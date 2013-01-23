@@ -1,0 +1,4 @@
+Once inside src/ folder,
+// this is dave's comment
+COMPILE: javac *.java
+
