@@ -34,9 +34,10 @@ public class FileThread extends Thread
 				System.out.println("Request received: " + e.getMessage());
 
 				// Handler to list files that this user is allowed to see
+				// FIXME switch with String, depending if the SENNOT SQUARE 6110 computers have java 7
 				if(e.getMessage().equals("LFILES"))
 				{
-				    /* TODO: Write this handler */
+					/* TODO: Write this handler */
 				}
 				if(e.getMessage().equals("UPLOADF"))
 				{
@@ -123,66 +124,66 @@ public class FileThread extends Thread
 						try
 						{
 							File f = new File("shared_files/_"+remotePath.replace('/', '_'));
-						if (!f.exists()) {
-							System.out.printf("Error file %s missing from disk\n", "_"+remotePath.replace('/', '_'));
-							e = new Envelope("ERROR_NOTONDISK");
-							output.writeObject(e);
-
-						}
-						else {
-							FileInputStream fis = new FileInputStream(f);
-
-							do {
-								byte[] buf = new byte[4096];
-								if (e.getMessage().compareTo("DOWNLOADF")!=0) {
-									System.out.printf("Server error: %s\n", e.getMessage());
-									break;
-								}
-								e = new Envelope("CHUNK");
-								int n = fis.read(buf); //can throw an IOException
-								if (n > 0) {
-									System.out.printf(".");
-								} else if (n < 0) {
-									System.out.println("Read error");
-
-								}
-
-
-								e.addObject(buf);
-								e.addObject(new Integer(n));
-
+							if (!f.exists()) {
+								System.out.printf("Error file %s missing from disk\n", "_"+remotePath.replace('/', '_'));
+								e = new Envelope("ERROR_NOTONDISK");
 								output.writeObject(e);
-
-								e = (Envelope)input.readObject();
-
 
 							}
-							while (fis.available()>0);
+							else {
+								FileInputStream fis = new FileInputStream(f);
 
-							//If server indicates success, return the member list
-							if(e.getMessage().compareTo("DOWNLOADF")==0)
-							{
+								do {
+									byte[] buf = new byte[4096];
+									if (e.getMessage().compareTo("DOWNLOADF")!=0) {
+										System.out.printf("Server error: %s\n", e.getMessage());
+										break;
+									}
+									e = new Envelope("CHUNK");
+									int n = fis.read(buf); //can throw an IOException
+									if (n > 0) {
+										System.out.printf(".");
+									} else if (n < 0) {
+										System.out.println("Read error");
 
-								e = new Envelope("EOF");
-								output.writeObject(e);
+									}
 
-								e = (Envelope)input.readObject();
-								if(e.getMessage().compareTo("OK")==0) {
-									System.out.printf("File data upload successful\n");
+
+									e.addObject(buf);
+									e.addObject(new Integer(n));
+
+									output.writeObject(e);
+
+									e = (Envelope)input.readObject();
+
+
+								}
+								while (fis.available()>0);
+
+								//If server indicates success, return the member list
+								if(e.getMessage().compareTo("DOWNLOADF")==0)
+								{
+
+									e = new Envelope("EOF");
+									output.writeObject(e);
+
+									e = (Envelope)input.readObject();
+									if(e.getMessage().compareTo("OK")==0) {
+										System.out.printf("File data upload successful\n");
+									}
+									else {
+
+										System.out.printf("Upload failed: %s\n", e.getMessage());
+
+									}
+
 								}
 								else {
 
 									System.out.printf("Upload failed: %s\n", e.getMessage());
 
 								}
-
 							}
-							else {
-
-								System.out.printf("Upload failed: %s\n", e.getMessage());
-
-							}
-						}
 						}
 						catch(Exception e1)
 						{

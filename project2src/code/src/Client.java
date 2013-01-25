@@ -7,10 +7,11 @@ public abstract class Client {
 	/* protected keyword is like private but subclasses have access
 	 * Socket and input/output streams
 	 */
-	protected Socket sock;
+	protected Socket sock;				//NOTE: this requires blocking access
 	protected ObjectOutputStream output;
 	protected ObjectInputStream input;
 
+	//this is really easy
 	public boolean connect(final String server, final int port) {
 		System.out.println("attempting to connect");
 
@@ -18,6 +19,8 @@ public abstract class Client {
 
 	}
 
+	//I don't really know why we need this.
+	//Plus it's easy to condense
 	public boolean isConnected() {
 		if (sock == null || !sock.isConnected()) {
 			return false;
@@ -27,6 +30,7 @@ public abstract class Client {
 		}
 	}
 
+	//really bad coding practice.........
 	public void disconnect()	 {
 		if (isConnected()) {
 			try
