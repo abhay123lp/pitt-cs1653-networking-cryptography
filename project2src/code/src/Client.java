@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public abstract class Client {
+public abstract class Client implements ClientInterface {
 
 	/* protected keyword is like private but subclasses have access
 	 * Socket and input/output streams

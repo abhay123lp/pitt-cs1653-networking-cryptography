@@ -6,7 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-public class FileClient extends Client implements FileClientInterface {
+public class FileClient extends Client implements FileInterface, ClientInterface {
 
 	//always returns true...not a very good use of boolean
 	public boolean delete(String filename, UserToken token) {
