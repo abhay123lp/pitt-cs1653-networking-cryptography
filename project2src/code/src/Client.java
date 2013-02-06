@@ -1,4 +1,6 @@
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
@@ -16,7 +18,19 @@ public abstract class Client {
 		System.out.println("attempting to connect");
 
 		/* TODO: Write this method */
-
+		//IS A MESSAGE NEEDED???
+		try {
+			sock = new Socket(server, port);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	//I don't really know why we need this.
