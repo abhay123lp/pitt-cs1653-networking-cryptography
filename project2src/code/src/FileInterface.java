@@ -7,28 +7,8 @@ import java.util.List;
  * must be implemented!
  *
  */
-public interface FileClientInterface
+public interface FileInterface
 {
-	/**
-	 * Connect to the specified file server.  No other methods should
-	 * work until the client is connected to a file server.
-	 *
-	 * @param server The IP address or hostname of the file server
-	 * @param port The port that the file server is listening on
-	 *
-	 * @return true if the connection succeeds, false otherwise
-	 *
-	 */
-	public boolean connect(final String server, final int port);
-
-
-	/**
-	 * Close down the connection to the file server.
-	 *
-	 */
-	public void disconnect();
-
-
 	/**
 	 * Retrieves a list of files that are allowed to be displayed
 	 * members of the groups encoded in the supplied user token.
