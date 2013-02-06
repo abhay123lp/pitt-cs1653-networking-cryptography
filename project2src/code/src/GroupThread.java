@@ -111,22 +111,117 @@ public class GroupThread extends Thread
 				else if(message.getMessage().equals("CGROUP")) //Client wants to create a group
 				{
 				    /* TODO:  Write this handler */
+					if(message.getObjContents().size() < 2)
+					{
+						response = new Envelope("FAIL");
+					}
+					else
+					{
+						response = new Envelope("FAIL");
+						
+						if(message.getObjContents().get(0) != null)
+						{
+							if(message.getObjContents().get(1) != null)
+							{
+								// do create a group stuff in here
+							}
+							
+						}
+						
+					}
+					
 				}
 				else if(message.getMessage().equals("DGROUP")) //Client wants to delete a group
 				{
 				    /* TODO:  Write this handler */
+					if(message.getObjContents().size() < 2)
+					{
+						response = new Envelope("FAIL");
+					}
+					else
+					{
+						response = new Envelope("FAIL");
+						
+						if(message.getObjContents().get(0) != null)
+						{
+							if(message.getObjContents().get(1) != null)
+							{
+								// do delete a group stuff in here
+								// hint my_gs.groupList.deleteGroup(groupName, UserToken) etc...
+							}
+							
+						}
+						
+					}
 				}
 				else if(message.getMessage().equals("LMEMBERS")) //Client wants a list of members in a group
 				{
 				    /* TODO:  Write this handler */
+					if(message.getObjContents().size() < 2)
+					{
+						response = new Envelope("FAIL");
+					}
+					else
+					{
+						response = new Envelope("FAIL");
+						
+						if(message.getObjContents().get(0) != null)
+						{
+							if(message.getObjContents().get(1) != null)
+							{
+								// do return a list of members in a group in here
+								
+							}
+							
+						}
+						
+					}
 				}
 				else if(message.getMessage().equals("AUSERTOGROUP")) //Client wants to add user to a group
 				{
 				    /* TODO:  Write this handler */
+					if(message.getObjContents().size() < 2)
+					{
+						response = new Envelope("FAIL");
+					}
+					else
+					{
+						response = new Envelope("FAIL");
+						
+						if(message.getObjContents().get(0) != null)
+						{
+							if(message.getObjContents().get(1) != null)
+							{
+								// do add a user to a group stuff in here
+								
+							}
+							
+						}
+						
+					}
 				}
 				else if(message.getMessage().equals("RUSERFROMGROUP")) //Client wants to remove user from a group
 				{
 				    /* TODO:  Write this handler */
+					if(message.getObjContents().size() < 2)
+					{
+						response = new Envelope("FAIL");
+					}
+					else
+					{
+						response = new Envelope("FAIL");
+						
+						if(message.getObjContents().get(0) != null)
+						{
+							if(message.getObjContents().get(1) != null)
+							{
+								// do remove a user from a group
+								
+							}
+							
+						}
+						
+					}
 				}
 				else if(message.getMessage().equals("DISCONNECT")) //Client wants to disconnect
 				{
@@ -227,7 +322,8 @@ public class GroupThread extends Thread
 					//If user is the owner, removeMember will automatically delete group!
 					for(int index = 0; index < deleteFromGroups.size(); index++)
 					{
-						my_gs.groupList.removeMember(username, deleteFromGroups.get(index));
+						// -- old implementation -- my_gs.groupList.removeMember(username, deleteFromGroups.get(index));
+						my_gs.groupList.removeUser(username, deleteFromGroups.get(index));
 					}
 					
 					//If groups are owned, they must be deleted
@@ -267,5 +363,63 @@ public class GroupThread extends Thread
 			return false; //requester does not exist
 		}
 	}
+	
+	
+	/** Dave added this function
+	 * 
+	 * @param groupName
+	 * @param yourToken
+	 */
+	private void deleteGroup(String groupName, UserToken yourToken){
+		
+		// delete the group because this user is the owner
+		// my_gs.groupList.deleteGroup(groupName, yourToken);	
+		
+		//(1) Get the list of users in group..store in arraylist
+		//(2) delete group that needs to be deleted
+		//(3) in UserList find each user and remove group from grouplist for that user
+		
+		String requester = yourToken.getSubject();
+		
+		//Does requester exist?
+		if(my_gs.userList.checkUser(requester))
+		{
+			//ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
+			ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
+			//requester needs to be an administer
+			if(temp.contains("ADMIN"))
+			{
+				
+				// (1)
+				ArrayList<String> usersInGroup = my_gs.groupList.getGroupUsers(groupName);
+				
+				
+				// (2)
+				my_gs.groupList.deleteGroup(groupName);
+				
+				//(3)
+				for(String user : usersInGroup){
+					
+					//Does user exist?
+					if(my_gs.userList.checkUser(user))
+					{
+						my_gs.userList.removeGroup(user, groupName);
+					}
+					
+					
+				}
+											
+				
+			} 
+			
+			
+		}
+		
+		
+		
+	}
+	
+	
+	
 	
 }
