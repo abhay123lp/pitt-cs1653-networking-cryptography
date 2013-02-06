@@ -2,6 +2,7 @@
 
 import java.lang.Thread;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,10 +35,48 @@ public class FileThread extends Thread
 				System.out.println("Request received: " + e.getMessage());
 
 				// Handler to list files that this user is allowed to see
-				// FIXME switch with String, depending if the SENNOT SQUARE 6110 computers have java 7
 				if(e.getMessage().equals("LFILES"))
 				{
-					/* TODO: Write this handler */
+				    /* TODO: Write this handler */
+					/* Note: area of confusion - haveing trouble following the logic behind
+					 * 1. FileServer.fileList.getFiles()...what list is this returning?
+					 * 2. List<String> listFiles(UserToken token)...this will get all files for user?  Where do we use it?					 * 
+					 */
+					
+					// (1)  FileClient sends a message - new Envelope("LFILES"))
+					// (2)  Get the users token - (UserToken)e.getObjContents().get(2); 
+					// (3)  Get groups user belongs to - List<String> groups = yourToken.getGroups();
+					// (4)  For each group of user, list all files relevant to group
+										
+					
+					// (2) Get the token of the user
+					UserToken uToken = (UserToken)e.getObjContents().get(2); 
+					// (3) Get the groups user is associated with
+					List<String> groups = uToken.getGroups();
+					
+					// (4)
+					List<ShareFile> files = FileServer.fileList.getFiles();
+					
+					// Get all the groups of the user
+					for(String s : groups){
+
+						for(int i = 0; i < files.size(); i ++){
+							
+							if(s.equals(files.get(i).getGroup())){
+								
+								// Print the file(s) associated with group
+								// Another loop when inside group to get all files....?????
+								System.out.println("Owner: " + files.get(i).getOwner() + " Group: " + files.get(i).getOwner() + 
+										" Path: " + files.get(i).getPath());
+								
+							}
+						}
+						
+					}
+					
+					
+					
+					
 				}
 				if(e.getMessage().equals("UPLOADF"))
 				{
@@ -124,66 +163,66 @@ public class FileThread extends Thread
 						try
 						{
 							File f = new File("shared_files/_"+remotePath.replace('/', '_'));
-							if (!f.exists()) {
-								System.out.printf("Error file %s missing from disk\n", "_"+remotePath.replace('/', '_'));
-								e = new Envelope("ERROR_NOTONDISK");
-								output.writeObject(e);
+						if (!f.exists()) {
+							System.out.printf("Error file %s missing from disk\n", "_"+remotePath.replace('/', '_'));
+							e = new Envelope("ERROR_NOTONDISK");
+							output.writeObject(e);
 
-							}
-							else {
-								FileInputStream fis = new FileInputStream(f);
+						}
+						else {
+							FileInputStream fis = new FileInputStream(f);
 
-								do {
-									byte[] buf = new byte[4096];
-									if (e.getMessage().compareTo("DOWNLOADF")!=0) {
-										System.out.printf("Server error: %s\n", e.getMessage());
-										break;
-									}
-									e = new Envelope("CHUNK");
-									int n = fis.read(buf); //can throw an IOException
-									if (n > 0) {
-										System.out.printf(".");
-									} else if (n < 0) {
-										System.out.println("Read error");
-
-									}
-
-
-									e.addObject(buf);
-									e.addObject(new Integer(n));
-
-									output.writeObject(e);
-
-									e = (Envelope)input.readObject();
-
+							do {
+								byte[] buf = new byte[4096];
+								if (e.getMessage().compareTo("DOWNLOADF")!=0) {
+									System.out.printf("Server error: %s\n", e.getMessage());
+									break;
+								}
+								e = new Envelope("CHUNK");
+								int n = fis.read(buf); //can throw an IOException
+								if (n > 0) {
+									System.out.printf(".");
+								} else if (n < 0) {
+									System.out.println("Read error");
 
 								}
-								while (fis.available()>0);
 
-								//If server indicates success, return the member list
-								if(e.getMessage().compareTo("DOWNLOADF")==0)
-								{
 
-									e = new Envelope("EOF");
-									output.writeObject(e);
+								e.addObject(buf);
+								e.addObject(new Integer(n));
 
-									e = (Envelope)input.readObject();
-									if(e.getMessage().compareTo("OK")==0) {
-										System.out.printf("File data upload successful\n");
-									}
-									else {
+								output.writeObject(e);
 
-										System.out.printf("Upload failed: %s\n", e.getMessage());
+								e = (Envelope)input.readObject();
 
-									}
 
+							}
+							while (fis.available()>0);
+
+							//If server indicates success, return the member list
+							if(e.getMessage().compareTo("DOWNLOADF")==0)
+							{
+
+								e = new Envelope("EOF");
+								output.writeObject(e);
+
+								e = (Envelope)input.readObject();
+								if(e.getMessage().compareTo("OK")==0) {
+									System.out.printf("File data upload successful\n");
 								}
 								else {
 
 									System.out.printf("Upload failed: %s\n", e.getMessage());
 
 								}
+
 							}
+							else {
+
+								System.out.printf("Upload failed: %s\n", e.getMessage());
+
+							}
+						}
 						}
 						catch(Exception e1)
 						{
