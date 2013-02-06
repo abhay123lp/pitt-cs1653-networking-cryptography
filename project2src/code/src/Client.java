@@ -20,7 +20,9 @@ public abstract class Client {
 		/* TODO: Write this method */
 		//IS A MESSAGE NEEDED???
 		try {
-			sock = new Socket(server, port);
+			this.sock = new Socket(server, port);
+			this.output = new ObjectOutputStream(this.sock.getOutputStream());
+			this.input = new ObjectInputStream(this.sock.getInputStream());
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
