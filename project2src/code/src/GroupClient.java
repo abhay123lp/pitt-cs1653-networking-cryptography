@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.ObjectInputStream;
 
-public class GroupClient extends Client implements GroupClientInterface {
+public class GroupClient extends Client implements GroupInterface, ClientInterface {
  
 	 public UserToken getToken(String username)
 	 {
