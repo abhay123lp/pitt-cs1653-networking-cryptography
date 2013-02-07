@@ -19,6 +19,7 @@ public class GroupServer extends Server {
 
 	public static final int SERVER_PORT = 8765;
 	public UserList userList;
+	public GroupList groupList;
     
 	public GroupServer() {
 		super(SERVER_PORT, "ALPHA");
@@ -31,11 +32,6 @@ public class GroupServer extends Server {
 	public void start() {
 		// Overwrote server.start() because if no user file exists, initial admin account needs to be created
 		
-		String userFile = "UserList.bin";
-		Scanner console = new Scanner(System.in);
-		ObjectInputStream userStream;
-		ObjectInputStream groupStream;
-		
 		//This runs a thread that saves the lists on program exit
 		Runtime runtime = Runtime.getRuntime();
 		runtime.addShutdownHook(new ShutDownListener(this));
@@ -43,15 +39,26 @@ public class GroupServer extends Server {
 		//Open user file to get user list
 		try
 		{
-			FileInputStream fis = new FileInputStream(userFile);
-			userStream = new ObjectInputStream(fis);
+			String userFile = "UserList.bin";
+			String groupFile = "GroupList.bin";
+			ObjectInputStream userStream;
+			ObjectInputStream groupStream;
+//			FileInputStream fis = new FileInputStream(userFile);
+			userStream = new ObjectInputStream(new FileInputStream(userFile));
 			userList = (UserList)userStream.readObject();
+//			fis.close();
+			userStream.close();
+			
+			groupStream = new ObjectInputStream(new FileInputStream(groupFile));
+			groupList = (GroupList)groupStream.readObject();
+			groupStream.close();
 		}
 		catch(FileNotFoundException e)
 		{
 			System.out.println("UserList File Does Not Exist. Creating UserList...");
 			System.out.println("No users currently exist. Your account will be the administrator.");
 			System.out.print("Enter your username: ");
+			Scanner console = new Scanner(System.in);
 			String username = console.next();
 			
 			//Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
@@ -59,6 +66,13 @@ public class GroupServer extends Server {
 			userList.addUser(username);
 			userList.addGroup(username, "ADMIN");
 			userList.addOwnership(username, "ADMIN");
+			
+			groupList = new GroupList();
+			groupList.addGroup("ADMIN");
+			groupList.addUser("ADMIN", username);
+			groupList.addOwner("ADMIN", username);
+			
+			console.close();
 		}
 		catch(IOException e)
 		{
@@ -91,6 +105,7 @@ public class GroupServer extends Server {
 				thread = new GroupThread(sock, this);
 				thread.start();
 			}
+//			serverSock.close();
 		}
 		catch(Exception e)
 		{
@@ -119,6 +134,12 @@ class ShutDownListener extends Thread
 		{
 			outStream = new ObjectOutputStream(new FileOutputStream("UserList.bin"));
 			outStream.writeObject(my_gs.userList);
+			outStream.flush();
+			outStream.close();
+			outStream = new ObjectOutputStream(new FileOutputStream("GroupList.bin"));
+			outStream.writeObject(my_gs.groupList);
+			outStream.flush();
+			outStream.close();
 		}
 		catch(Exception e)
 		{
@@ -149,6 +170,13 @@ class AutoSave extends Thread
 				{
 					outStream = new ObjectOutputStream(new FileOutputStream("UserList.bin"));
 					outStream.writeObject(my_gs.userList);
+					outStream.flush();
+					outStream.close();
+					
+					outStream = new ObjectOutputStream(new FileOutputStream("GroupList.bin"));
+					outStream.writeObject(my_gs.groupList);
+					outStream.flush();
+					outStream.close();
 				}
 				catch(Exception e)
 				{
