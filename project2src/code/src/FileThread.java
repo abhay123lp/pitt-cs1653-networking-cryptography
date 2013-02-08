@@ -35,6 +35,7 @@ public class FileThread extends Thread
 				System.out.println("Request received: " + e.getMessage());
 
 				// Handler to list files that this user is allowed to see
+				//RETURNS MESSAGE OK AND LIST OF FILES
 				if(e.getMessage().equals("LFILES"))
 				{
 				    /* TODO: Write this handler */
@@ -47,7 +48,6 @@ public class FileThread extends Thread
 					// (2)  Get the users token - (UserToken)e.getObjContents().get(2); 
 					// (3)  Get groups user belongs to - List<String> groups = yourToken.getGroups();
 					// (4)  For each group of user, list all files relevant to group
-										
 					
 					// (2) Get the token of the user
 					UserToken uToken = (UserToken)e.getObjContents().get(2); 
@@ -56,27 +56,19 @@ public class FileThread extends Thread
 					
 					// (4)
 					List<ShareFile> files = FileServer.fileList.getFiles();
+					List<ShareFile> visibleFiles = new ArrayList<ShareFile>();
 					
-					// Get all the groups of the user
-					for(String s : groups){
-
-						for(int i = 0; i < files.size(); i ++){
-							
-							if(s.equals(files.get(i).getGroup())){
-								
-								// Print the file(s) associated with group
-								// Another loop when inside group to get all files....?????
-								System.out.println("Owner: " + files.get(i).getOwner() + " Group: " + files.get(i).getOwner() + 
-										" Path: " + files.get(i).getPath());
-								
-							}
+					for(ShareFile f : files)
+					{
+						if(groups.contains(f.getGroup()))
+						{
+							visibleFiles.add(f);
 						}
-						
 					}
 					
-					
-					
-					
+					response = new Envelope("OK");
+					response.addObject(visibleFiles);
+					output.writeObject(response);
 				}
 				if(e.getMessage().equals("UPLOADF"))
 				{
