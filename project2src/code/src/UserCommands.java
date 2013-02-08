@@ -137,135 +137,231 @@ public class UserCommands {
 	 * The approved user is allowed to upload files, deletes files, create groups, etc.
 	 */
 	private static void parseCommands(String[] userCommands, UserToken userToken) 
-	{		
+	{	
+		// s is a big string of messages of successes and failures of any server operations.
+		// The String will be printed out after all of the commands execute.
 		String s = "";
 		String username = "";
 		String groupName = "";
+		// GroupClient is used for the Group server commands	
 		GroupClient gc = new GroupClient();
-		for(int i = 0; i < userCommands.length; i++)
+		// FileClient is used for the File server commands
+		FileClient fc = new FileClient();
+		// The try is to catch any ArrayIndexOutOfBounds exceptions.
+		// For our purposes, it's simpler and cleaner to catch the exception.
+		// Although it's a performance hit for the exception, taking
+		// the performance hit for the exception won't affect the real-world
+		// performance of the program on today's modern machines.
+		try
 		{
-			// TODO: Finish the switch statement by adding all the functionality
-			switch(userCommands[i])
+			for(int i = 0; i < userCommands.length; i++)
 			{
-				// ===== Group Server commands	=====
-				case "lel":
-					System.out.printf("Laugh extra loud!\n");
-					break;
-				case "gcreateuser":
-					// should follow with correct String
-					i++;
-					// TODO: catch ArrayOutOfBoundsException
-					username = userCommands[i];
-					if(gc.createUser(username, userToken))
-					{
-						s = s + ("Successfully created username \"" + username + "\".\n");
-					}
-					// User did not have admin privileges
-					else						
-					{
-						s = s + ("Unable to create username \"" + username + "\" due to insufficient privileges." +
-								"Admin privileges are required to create users.\n");
-					}
-					break;
-				case "gdeleteuser":
-					// should follow with correct String
-					i++;
-					// TODO: catch ArrayOutOfBoundsException
-					username = userCommands[i];
-					if(gc.deleteUser(username, userToken))
-					{
-						s = s + ("Successfully deleted username \"" + username + "\".\n");
-					}
-					// User did not have admin privileges
-					else						
-					{
-						s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges." +
-								"Admin privileges are required to delete users.\n");
-					}
-					break;
-				case "gcreategroup":
-					i++;
-					groupName = userCommands[i];
-					if(gc.createGroup(groupName, userToken))
-					{
-						s = s + ("Successfully created group \"" + groupName + "\".\n");
-					}
-					else
-					{
-						s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
-					}
-					break;
-				case "gdeletegroup":
-					i++;
-					groupName = userCommands[i];
-					if(gc.deleteGroup(groupName, userToken))
-					{
-						s = s + ("Successfully deleted group \"" + groupName + "\".\n");
-					}
-					else
-					{
-						s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
-					}
-					break;
-				case "gaddusertogroup":
-					i++;	
-					groupName = userCommands[i];
-					i++;	
-					username = userCommands[i];
-					if(gc.addUserToGroup(username, groupName, userToken))
-					{
-						s = s + ("Successfully added user \"" + username + "\" to group \"" + groupName + "\".\n");
-					}
-					// Possibly the user wasn't the owner/creator of the group.
-					else
-					{
-						s = s + ("Unsuccesful in adding user \"" + username + "\" to group \"" + groupName + "\".");
-						s = s + (" Note that only the owner of a group can add users to a group.\n");
-					}
-					break;
-				case "gdeleteuserfromgroup":
-					i++;	
-					groupName = userCommands[i];
-					i++;	
-					username = userCommands[i];
-					if(gc.deleteUserFromGroup(username, groupName, userToken))
-					{
-						s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
-					}
-					// Possibly the user wasn't the owner/creator of the group.
-					else
-					{
-						s = s + ("Unsuccesful in deleteing user \"" + username + "\" from group \"" + groupName + "\".");
-						s = s + (" Note that only the owner of a group can delete users from a group.\n");
-					}
-					break;
-				case "glistmembers":
-					i++;
-					groupName = userCommands[i];
-					List<String> userList = new ArrayList<String>();
-					userList = gc.listMembers(groupName, userToken);
-					if( userList != null)
-					{
-						s = s + "There are " + userList.size() + " users in group \"" + groupName + "\":\n";
-						// Concatenate the users
-						for(int j = 0; j < userList.size(); j++)
+				switch(userCommands[i])
+				{
+					// ===== Group Server commands	=====
+					case "lel":
+						System.out.printf("Laugh extra loud!\n");
+						break;
+					case "gcreateuser":
+						// should follow with correct String
+						i++;
+						username = userCommands[i];
+						if(gc.createUser(username, userToken))
 						{
-							s = s + userList.get(i) + "\n";
+							s = s + ("Successfully created username \"" + username + "\".\n");
 						}
-					}
-					else
-					{
-						s = s + ("Insufficient privileges to print users in group \"" + groupName + "\". Only owners can print group members.\n");
-					}
-					break;
-					
-					// TODO: Finish the server commands
-					// ===== Server Commands =====
-				default:		
-					s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
-					break;
-			}
-		}
+						// User did not have admin privileges
+						else						
+						{
+							s = s + ("Unable to create username \"" + username + "\" due to insufficient privileges." +
+									"Admin privileges are required to create users.\n");
+						}
+						break;
+					case "gdeleteuser":
+						// should follow with correct String
+						i++;
+						// TODO: catch ArrayOutOfBoundsException
+						username = userCommands[i];
+						if(gc.deleteUser(username, userToken))
+						{
+							s = s + ("Successfully deleted username \"" + username + "\".\n");
+						}
+						// User did not have admin privileges
+						else						
+						{
+							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges." +
+									"Admin privileges are required to delete users.\n");
+						}
+						break;
+					case "gcreategroup":
+						i++;
+						groupName = userCommands[i];
+						if(userToken == gc.createGroup(groupName, userToken))
+						{
+							s = s + ("Successfully created group \"" + groupName + "\".\n");
+						}
+						else
+						{
+							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
+						}
+						break;
+					case "gdeletegroup":
+						i++;
+						groupName = userCommands[i];
+						if(userToken == gc.deleteGroup(groupName, userToken))
+						{
+							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
+						}
+						else
+						{
+							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
+						}
+						break;
+					case "gaddusertogroup":
+						i++;	
+						groupName = userCommands[i];
+						i++;	
+						username = userCommands[i];
+						if(gc.addUserToGroup(username, groupName, userToken))
+						{
+							s = s + ("Successfully added user \"" + username + "\" to group \"" + groupName + "\".\n");
+						}
+						// Possibly the user wasn't the owner/creator of the group.
+						else
+						{
+							s = s + ("Unsuccesful in adding user \"" + username + "\" to group \"" + groupName + "\".");
+							s = s + (" Note that only the owner of a group can add users to a group.\n");
+						}
+						break;
+					case "gdeleteuserfromgroup":
+						i++;	
+						groupName = userCommands[i];
+						i++;	
+						username = userCommands[i];
+						if(gc.deleteUserFromGroup(username, groupName, userToken))
+						{
+							s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
+						}
+						// Possibly the user wasn't the owner/creator of the group.
+						else
+						{
+							s = s + ("Unsuccesful in deleteing user \"" + username + "\" from group \"" + groupName + "\".");
+							s = s + (" Note that only the owner of a group can delete users from a group.\n");
+						}
+						break;
+					// TODO: Make sure listMembers implemntation is correct
+					case "glistmembers":
+						i++;
+						groupName = userCommands[i];
+						List<String> userList = new ArrayList<String>();
+						userList = gc.listMembers(groupName, userToken);
+						if( userList != null)
+						{
+							s = s + "There are " + userList.size() + " users in group \"" + groupName + "\":\n";
+							// Concatenate the users
+							for(String user : userList)
+							{
+								s = s + user + "\n";
+							}
+						}
+						else
+						{
+							s = s + ("Insufficient privileges to print users in group \"" + groupName + "\". Only owners can print group members.\n");
+						}
+						break;
+						// ===== File Server Commands =====
+						// TODO: Make sure my listFiles implementation is correct =D
+					case "flistfiles":
+						List<String> fileList = new ArrayList<String>();
+						fileList = fc.listFiles(userToken);
+						if( fileList != null)
+						{
+							s = s + "There are " + fileList.size() + " files viewable by you:\n";
+							// Concatenate the files
+							for(String file : fileList)
+							{
+								s = s + file + "\n";
+							}
+						}
+						else
+						{
+							s = s + ("Insufficient privileges to print files in group \"" + groupName + "\". Only owners can print group members.\n");
+						}
+						break;
+					case "fupload":
+						i++;
+						String sourceFile = userCommands[i];
+						i++;
+						String destFile = userCommands[i];
+						i++;
+						groupName = userCommands[i];
+						// Success
+						if(fc.upload(sourceFile, destFile, groupName, userToken))
+						{
+							s = s + "Successfully uploaded local source file \""
+									+ sourceFile + "\" as \"" + destFile
+									+ "\" to group \"" + groupName
+									+ "\" on the file server.\n";
+						}
+						// Failure
+						else
+						{
+							s = s + "Unsuccesful in uploading local source file \""
+									+ sourceFile + "\" as \"" + destFile
+									+ "\" to group \"" + groupName
+									+ "\" on the file server.\n";
+							s = s + "You need to be a part of a group or admin to upload files.\n";
+						}
+						break;
+						// TODO: list assumptions of users and admin privileges 
+					case "fdownload":
+						i++;
+						sourceFile = userCommands[i];
+						i++;
+						destFile = userCommands[i];
+						// Success
+						if(fc.download(sourceFile, destFile, userToken))
+						{
+							s = s + "Successfully downloaded to local source file \""
+									+ sourceFile + "\" from file \"" + destFile
+									+ "\" from the file server.\n";
+						}
+						// Failure
+						else
+						{
+							s = s + "Unsuccesful in download to local source file \""
+									+ sourceFile + "\" from file \"" + destFile
+									+ "\" from the file server.\n";
+							s = s + "You need to be a part of a group or admin to download files.\n";
+						}
+						break;
+					case "fdelete":
+						i++;
+						String fileName = userCommands[i];
+						// Success
+						if(fc.delete(fileName, userToken))
+						{
+							s = s + "Successfully deleted file \"" + fileName + "\" from the file server.\n";
+						}
+						// Failure
+						else
+						{
+							s = s + "unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
+							s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
+						}
+						break;
+					default:		
+						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
+						break;
+				} 
+			} // end for loop
+		} // end try
+		catch(ArrayIndexOutOfBoundsException e)
+		{
+			s = s
+					+ "You entered an improperly formatted command. For a list of commands, type help.\n"
+					+ " For help on how to use the commands, type help followed by a command\n";
+		}		
 		// Here we print out the success and failures of commands. 
 		// Everything gets printed at once after the commands all finish.
 		System.out.printf(s);
