@@ -4,10 +4,9 @@ import java.util.Hashtable;
 public class GroupList {
 	private Hashtable<String, Group> list = new Hashtable<String, Group>();
 
-	public synchronized void addGroup(String groupName)
+	public synchronized void addGroup(String groupName, String owner)
 	{
-		Group newUser = new Group();
-		list.put(groupName, newUser);
+		list.put(groupName, new Group(owner));
 	}
 
 	public synchronized void deleteGroup(String groupName)
@@ -17,14 +16,7 @@ public class GroupList {
 
 	public synchronized boolean checkGroup(String groupName)
 	{
-		if(list.containsKey(groupName))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return list.containsKey(groupName);
 	}
 
 	public synchronized ArrayList<String> getGroupUsers(String groupName)
@@ -32,9 +24,9 @@ public class GroupList {
 		return list.get(groupName).getUsers();
 	}
 
-	public synchronized ArrayList<String> getGroupOwners(String groupName)
+	public synchronized String getGroupOwner(String groupName)
 	{
-		return list.get(groupName).getOwners();
+		return list.get(groupName).getOwner();
 	}
 
 	public synchronized void addUser(String group, String username)
@@ -47,26 +39,26 @@ public class GroupList {
 		list.get(group).removeUser(username);
 	}
 
-	public synchronized void addOwner(String group, String username)
-	{
-		list.get(group).addOwner(username);
-	}
-
-	public synchronized void removeOwner(String group, String username)
-	{
-		list.get(group).removeOwner(username);
-	}
+//	public synchronized void addOwner(String group, String username)
+//	{
+//		list.get(group).addOwner(username);
+//	}
+//
+//	public synchronized void removeOwner(String group, String username)
+//	{
+//		list.get(group).removeOwner(username);
+//	}
 
 
 	class Group {
 
 		 private ArrayList<String> users;
-		 private ArrayList<String> owners;
+		 private final String owner;
 
-		 public Group()
+		 public Group(String owner)
 		 {
-			 users = new ArrayList<String>();
-			 owners = new ArrayList<String>();
+			 this.users = new ArrayList<String>();
+			 this.owner = owner;
 		 }
 
 		 public ArrayList<String> getUsers()
@@ -74,9 +66,9 @@ public class GroupList {
 			 return users;
 		 }
 
-		 public ArrayList<String> getOwners()
+		 public String getOwner()
 		 {
-			 return owners;
+			 return owner;
 		 }
 
 		 public void addUser(String username)
@@ -86,30 +78,28 @@ public class GroupList {
 
 		 public void removeUser(String username)
 		 {
-			 if(!users.isEmpty())
+			 if(users.contains(username))
 			 {
-				 if(users.contains(username))
-				 {
-					 users.remove(users.indexOf(username));
-				 }
+				 users.remove(username);
+				 //users.remove(users.indexOf(username));
 			 }
 		 }
 
-		 public void addOwner(String username)
-		 {
-			 owners.add(username);
-		 }
+//		 public void addOwner(String username)
+//		 {
+//			 owners.add(username);
+//		 }
 
-		 public void removeOwner(String username)
-		 {
-			 if(!owners.isEmpty())
-			 {
-				 if(owners.contains(username))
-				 {
-					 owners.remove(owners.indexOf(username));
-				 }
-			 }
-		 }
+//		 public void removeOwner(String username)
+//		 {
+//			 if(!owners.isEmpty())
+//			 {
+//				 if(owners.contains(username))
+//				 {
+//					 owners.remove(owners.indexOf(username));
+//				 }
+//			 }
+//		 }
 
 	}
 }
