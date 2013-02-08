@@ -119,13 +119,13 @@ public class GroupThread extends Thread
 					else
 					{
 						response = new Envelope("FAIL");
-						
+
 						if(message.getObjContents().get(0) != null)
 						{
 							if(message.getObjContents().get(1) != null)
 							{
 								// do create a group stuff in here
-								String groupname = (String)message.getObjContents().get(0); //Extract the username
+								String groupname = (String)message.getObjContents().get(0); //Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
 								if(createGroup(groupname, yourToken))
@@ -155,7 +155,7 @@ public class GroupThread extends Thread
 						{
 							if(message.getObjContents().get(1) != null)
 							{								
-								String groupname = (String)message.getObjContents().get(0); //Extract the username
+								String groupname = (String)message.getObjContents().get(0); //Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
 								if(deleteGroup(groupname, yourToken))
@@ -167,6 +167,7 @@ public class GroupThread extends Thread
 							}
 						}
 					}
+					
 					output.writeObject(response);
 				}
 				else if(message.getMessage().equals("LMEMBERS")) //Client wants a list of members in a group
@@ -185,7 +186,7 @@ public class GroupThread extends Thread
 							if(message.getObjContents().get(1) != null)
 							{
 								// Return a list of members in a group 
-								String groupname = (String)message.getObjContents().get(0); //Extract the username
+								String groupname = (String)message.getObjContents().get(0); //Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
 								List<String> members = listMembers(groupname, yourToken);
@@ -197,36 +198,44 @@ public class GroupThread extends Thread
 							}
 						}
 					}
+					
 					output.writeObject(response);
 				}
 				else if(message.getMessage().equals("AUSERTOGROUP")) //Client wants to add user to a group
 				{
 					/* TODO:  Write this handler */
-					if(message.getObjContents().size() < 2)
+					if(message.getObjContents().size() < 3)
 					{
 						response = new Envelope("FAIL");
 					}
 					else
 					{
 						response = new Envelope("FAIL");
-						
+
 						if(message.getObjContents().get(0) != null)
 						{
 							if(message.getObjContents().get(1) != null)
 							{
-								String username = (String)message.getObjContents().get(0);  // Extract the username
-								String groupname = (String)message.getObjContents().get(1); //Extract the groupname
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-								if(addUserToGroup(username, groupname, yourToken))
-								{
-									
-									response = new Envelope("OK"); //Success
-									// Add the group name for the user in the token
-									yourToken.getGroups().add(groupname);	
-									// Send the token 
-									response.addObject(yourToken);
-									
+								if(message.getObjContents().get(2) != null){
+
+									String username = (String)message.getObjContents().get(0);  // Extract the username
+									String groupname = (String)message.getObjContents().get(1); //Extract the groupname
+									UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the token
+
+									if(addUserToGroup(username, groupname, yourToken))
+									{
+										response = new Envelope("OK"); //Success
+										// Add the group name for the user in the token
+										if(username.equals(yourToken.getSubject()))
+										{
+											yourToken.getGroups().add(groupname);	
+										}
+
+										response.addObject(yourToken);
+									}
+
+
 								}
 							}
 						}
@@ -236,7 +245,7 @@ public class GroupThread extends Thread
 				else if(message.getMessage().equals("RUSERFROMGROUP")) //Client wants to remove user from a group
 				{
 					/* TODO:  Write this handler */
-					if(message.getObjContents().size() < 2)
+					if(message.getObjContents().size() < 3)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -248,24 +257,29 @@ public class GroupThread extends Thread
 						{
 							if(message.getObjContents().get(1) != null)
 							{
-								// Remove a user from a group TODO
-								String username = (String)message.getObjContents().get(0);  // Extract the username
-								String groupname = (String)message.getObjContents().get(1); //Extract the groupname
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
+								if(message.getObjContents().get(2) != null){
+									
+									// Remove a user from a group TODO
+									String username = (String)message.getObjContents().get(0);  // Extract the username
+									String groupname = (String)message.getObjContents().get(1); //Extract the groupname
+									UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the token
 
-								if(deleteUserFromGroup(username, groupname, yourToken))
-								{
-									response = new Envelope("OK"); //Success	
-									// Remove the groupname from the user in the token
-									yourToken.getGroups().remove(groupname);										
-									response.addObject(yourToken);
+									if(deleteUserFromGroup(username, groupname, yourToken))
+									{
+										response = new Envelope("OK"); //Success	
+										// Remove the groupname from the user in the token
+										yourToken.getGroups().remove(groupname);										
+										response.addObject(yourToken);
+
+									}
 									
 								}
+								
 							}
 						}
-						
+
 					}
-					
+
 					output.writeObject(response);
 				}
 				else if(message.getMessage().equals("DISCONNECT")) //Client wants to disconnect
@@ -407,7 +421,7 @@ public class GroupThread extends Thread
 		}
 	}
 
-	
+
 
 	/**
 	 * TODO: createGroup
@@ -438,10 +452,9 @@ public class GroupThread extends Thread
 				return true;
 			}
 		}
-		else
-		{
-			return false; //requester does not exist
-		}
+
+		return false; //requester does not exist
+
 	}
 
 	/**
@@ -453,25 +466,18 @@ public class GroupThread extends Thread
 	 */
 	private boolean deleteGroup(String groupname, UserToken token){
 
-		// delete the group because this user is the owner
-		// my_gs.groupList.deleteGroup(groupName, yourToken);	
-
-		//(1) Get the list of users in group..store in arraylist
-		//(2) delete group that needs to be deleted
-		//(3) in UserList find each user and remove group from grouplist for that user
-
 		String requester = token.getSubject();
 
 		//Does requester exist?
 		if(my_gs.userList.checkUser(requester))
 		{
-			//ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
+
 			ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
 
 			// Get the owner of the group
 			String ownerOfGroup = my_gs.groupList.getGroupOwner(groupname);
 
-			//requester needs to be an administer or owner of the group
+			// Requester needs to be an administer or owner of the group
 			if(temp.contains(ADMIN_GROUP_NAME) || ownerOfGroup.equals(requester))
 			{
 				// (1)
@@ -481,22 +487,19 @@ public class GroupThread extends Thread
 				my_gs.groupList.deleteGroup(groupname);
 
 				//(3)
-				for(String user : usersInGroup){
-					//Does user exist?
-					if(my_gs.userList.checkUser(user))
-					{
-						my_gs.userList.removeGroup(user, groupname);
-					}
+				for(String user : usersInGroup){		
+
+					my_gs.userList.removeGroup(user, groupname);	
+
 				}
 				return true;
 			} else{
 				return false; //requester not an administrator
 			}
 		}
-		else
-		{
-			return false; //requester does not exist
-		}
+
+		return false; //requester does not exist
+
 	}
 
 	/**
@@ -509,11 +512,12 @@ public class GroupThread extends Thread
 	 */
 	private boolean addUserToGroup(String user, String group, UserToken token){
 		String requester = token.getSubject();
-		
+
 		// Does requester exist and does group exist.
 		if(my_gs.userList.checkUser(requester))
 		{
 			if(my_gs.userList.checkUser(user) && my_gs.groupList.checkGroup(group)){
+
 				//Get the list of groups of the requester
 				ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
 
@@ -524,7 +528,7 @@ public class GroupThread extends Thread
 				if(temp.contains(ADMIN_GROUP_NAME) || ownerOfGroup.equals(requester))
 				{
 					// Make sure that the user is not already in the group
-					if(my_gs.userList.getUserGroups(requester).contains(group)){
+					if(my_gs.userList.getUserGroups(user).contains(group)){
 						return false; // user already exists in group
 					} else{
 						// add the user the group in group list
@@ -533,17 +537,14 @@ public class GroupThread extends Thread
 						my_gs.userList.addGroup(user, group);
 					}										
 					return true;
-				} else{
-					return false; //requester not an administrator or owner
-				}
-			} else {
-				return false; // user or group does not exist
+				} 
+
 			}
+
 		}
-		else
-		{
-			return false; //requester does not exist
-		}
+
+		return false; //requester does not exist
+
 	}
 
 	//Note: does not alter user token here
@@ -556,7 +557,7 @@ public class GroupThread extends Thread
 	 */
 	private boolean deleteUserFromGroup(String user, String group, UserToken token)
 	{
-		//user does not exist, group does not exist, or token user is not an admin or owner of the group
+		//user does not exist, group does not exist, or token user is not an owner of the group or admin
 		if(!my_gs.userList.checkUser(user) || !my_gs.groupList.checkGroup(group) || !(my_gs.userList.getUserOwnership(token.getSubject()).contains(group) || my_gs.groupList.getGroupUsers(ADMIN_GROUP_NAME).contains(token.getSubject())))
 		{
 			return false;
@@ -565,9 +566,9 @@ public class GroupThread extends Thread
 		my_gs.userList.removeGroup(user, group);
 		return true;
 	}
-	
+
 	/**
-	 * TOD0: listMembers
+	 * TODO: listMembers
 	 * Will return a list of members of a group if the user is an admin or owner of the group.
 	 * @param group
 	 * @param yourToken
@@ -576,30 +577,27 @@ public class GroupThread extends Thread
 	private List<String> listMembers(String groupname, UserToken token)
 	{
 		String requester = token.getSubject();
-
-		//Does requester exist?
-		if(my_gs.userList.checkUser(requester))
-		{
-			ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
-
+		
+		// Check if group exists
+		if(my_gs.groupList.checkGroup(groupname)){
+			
 			// Get the owner of the group
 			String ownerOfGroup = my_gs.groupList.getGroupOwner(groupname);
-
+			
 			// ****** NOTE *******
 			// requester needs to be an administer or owner of the group to see list of members
-			if(temp.contains(ADMIN_GROUP_NAME) || ownerOfGroup.equals(requester))
+			if(ownerOfGroup.equals(requester) || my_gs.groupList.getGroupUsers(ADMIN_GROUP_NAME).contains(requester) )
 			{				
 				return my_gs.groupList.getGroupUsers(groupname);
-			} else{
-				return null; // user is not an admin or owner
-			}
-		}
-		else
-		{
-			return null; // user does not exist
+			} 
+			
+			
 		}
 		
+		return null;
+				
+
 	}
-	
-	
+
+
 }
