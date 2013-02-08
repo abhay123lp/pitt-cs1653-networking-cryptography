@@ -85,7 +85,7 @@ public interface GroupInterface
      * @return true if the user was added, false otherwise
      *
      */
-    public boolean addUserToGroup(final String user, final String group, final UserToken token);
+    public UserToken addUserToGroup(final String user, final String group, final UserToken token);
 
 
     /**
@@ -99,7 +99,7 @@ public interface GroupInterface
      * @return true if the user was removed, false otherwise
      *
      */
-    public boolean deleteUserFromGroup(final String user, final String group, final UserToken token);
+    public UserToken deleteUserFromGroup(final String user, final String group, final UserToken token);
 
 
 
