@@ -105,7 +105,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			}
 	 }
 	 
-	 public boolean createGroup(String groupname, UserToken token)
+	 public UserToken createGroup(String groupname, UserToken token)
 	 {
 		 try
 			{
@@ -121,20 +121,20 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				//If server indicates success, return true
 				if(response.getMessage().equals("OK"))
 				{
-					return true;
+					return (UserToken)response.getObjContents().get(0);
 				}
 				
-				return false;
+				return null;
 			}
 			catch(Exception e)
 			{
 				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace(System.err);
-				return false;
+				return null;
 			}
 	 }
 	 
-	 public boolean deleteGroup(String groupname, UserToken token)
+	 public UserToken deleteGroup(String groupname, UserToken token)
 	 {
 		 try
 			{
@@ -149,16 +149,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				//If server indicates success, return true
 				if(response.getMessage().equals("OK"))
 				{
-					return true;
+					return (UserToken)response.getObjContents().get(0);
 				}
 				
-				return false;
+				return null;
 			}
 			catch(Exception e)
 			{
 				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace(System.err);
-				return false;
+				return null;
 			}
 	 }
 	 

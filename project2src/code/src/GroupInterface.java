@@ -58,7 +58,7 @@ public interface GroupInterface
      * @return true if the new group was created, false otherwise
      *
      */
-    public boolean createGroup(final String groupname, final UserToken token);
+    public UserToken createGroup(final String groupname, final UserToken token);
 
 
     /**
@@ -71,7 +71,7 @@ public interface GroupInterface
      * @return true if the group was deleted, false otherwise
      *
      */
-    public boolean deleteGroup(final String groupname, final UserToken token);
+    public UserToken deleteGroup(final String groupname, final UserToken token);
 
 
     /**
