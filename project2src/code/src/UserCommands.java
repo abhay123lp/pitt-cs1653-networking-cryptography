@@ -191,7 +191,7 @@ public class UserCommands {
 						{
 							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges." +
 									"Admin privileges are required to delete users.\n");
-						}
+						} 
 						break;
 					case "gcreategroup":
 						i++;
