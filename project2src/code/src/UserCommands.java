@@ -175,7 +175,7 @@ public class UserCommands {
 						{
 							s = s + ("Unable to create username \"" + username + "\" due to insufficient privileges." +
 									"Admin privileges are required to create users.\n");
-						}
+						} 
 						break;
 					case "gdeleteuser":
 						// should follow with correct String
