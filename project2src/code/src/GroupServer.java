@@ -68,9 +68,8 @@ public class GroupServer extends Server {
 			userList.addOwnership(username, "ADMIN");
 			
 			groupList = new GroupList();
-			groupList.addGroup("ADMIN");
+			groupList.addGroup("ADMIN", username);
 			groupList.addUser("ADMIN", username);
-			groupList.addOwner("ADMIN", username);
 			
 			console.close();
 		}
