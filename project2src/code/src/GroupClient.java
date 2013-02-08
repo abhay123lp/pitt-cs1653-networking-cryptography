@@ -193,62 +193,62 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			}
 	 }
 	 
-	 public boolean addUserToGroup(String username, String groupname, UserToken token)
+	 public UserToken addUserToGroup(String username, String groupname, UserToken token)
 	 {
 		 try
-			{
-				Envelope message = null, response = null;
-				//Tell the server to add a user to the group
-				message = new Envelope("AUSERTOGROUP");
-				message.addObject(username); //Add user name string
-				message.addObject(groupname); //Add group name string
-				message.addObject(token); //Add requester's token
-				output.writeObject(message); 
-			
-				response = (Envelope)input.readObject();
-				//If server indicates success, return true
-				if(response.getMessage().equals("OK"))
-				{
-					return true;
-				}
-				
-				return false;
-			}
-			catch(Exception e)
-			{
-				System.err.println("Error: " + e.getMessage());
-				e.printStackTrace(System.err);
-				return false;
-			}
+		 {
+			 Envelope message = null, response = null;
+			 //Tell the server to add a user to the group
+			 message = new Envelope("AUSERTOGROUP");
+			 message.addObject(username); //Add user name string
+			 message.addObject(groupname); //Add group name string
+			 message.addObject(token); //Add requester's token
+			 output.writeObject(message); 
+
+			 response = (Envelope)input.readObject();
+			 //If server indicates success, return true
+			 if(response.getMessage().equals("OK"))
+			 {
+				 return (UserToken)response.getObjContents().get(0);
+			 }
+
+			 return null;
+		 }
+		 catch(Exception e)
+		 {
+			 System.err.println("Error: " + e.getMessage());
+			 e.printStackTrace(System.err);
+			 return null;
+		 }
 	 }
-	 
-	 public boolean deleteUserFromGroup(String username, String groupname, UserToken token)
+
+	 public UserToken deleteUserFromGroup(String username, String groupname, UserToken token)
 	 {
 		 try
-			{
-				Envelope message = null, response = null;
-				//Tell the server to remove a user from the group
-				message = new Envelope("RUSERFROMGROUP");
-				message.addObject(username); //Add user name string
-				message.addObject(groupname); //Add group name string
-				message.addObject(token); //Add requester's token
-				output.writeObject(message);
-			
-				response = (Envelope)input.readObject();
-				//If server indicates success, return true
-				if(response.getMessage().equals("OK"))
-				{
-					return true;
-				}
-				
-				return false;
-			}
-			catch(Exception e)
-			{
-				System.err.println("Error: " + e.getMessage());
-				e.printStackTrace(System.err);
-				return false;
-			}
+		 {
+			 Envelope message = null, response = null;
+			 //Tell the server to remove a user from the group
+			 message = new Envelope("RUSERFROMGROUP");
+			 message.addObject(username); //Add user name string
+			 message.addObject(groupname); //Add group name string
+			 message.addObject(token); //Add requester's token
+			 output.writeObject(message);
+
+			 response = (Envelope)input.readObject();
+			 //If server indicates success, return true
+			 if(response.getMessage().equals("OK"))
+			 {
+				 return (UserToken)response.getObjContents().get(0);
+			 }
+
+			 return null;
+		 }
+		 catch(Exception e)
+		 {
+			 System.err.println("Error: " + e.getMessage());
+			 e.printStackTrace(System.err);
+			 return null;
+		 }
 	 }
 
 }
