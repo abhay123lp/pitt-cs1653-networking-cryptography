@@ -56,13 +56,13 @@ public class FileThread extends Thread
 					
 					// (4)
 					List<ShareFile> files = FileServer.fileList.getFiles();
-					List<ShareFile> visibleFiles = new ArrayList<ShareFile>();
+					List<String> visibleFiles = new ArrayList<String>();
 					
 					for(ShareFile f : files)
 					{
 						if(groups.contains(f.getGroup()))
 						{
-							visibleFiles.add(f);
+							visibleFiles.add(f.getPath());
 						}
 					}
 					
