@@ -36,9 +36,6 @@ public class UserCommands {
 	
 	public static void main(String [] args)
 	{
-		UserToken userToken = connectUserToGroupServer();
-		String userInput = "";
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		// We need to connect the user to the group server -- we create a
 		// client
 		groupClient = new GroupClient();
@@ -47,6 +44,9 @@ public class UserCommands {
 		fileClient = new FileClient();
 		// 4321 = file server
 		fileClient.connect("localhost", 4321);
+		UserToken userToken = connectUserToGroupServer();
+		String userInput = "";
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		// If we get to here, the client is in the user list and we have the
 		// token. The client is free to create groups, upload files, etc
 		System.out.printf("Enter a command.\n");
@@ -205,7 +205,7 @@ public class UserCommands {
 						i++;
 						groupName = userCommands[i];
 						//groupClient.createGroup(groupName, userToken);
-						if(userToken == null)
+						if(groupClient.createGroup(groupName, userToken) == null)
 						{
 							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
 						}
@@ -217,7 +217,7 @@ public class UserCommands {
 					case "gdeletegroup":
 						i++;
 						groupName = userCommands[i];
-						if(userToken == null)
+						if(groupClient.deleteGroup(groupName, userToken) == null)
 						{
 							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
 						}

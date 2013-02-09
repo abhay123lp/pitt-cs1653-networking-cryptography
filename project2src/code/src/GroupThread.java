@@ -365,7 +365,7 @@ public class GroupThread extends Thread
 			if(temp.contains(ADMIN_GROUP_NAME))
 			{
 				//Does user exist?
-				if(my_gs.userList.checkUser(username))
+				if(!yourToken.getSubject().equals(username) && my_gs.userList.checkUser(username))
 				{
 					//User needs deleted from the groups they belong
 					ArrayList<String> deleteFromGroups = new ArrayList<String>();
@@ -445,7 +445,8 @@ public class GroupThread extends Thread
 			else
 			{						
 				// Add group to group list
-				my_gs.groupList.addGroup(groupname, requester);					
+				my_gs.groupList.addGroup(groupname, requester);
+				my_gs.groupList.addUser(groupname, requester);
 				// Add group and owner to user list
 				my_gs.userList.addGroup(requester, groupname);	
 				my_gs.userList.addOwnership(requester, groupname);

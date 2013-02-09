@@ -50,7 +50,7 @@ public class FileThread extends Thread
 					// (4)  For each group of user, list all files relevant to group
 					
 					// (2) Get the token of the user
-					UserToken uToken = (UserToken)e.getObjContents().get(2); 
+					UserToken uToken = (UserToken)e.getObjContents().get(0); 
 					// (3) Get the groups user is associated with
 					List<String> groups = uToken.getGroups();
 					
@@ -224,6 +224,7 @@ public class FileThread extends Thread
 						}
 					}
 				}
+				//TODO replace all / with System.getProperty("path.separator")
 				else if (e.getMessage().compareTo("DELETEF")==0) {
 
 					String remotePath = (String)e.getObjContents().get(0);

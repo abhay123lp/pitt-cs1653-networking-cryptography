@@ -1,7 +1,13 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-public class GroupList {
+public class GroupList implements Serializable
+{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 164220729465294156L;
 	private Hashtable<String, Group> list = new Hashtable<String, Group>();
 
 	public synchronized void addGroup(String groupName, String owner)
@@ -50,9 +56,13 @@ public class GroupList {
 //	}
 
 
-	class Group {
+	class Group implements Serializable{
 
-		 private ArrayList<String> users;
+		 /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1670533812588746958L;
+		private ArrayList<String> users;
 		 private final String owner;
 
 		 public Group(String owner)
