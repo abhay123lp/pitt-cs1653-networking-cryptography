@@ -53,7 +53,8 @@ public class UserCommands {
 				// use split() on s to get array
 				String[] userCommands = userInput.split(" ");
 				System.out.printf("Test: %s\n", Arrays.toString(userCommands));
-				parseCommands(userCommands, userToken);
+				// The userToken gets updated if they add / delete users from a group
+				userToken = parseCommands(userCommands, userToken);
 			}
 			catch(IOException e)
 			{
@@ -62,9 +63,6 @@ public class UserCommands {
 		}
 		// Quit when the user tells us to quit
 		while (!userInput.equals("quit")); 
-		
-		if(userInput.equals("quit"))
-			System.exit(0);
 
 		// we have the client
 		// they want to manage group or file server
@@ -77,7 +75,7 @@ public class UserCommands {
 		// by calling either the file clients or the group clients methods
 		// Then wait for a response from one of the two servers depending
 		// on which one they asked for.
-	}
+	} // end of main()
 
 	/**
 	 * 
@@ -135,18 +133,23 @@ public class UserCommands {
 	 * 
 	 * @param userCommands is the commandline / console input from the user.
 	 * The approved user is allowed to upload files, deletes files, create groups, etc.
+	 * @return 
 	 */
-	private static void parseCommands(String[] userCommands, UserToken userToken) 
+	private static UserToken parseCommands(String[] userCommands, UserToken userToken) 
 	{	
 		// s is a big string of messages of successes and failures of any server operations.
 		// The String will be printed out after all of the commands execute.
 		String s = "";
 		String username = "";
 		String groupName = "";
+		String sourceFile = "";
+		String destFile = "";
 		// GroupClient is used for the Group server commands	
 		GroupClient gc = new GroupClient();
 		// FileClient is used for the File server commands
 		FileClient fc = new FileClient();
+		// newToken is used when adding or deleting a user from a group
+		UserToken newToken = null;
 		// The try is to catch any ArrayIndexOutOfBounds exceptions.
 		// For our purposes, it's simpler and cleaner to catch the exception.
 		// Although it's a performance hit for the exception, taking
@@ -222,8 +225,12 @@ public class UserCommands {
 						groupName = userCommands[i];
 						i++;	
 						username = userCommands[i];
-						if(gc.addUserToGroup(username, groupName, userToken))
+						// Here we need to 
+						newToken = gc.addUserToGroup(username, groupName, userToken);
+						if(newToken != null)
 						{
+							// We update the user's token in case they were added to a new group.
+							userToken = newToken;
 							s = s + ("Successfully added user \"" + username + "\" to group \"" + groupName + "\".\n");
 						}
 						// Possibly the user wasn't the owner/creator of the group.
@@ -238,8 +245,10 @@ public class UserCommands {
 						groupName = userCommands[i];
 						i++;	
 						username = userCommands[i];
-						if(gc.deleteUserFromGroup(username, groupName, userToken))
+						newToken = gc.deleteUserFromGroup(username, groupName, userToken);
+						if(newToken != null)
 						{
+							userToken = newToken;
 							s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
 						}
 						// Possibly the user wasn't the owner/creator of the group.
@@ -290,9 +299,9 @@ public class UserCommands {
 						break;
 					case "fupload":
 						i++;
-						String sourceFile = userCommands[i];
+						sourceFile = userCommands[i];
 						i++;
-						String destFile = userCommands[i];
+						destFile = userCommands[i];
 						i++;
 						groupName = userCommands[i];
 						// Success
@@ -350,6 +359,9 @@ public class UserCommands {
 							s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
 						}
 						break;
+					case "help":
+							s = s + "Here are a list of commands: \n" + "";
+						break;
 					default:		
 						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
 						break;
@@ -363,7 +375,8 @@ public class UserCommands {
 					+ " For help on how to use the commands, type help followed by a command\n";
 		}		
 		// Here we print out the success and failures of commands. 
-		// Everything gets printed at once after the commands all finish.
+		// Everything gets printed at once after the commands all finish.		
 		System.out.printf(s);
+		return userToken;
 	}
 }
