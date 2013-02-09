@@ -31,12 +31,22 @@ public class UserCommands {
 	 * the group or file server, and either server could time out, which might
 	 * be caused by something like the server dying.
 	 */
+	private static FileClient fileClient;
+	private static GroupClient groupClient;
+	
 	public static void main(String [] args)
 	{
 		UserToken userToken = connectUserToGroupServer();
 		String userInput = "";
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		
+		// We need to connect the user to the group server -- we create a
+		// client
+		groupClient = new GroupClient();
+		// 8765 = group server
+		groupClient.connect("localhost", 8765);
+		fileClient = new FileClient();
+		// 4321 = file server
+		fileClient.connect("localhost", 4321);
 		// If we get to here, the client is in the user list and we have the
 		// token. The client is free to create groups, upload files, etc
 		System.out.printf("Enter a command.\n");
@@ -63,7 +73,8 @@ public class UserCommands {
 		}
 		// Quit when the user tells us to quit
 		while (!userInput.equals("quit")); 
-
+		groupClient.disconnect();
+		fileClient.disconnect();
 		// we have the client
 		// they want to manage group or file server
 		// get their tokens 
@@ -88,9 +99,6 @@ public class UserCommands {
 		{
 			String username = "";
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			// We need to connect the user to the group server -- we create a
-			// client
-			GroupClient client = new GroupClient();
 			UserToken userToken = null;
 			// Look up the user in the file list.
 			// Quit if the user tells to quit. The user can
@@ -105,7 +113,7 @@ public class UserCommands {
 					System.exit(0);
 				// The user/client is given a token by the group server
 				// if their username is in the user list
-				userToken = client.getToken(username);
+				userToken = groupClient.getToken(username);
 				// If the user does not exist and is not in the user list,
 				// getToken(username) returns null.
 				if (userToken == null) 
@@ -145,9 +153,8 @@ public class UserCommands {
 		String sourceFile = "";
 		String destFile = "";
 		// GroupClient is used for the Group server commands	
-		GroupClient gc = new GroupClient();
-		// FileClient is used for the File server commands
-		FileClient fc = new FileClient();
+		groupClient = new GroupClient();
+		// FileClient is used for the File server commands		
 		// newToken is used when adding or deleting a user from a group
 		UserToken newToken = null;
 		// The try is to catch any ArrayIndexOutOfBounds exceptions.
@@ -169,7 +176,7 @@ public class UserCommands {
 						// should follow with correct String
 						i++;
 						username = userCommands[i];
-						if(gc.createUser(username, userToken))
+						if(groupClient.createUser(username, userToken))
 						{
 							s = s + ("Successfully created username \"" + username + "\".\n");
 						}
@@ -185,7 +192,7 @@ public class UserCommands {
 						i++;
 						// TODO: catch ArrayOutOfBoundsException
 						username = userCommands[i];
-						if(gc.deleteUser(username, userToken))
+						if(groupClient.deleteUser(username, userToken))
 						{
 							s = s + ("Successfully deleted username \"" + username + "\".\n");
 						}
@@ -199,7 +206,7 @@ public class UserCommands {
 					case "gcreategroup":
 						i++;
 						groupName = userCommands[i];
-						if(userToken == gc.createGroup(groupName, userToken))
+						if(userToken == groupClient.createGroup(groupName, userToken))
 						{
 							s = s + ("Successfully created group \"" + groupName + "\".\n");
 						}
@@ -211,7 +218,7 @@ public class UserCommands {
 					case "gdeletegroup":
 						i++;
 						groupName = userCommands[i];
-						if(userToken == gc.deleteGroup(groupName, userToken))
+						if(userToken == groupClient.deleteGroup(groupName, userToken))
 						{
 							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
 						}
@@ -226,7 +233,7 @@ public class UserCommands {
 						i++;	
 						username = userCommands[i];
 						// Here we need to 
-						newToken = gc.addUserToGroup(username, groupName, userToken);
+						newToken = groupClient.addUserToGroup(username, groupName, userToken);
 						if(newToken != null)
 						{
 							// We update the user's token in case they were added to a new group.
@@ -245,7 +252,7 @@ public class UserCommands {
 						groupName = userCommands[i];
 						i++;	
 						username = userCommands[i];
-						newToken = gc.deleteUserFromGroup(username, groupName, userToken);
+						newToken = groupClient.deleteUserFromGroup(username, groupName, userToken);
 						if(newToken != null)
 						{
 							userToken = newToken;
@@ -263,7 +270,7 @@ public class UserCommands {
 						i++;
 						groupName = userCommands[i];
 						List<String> userList = new ArrayList<String>();
-						userList = gc.listMembers(groupName, userToken);
+						userList = groupClient.listMembers(groupName, userToken);
 						if( userList != null)
 						{
 							s = s + "There are " + userList.size() + " users in group \"" + groupName + "\":\n";
@@ -282,7 +289,7 @@ public class UserCommands {
 						// TODO: Make sure my listFiles implementation is correct =D
 					case "flistfiles":
 						List<String> fileList = new ArrayList<String>();
-						fileList = fc.listFiles(userToken);
+						fileList = fileClient.listFiles(userToken);
 						if( fileList != null)
 						{
 							s = s + "There are " + fileList.size() + " files viewable by you:\n";
@@ -305,7 +312,7 @@ public class UserCommands {
 						i++;
 						groupName = userCommands[i];
 						// Success
-						if(fc.upload(sourceFile, destFile, groupName, userToken))
+						if(fileClient.upload(sourceFile, destFile, groupName, userToken))
 						{
 							s = s + "Successfully uploaded local source file \""
 									+ sourceFile + "\" as \"" + destFile
@@ -329,7 +336,7 @@ public class UserCommands {
 						i++;
 						destFile = userCommands[i];
 						// Success
-						if(fc.download(sourceFile, destFile, userToken))
+						if(fileClient.download(sourceFile, destFile, userToken))
 						{
 							s = s + "Successfully downloaded to local source file \""
 									+ sourceFile + "\" from file \"" + destFile
@@ -348,7 +355,7 @@ public class UserCommands {
 						i++;
 						String fileName = userCommands[i];
 						// Success
-						if(fc.delete(fileName, userToken))
+						if(fileClient.delete(fileName, userToken))
 						{
 							s = s + "Successfully deleted file \"" + fileName + "\" from the file server.\n";
 						}
