@@ -124,7 +124,7 @@ public class UserCommands {
 					System.out
 							.printf("Type \"quit\" at any time to quit the program.\n");
 				}
-			} while (userToken != null);
+			} while (userToken == null);
 			
 			return userToken;
 		} 
@@ -151,9 +151,7 @@ public class UserCommands {
 		String username = "";
 		String groupName = "";
 		String sourceFile = "";
-		String destFile = "";
-		// GroupClient is used for the Group server commands	
-		groupClient = new GroupClient();
+		String destFile = "";		
 		// FileClient is used for the File server commands		
 		// newToken is used when adding or deleting a user from a group
 		UserToken newToken = null;
@@ -206,32 +204,33 @@ public class UserCommands {
 					case "gcreategroup":
 						i++;
 						groupName = userCommands[i];
-						if(userToken == groupClient.createGroup(groupName, userToken))
+						//groupClient.createGroup(groupName, userToken);
+						if(userToken == null)
 						{
-							s = s + ("Successfully created group \"" + groupName + "\".\n");
+							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
 						}
 						else
 						{
-							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
+							s = s + ("Successfully created group \"" + groupName + "\".\n");							
 						}
 						break;
 					case "gdeletegroup":
 						i++;
 						groupName = userCommands[i];
-						if(userToken == groupClient.deleteGroup(groupName, userToken))
+						if(userToken == null)
 						{
-							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
+							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
 						}
 						else
 						{
-							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
+							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
 						}
 						break;
 					case "gaddusertogroup":
 						i++;	
-						groupName = userCommands[i];
-						i++;	
 						username = userCommands[i];
+						i++;	
+						groupName = userCommands[i];
 						// Here we need to 
 						newToken = groupClient.addUserToGroup(username, groupName, userToken);
 						if(newToken != null)
@@ -249,9 +248,9 @@ public class UserCommands {
 						break;
 					case "gdeleteuserfromgroup":
 						i++;	
-						groupName = userCommands[i];
-						i++;	
 						username = userCommands[i];
+						i++;	
+						groupName = userCommands[i];
 						newToken = groupClient.deleteUserFromGroup(username, groupName, userToken);
 						if(newToken != null)
 						{
@@ -367,7 +366,7 @@ public class UserCommands {
 						}
 						break;
 					case "help":
-							s = s + "Here are a list of commands: \n" + "";
+							printListOfCommands();
 						break;
 					default:		
 						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
@@ -385,5 +384,29 @@ public class UserCommands {
 		// Everything gets printed at once after the commands all finish.		
 		System.out.printf(s);
 		return userToken;
+	}
+
+	// Supported commands for group and file servers
+	private static void printListOfCommands() 
+	{
+		System.out.printf("Here are the supported group and file server commands.\n");
+		System.out
+				.printf("Any command preceded by \"f\" is a file server command. "
+						+ " Any command preceded by \"g\" is a group server command\n");
+		
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");
+		System.out.printf("\tgcreateuser");		
 	}
 }
