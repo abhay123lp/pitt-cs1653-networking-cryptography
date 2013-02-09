@@ -1,5 +1,7 @@
 
 import java.io.BufferedReader;  // Buffered Reader used for reading input
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException; // In the case that the group or file server times out
 // or doesn't respond, we import IOException.
 import java.io.InputStreamReader; // Used for Buffered Reader 
@@ -36,17 +38,18 @@ public class UserCommands {
 	
 	public static void main(String [] args)
 	{
-		UserToken userToken = connectUserToGroupServer();
-		String userInput = "";
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		// We need to connect the user to the group server -- we create a
-		// client
+		manual("help");
 		groupClient = new GroupClient();
 		// 8765 = group server
 		groupClient.connect("localhost", 8765);
 		fileClient = new FileClient();
 		// 4321 = file server
 		fileClient.connect("localhost", 4321);
+		UserToken userToken = connectUserToGroupServer();
+		String userInput = "";
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		// We need to connect the user to the group server -- we create a
+		// client
 		// If we get to here, the client is in the user list and we have the
 		// token. The client is free to create groups, upload files, etc
 		System.out.printf("Enter a command.\n");
@@ -62,7 +65,6 @@ public class UserCommands {
 				System.out.printf("You entered: \"%s\"\n", userInput);
 				// use split() on s to get array
 				String[] userCommands = userInput.split(" ");
-				System.out.printf("Test: %s\n", Arrays.toString(userCommands));
 				// The userToken gets updated if they add / delete users from a group
 				userToken = parseCommands(userCommands, userToken);
 			}
@@ -197,7 +199,7 @@ public class UserCommands {
 						// User did not have admin privileges
 						else						
 						{
-							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges." +
+							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges.\n" +
 									"Admin privileges are required to delete users.\n");
 						} 
 						break;
@@ -205,7 +207,7 @@ public class UserCommands {
 						i++;
 						groupName = userCommands[i];
 						//groupClient.createGroup(groupName, userToken);
-						if(userToken == null)
+						if(groupClient.createGroup(groupName, userToken) == null)
 						{
 							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
 						}
@@ -217,7 +219,7 @@ public class UserCommands {
 					case "gdeletegroup":
 						i++;
 						groupName = userCommands[i];
-						if(userToken == null)
+						if(groupClient.deleteGroup(groupName, userToken) == null)
 						{
 							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
 						}
@@ -281,7 +283,9 @@ public class UserCommands {
 						}
 						else
 						{
-							s = s + ("Insufficient privileges to print users in group \"" + groupName + "\". Only owners can print group members.\n");
+						s = s
+								+ ("Insufficient privileges to print users in group \""
+										+ groupName + "\". Only owners can print group members.\n");
 						}
 						break;
 						// ===== File Server Commands =====
@@ -300,7 +304,9 @@ public class UserCommands {
 						}
 						else
 						{
-							s = s + ("Insufficient privileges to print files in group \"" + groupName + "\". Only owners can print group members.\n");
+						s = s
+								+ ("Insufficient privileges to print files in group \""
+										+ groupName + "\". Only owners can print group members.\n");
 						}
 						break;
 					case "fupload":
@@ -361,12 +367,16 @@ public class UserCommands {
 						// Failure
 						else
 						{
-							s = s + "unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
+							s = s + "Unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
 							s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
 						}
 						break;
 					case "help":
 							printListOfCommands();
+						break;
+					case "man":
+						i++;						
+						manual(userCommands[i]);
 						break;
 					default:		
 						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
@@ -386,27 +396,79 @@ public class UserCommands {
 		return userToken;
 	}
 
-	// Supported commands for group and file servers
+	// Print supported commands for group and file servers
 	private static void printListOfCommands() 
 	{
 		System.out.printf("Here are the supported group and file server commands.\n");
 		System.out
-				.printf("Any command preceded by \"f\" is a file server command. "
-						+ " Any command preceded by \"g\" is a group server command\n");
+				.printf("Any command preceded by \"f\" is a file server command.\n"
+						+ " Any command preceded by \"g\" is a group server command.\n");
 		
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");		
+		System.out.printf("\tgcreateuser\n");
+		System.out.printf("\tgdeleteuser\n");
+		System.out.printf("\tgcreategroup\n");
+		System.out.printf("\tgdeletegroup\n");
+		System.out.printf("\tgaddusertogroup\n");
+		System.out.printf("\tgdeleteuserfromgroup\n");
+		System.out.printf("\tglistmembers\n");
+		System.out.printf("\tflistfiles\n");
+		System.out.printf("\tfupload\n");
+		System.out.printf("\tfdownload\n");
+		System.out.printf("\tfdelete\n");
+		System.out.printf("\thelp\n");		
+		System.out.printf("\tman\n");
+		
+		System.out.printf("Type \"man COMMAND-NAME\" to see information on how to use a command.\n");
+		System.out.printf("Type \"man *\" to see all manual information, including all commands.\n");
+	}
+	
+	private static void manual(String s)
+	{	
+		try
+		{
+			String fileName = "/src/text.txt";
+			String readIn = "";
+			Scanner fileScanner;
+			fileScanner = new Scanner(new File(fileName));
+			ArrayList<String> al = new ArrayList<String>();
+		    while (fileScanner.hasNext()) 
+		    {
+		      readIn = fileScanner.nextLine();
+		      al.add(readIn);
+		    }
+			for(String line : al)
+			{
+				System.out.printf(line);
+			}		
+			switch(s)
+			{			
+				case "help":
+					printListOfCommands();
+					break;
+				case "gcreateuser":
+					break;
+				case "gdeleteuser":				
+					break;
+				case "gcreategroup":				
+					break;
+				case "gdeletegroupr":				
+					break;
+				case "gaddusertogroup":				
+					break;
+				case "gdeleteuserfromgroup":				
+					break;
+				case "flistfiles":				
+					break;
+				case "fupload":				
+					break;
+				case "fdownload":				
+					break;
+			}
+			fileScanner.close();
+		}
+		catch(Exception e)
+		{
+			System.out.printf("File wasn't found--\n");
+		}
 	}
 }
