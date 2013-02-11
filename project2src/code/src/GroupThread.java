@@ -8,16 +8,35 @@ import java.util.*;
 
 public class GroupThread extends Thread 
 {
+	/**
+	 * socket is a class level variable representing the socket to be used by this class.
+	 */
 	private final Socket socket;
+	
+	/**
+	 * my_gs represents the groupserver to be used by this class.
+	 */
 	private GroupServer my_gs;
+	
+	/**
+	 * ADMIN_GROUP_NAME is a constant representing the name of the administrative group in the group server. 
+	 */
 	private static final String ADMIN_GROUP_NAME = "ADMIN";
 
+	/**
+	 * This constructor sets the socket class varible and GroupServer class variable.
+	 * @param _socket The socket to use. 
+	 * @param _gs The group server object to use.
+	 */
 	public GroupThread(Socket _socket, GroupServer _gs)
 	{
 		socket = _socket;
 		my_gs = _gs;
 	}
 
+	/**
+	 * This method runs all of the group server commands such as adding a user to a group, removing a user from a group, adding a group, etc...
+	 */
 	public void run()
 	{
 		boolean proceed = true;
@@ -317,7 +336,13 @@ public class GroupThread extends Thread
 		}
 	}
 
-	//Method to create a user
+	/**
+	 * This method will create a new user in the group server.
+	 * @param username The username to add to the group server.
+	 * @param yourToken The token of the requester.
+	 * @return Returns a boolean value indicating if the user was created.  Will return true if the user was created, 
+	 * false if the username already exists, false if the requester is not an admin, and false if the requester does not exist.  
+	 */
 	private boolean createUser(String username, UserToken yourToken)
 	{
 		String requester = yourToken.getSubject();
@@ -352,7 +377,13 @@ public class GroupThread extends Thread
 		}
 	}
 
-	//Method to delete a user
+	/**
+	 * This method will delete a user from the group server.
+	 * @param username The username to create.
+	 * @param yourToken The token of the requester.
+	 * @return Returns a boolean value indicating if the user was deleted.  Will return true if the user was deleted, 
+	 * false if the username already exists, false if the requester is not an admin, and false if the requester does not exist.  
+	 */	 
 	private boolean deleteUser(String username, UserToken yourToken)
 	{
 		String requester = yourToken.getSubject();

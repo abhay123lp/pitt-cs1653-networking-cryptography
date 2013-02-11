@@ -12,13 +12,24 @@ import java.io.ObjectOutputStream;
 
 public class FileThread extends Thread
 {
+	/**
+	 * Class level variable specifying the socket.
+	 */
 	private final Socket socket;
 
+	/**
+	 * This constructor initializes the socket class variable to the socket passed in as a parameter.
+	 * @param _socket The socket to be utilized by this object.
+	 */
 	public FileThread(Socket _socket)
 	{
 		socket = _socket;
 	}
 
+	/**
+	 * This method executes the processes associated with serving files such as list files, download a file, delete a file, etc...
+	 * 
+	 */
 	public void run()
 	{
 		boolean proceed = true;

@@ -9,10 +9,28 @@ public class Token implements UserToken, Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 843718676814078905L;
+	
+	/**
+	 * issuer is a class variable represents the who issued the token.
+	 */
 	private final String issuer;
+	
+	/**
+	 * subject is a class variable representing the name of the user the token has been awarded to.
+	 */
 	private final String subject;
+	
+	/**
+	 * groups is a class variable representing the list of groups the user belongs to.
+	 */
 	private final List<String> groups;
 	
+	/**
+	 * This constructor initializes the issuer, subject, and groups class variables.
+	 * @param issuer The issuer of the token.
+	 * @param subject The name of the user the token was awarded to.
+	 * @param groups The groups associated with the user.
+	 */
 	public Token(String issuer, String subject, List<String> groups){
 		
 		this.issuer = issuer;

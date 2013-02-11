@@ -2,6 +2,10 @@
 
 public class RunFileServer {
 	
+	/**
+	 * This method initializes and starts the File Server.
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		if (args.length > 0) {
 			try {
