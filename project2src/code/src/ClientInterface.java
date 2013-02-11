@@ -24,7 +24,6 @@ public interface ClientInterface
 
 	/**
 	 * Close down the connection to the server.
-	 *
 	 */
 	public void disconnect();
-}
+}//end interface ClientInterface
