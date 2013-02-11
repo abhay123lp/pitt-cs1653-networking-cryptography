@@ -1,7 +1,16 @@
 /* Driver program for FileSharing Group Server */
 
-public class RunGroupServer {
-	
+/**
+ * Runs the {@link GroupServer}.
+ * This class holds the main method to run the GroupServer.
+ */
+public class RunGroupServer
+{
+	/**
+	 * The main method.
+	 * This is the starting point for running the GroupServer.
+	 * @param args unused
+	 */
 	public static void main(String[] args) {
 		if (args.length> 0) {
 			try {
@@ -16,5 +25,5 @@ public class RunGroupServer {
 			GroupServer server = new GroupServer();
 			server.start();
 		}
-	}
-}
+	}//end method main(String[])
+}//end class RunGroupServer

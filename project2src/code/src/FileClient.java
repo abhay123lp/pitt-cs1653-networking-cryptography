@@ -8,7 +8,6 @@ import java.util.List;
 
 public class FileClient extends Client implements FileInterface, ClientInterface {
 
-	//always returns true...not a very good use of boolean
 	public boolean delete(String filename, UserToken token) {
 		String remotePath;
 		if (filename.charAt(0)=='/') {
