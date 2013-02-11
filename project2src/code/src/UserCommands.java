@@ -1,68 +1,68 @@
 
 import java.io.BufferedReader;  // Buffered Reader used for reading input
+import java.io.FileNotFoundException;
 import java.io.IOException; // In the case that the group or file server times out
 // or doesn't respond, we import IOException.
 import java.io.InputStreamReader; // Used for Buffered Reader 
-import java.util.Arrays; // Test only: use to print out String array with Arrays.toString()
 import java.util.List;
+import java.io.FileReader;
 
 import java.util.*;
 
-public class UserCommands {
 /**
  * 
- * Instantiates either file client or group client.
- * The main() method will read in input from the user.
- * The user will specify what server (group or file) they want
- * to talk to and what command they wish to execute.
+ * UserCommands.java is a command-line interface that bridges the gap between the user and the 
+ * group and file servers. The user is logged into the group and file servers and can then enter commands to execute 
+ * on the servers.
+ *
  */
+public class UserCommands {
 	
-	// want file or group client
-	// get the user name from the user
-	// 
-	
-	// both throw IOException
-	// BR br = new BR(new InputStreamerReader(System.in))
-	// br.readline() // returns a string 
 	/**
-	 *  
-	 * @throws IOException possible with readline() method of BufferedReader
-	 * in the case that either the server didn't respond. The user asks for either
-	 * the group or file server, and either server could time out, which might
-	 * be caused by something like the server dying.
+	 * The main method connects a user to the group server. It then connects the user to the file 
+	 * server. A user must be in the user list before being connected to the group server. To do anything, a user must 
+	 * be logged into the group server. Until the user is logged into the group server, the user cannot enter commands.
+	 * After logging in, the user will be prompted to enter commands. Once the user enters "quit," the user will be
+	 * disconnected from the group and file servers.
 	 */
 	private static FileClient fileClient;
 	private static GroupClient groupClient;
+	private static String groupServerIP;
+	private static int groupServerPort;
 	
 	public static void main(String [] args)
 	{
-		// We need to connect the user to the group server -- we create a
-		// client
+		manual("*");/*
+		// TODO: boolean for if user is connected or not
+			// check for file client null? Set to null when they disconnect
+		
+		// TODO: take in commandline for group server
+		// TODO: length 1 == just connect, default "localhost", default port number
+		// TODO: length 2 == they gave me an IP, assume default port number
+			// ^ in loop and from commandline
+		// TODO: URL Exception
+		// TODO: assume default localhost for fileserver if not specified
+		groupServerIP = "";
+		groupServerPort = -1;
+		handleInitialCommandlineArguments(args);		
 		groupClient = new GroupClient();
-		// 8765 = group server
-		groupClient.connect("localhost", 8765);
-		fileClient = new FileClient();
-		// 4321 = file server
-		fileClient.connect("localhost", 4321);
+		// The user can define the IP and port number from the commandline.
+		groupClient.connect(groupServerIP, groupServerPort);
+		// The user logs into the group server
 		UserToken userToken = connectUserToGroupServer();
+		fileClient = new FileClient();
 		String userInput = "";
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		// If we get to here, the client is in the user list and we have the
-		// token. The client is free to create groups, upload files, etc
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));		
 		System.out.printf("Enter a command.\n");
 		System.out.printf("Type \"quit\" at any time to quit the program.\n");
+		System.out.printf("Type \"fconnect IPaddress port_number\" to connect to a file server.\n");
 		do
 		{
 			try
 			{
-				// TODO: Finish connecting user to the server and add the commands
 				userInput = br.readLine();
-				if(userInput.equals("quit"))
-					System.exit(0);
-				System.out.printf("You entered: \"%s\"\n", userInput);
 				// use split() on s to get array
 				String[] userCommands = userInput.split(" ");
-				System.out.printf("Test: %s\n", Arrays.toString(userCommands));
 				// The userToken gets updated if they add / delete users from a group
 				userToken = parseCommands(userCommands, userToken);
 			}
@@ -70,28 +70,66 @@ public class UserCommands {
 			{
 				e.printStackTrace();
 			}
-		}
-		// Quit when the user tells us to quit
-		while (!userInput.equals("quit")); 
+		}		
+		while (!userInput.equals("quit")); // Quit when the user tells us to quit
 		groupClient.disconnect();
 		fileClient.disconnect();
-		// we have the client
-		// they want to manage group or file server
-		// get their tokens 
-		// instantiate a file client or group client
-		// ask them for commands
-		// this loop doesn't end
-		
-		// Depending on where they are connecting, parse the commands
-		// by calling either the file clients or the group clients methods
-		// Then wait for a response from one of the two servers depending
-		// on which one they asked for.
+		*/
+
 	} // end of main()
 
 	/**
 	 * 
+	 * @param args is the arguments specified when the user ran the main method() of UserCommands.java.
+	 * 
+	 * If the user specified no arguments, a default IP and port number are used. If one argument is passed from the
+	 * command line, it is assumed it is the IP address. If two arguments are passed, it is assumed the IP address of the
+	 * group server and port number are being passed (in that order).
+	 */
+	private static void handleInitialCommandlineArguments(String[] args) {
+		if(args.length == 0)
+		{
+			// IP = localhost for the groupserver
+			// Default group server port #: 8765
+			groupServerIP = "localhost"; // default
+			groupServerPort = 8765;	// default		
+		}
+		else if(args.length == 1)
+		{
+			// Assume the user specified the group server IP
+			groupServerIP = args[0]; // user defined
+			groupServerPort = 8765; // default
+		}
+		else if(args.length == 2)
+		{
+			// Assume the user gives us an IP and port number for group server
+			groupServerIP = args[0]; // user defined
+			try
+			{
+				groupServerPort = Integer.parseInt(args[1]); // user defined
+			}
+			catch(NumberFormatException e)
+			{
+				System.out.printf("To specify the IP and port number for the group server on the commandline,\n");
+				System.out.printf("type \"java UserCommands IPaddress port_number\n");
+				System.exit(0);
+			}
+		}
+		// Too many arguments
+		else
+		{
+			System.out.printf("Too many commandline arguments were received.\n");
+			System.out.printf("To specify the IP and port number for the group server on the commandline,\n");
+			System.out.printf("type \"java UserCommands IPaddress port_number\n");
+			System.exit(0);
+		}
+	}
+
+	/**
+	 * This method connects the user to the group server and returns that user's 
+	 * token to the main method.
 	 * @return The return UserToken will never be null. The user will enter an
-	 * approved username or will quit.
+	 * approved username or will quit. 
 	 */
 	private static UserToken connectUserToGroupServer() 
 	{
@@ -118,11 +156,8 @@ public class UserCommands {
 				// getToken(username) returns null.
 				if (userToken == null) 
 				{
-					System.out
-							.printf("The username \"%s\" was not found in the file list.",
-									username);
-					System.out
-							.printf("Type \"quit\" at any time to quit the program.\n");
+					System.out.printf("The username \"%s\" was not found in the file list.", username);
+					System.out.printf("Type \"quit\" at any time to quit the program.\n");
 				}
 			} while (userToken == null);
 			
@@ -138,13 +173,27 @@ public class UserCommands {
 	}
 	
 	/**
-	 * 
+	 * This method is home to a switch statement which will parse the user's input into 
+	 * commands for the group and file servers.
 	 * @param userCommands is the commandline / console input from the user.
 	 * The approved user is allowed to upload files, deletes files, create groups, etc.
-	 * @return 
+	 * @return A UserToken is returned to the main method in case the user was deleted from or added to a group.
 	 */
 	private static UserToken parseCommands(String[] userCommands, UserToken userToken) 
 	{	
+		if(userCommands.length == 0)
+		{
+			return userToken;
+		}
+		// User is not able to execute file server commands if they are not connected to a file server
+		else if((userCommands[0].charAt(0) == 'f') && !fileClient.isConnected())
+		{
+			System.out.printf("You are not logged into the file server. Use fconnect to log into the file server.\n");
+			System.out.printf("Specifiy an IP address and port number: \"fconnect IPaddress port_number\"\n");
+			return userToken;
+		}
+		
+		
 		// s is a big string of messages of successes and failures of any server operations.
 		// The String will be printed out after all of the commands execute.
 		String s = "";
@@ -167,9 +216,6 @@ public class UserCommands {
 				switch(userCommands[i])
 				{
 					// ===== Group Server commands	=====
-					case "lel":
-						System.out.printf("Laugh extra loud!\n");
-						break;
 					case "gcreateuser":
 						// should follow with correct String
 						i++;
@@ -188,7 +234,6 @@ public class UserCommands {
 					case "gdeleteuser":
 						// should follow with correct String
 						i++;
-						// TODO: catch ArrayOutOfBoundsException
 						username = userCommands[i];
 						if(groupClient.deleteUser(username, userToken))
 						{
@@ -197,7 +242,7 @@ public class UserCommands {
 						// User did not have admin privileges
 						else						
 						{
-							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges." +
+							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges.\n" +
 									"Admin privileges are required to delete users.\n");
 						} 
 						break;
@@ -264,7 +309,6 @@ public class UserCommands {
 							s = s + (" Note that only the owner of a group can delete users from a group.\n");
 						}
 						break;
-					// TODO: Make sure listMembers implemntation is correct
 					case "glistmembers":
 						i++;
 						groupName = userCommands[i];
@@ -281,11 +325,52 @@ public class UserCommands {
 						}
 						else
 						{
-							s = s + ("Insufficient privileges to print users in group \"" + groupName + "\". Only owners can print group members.\n");
+						s = s
+								+ ("Insufficient privileges to print users in group \""
+										+ groupName + "\". Only owners can print group members.\n");
 						}
 						break;
 						// ===== File Server Commands =====
-						// TODO: Make sure my listFiles implementation is correct =D
+					case "fconnect":
+						if(fileClient.isConnected())
+						{
+							System.out.printf("Disconnect from the current file server before making a new connection\n");
+							break;
+						}
+						i++;
+						// User wanted to use default settings
+						if(userCommands[i].equals("default"))
+						{
+							fileClient = new FileClient();						
+							fileClient.connect("localhost", 4321);
+						}
+						// User specified IP address and port number
+						else
+						{
+							fileClient = new FileClient();
+							String fileServerIP = userCommands[i];
+							int fileServerPort = -1;							
+							try
+							{
+								i++;
+								fileServerPort = Integer.parseInt(userCommands[i]);
+							}
+							catch(NumberFormatException e)
+							{
+								System.out.printf("Improper format for \"fconnect\".");
+								System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
+								break;
+							}
+							fileClient.connect(fileServerIP, fileServerPort);
+						}
+						break;
+					case "fdisconnect":
+						if(fileClient.isConnected())
+						{
+							fileClient.disconnect();
+							s = s + "Successfully disconnected from the file server.\n";
+						}
+						break;
 					case "flistfiles":
 						List<String> fileList = new ArrayList<String>();
 						fileList = fileClient.listFiles(userToken);
@@ -300,7 +385,9 @@ public class UserCommands {
 						}
 						else
 						{
-							s = s + ("Insufficient privileges to print files in group \"" + groupName + "\". Only owners can print group members.\n");
+						s = s
+								+ ("Insufficient privileges to print files in group \""
+										+ groupName + "\". Only owners can print group members.\n");
 						}
 						break;
 					case "fupload":
@@ -361,12 +448,16 @@ public class UserCommands {
 						// Failure
 						else
 						{
-							s = s + "unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
+							s = s + "Unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
 							s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
 						}
 						break;
 					case "help":
 							printListOfCommands();
+						break;
+					case "man":
+						i++;						
+						manual(userCommands[i]);
 						break;
 					default:		
 						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
@@ -386,27 +477,135 @@ public class UserCommands {
 		return userToken;
 	}
 
-	// Supported commands for group and file servers
+	/**
+	 *  This method prints all of the available commands for the group and file servers.
+	 */
 	private static void printListOfCommands() 
 	{
-		System.out.printf("Here are the supported group and file server commands.\n");
-		System.out
-				.printf("Any command preceded by \"f\" is a file server command. "
-						+ " Any command preceded by \"g\" is a group server command\n");
+		System.out.printf("Here are the supported group and file server commands:");
+		System.out.printf(" g = group server command, f = file server command\n");
 		
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");
-		System.out.printf("\tgcreateuser");		
+		System.out.printf("\tgcreateuser\n");
+		System.out.printf("\tgdeleteuser\n");
+		System.out.printf("\tgcreategroup\n");
+		System.out.printf("\tgdeletegroup\n");
+		System.out.printf("\tgaddusertogroup\n");
+		System.out.printf("\tgdeleteuserfromgroup\n");
+		System.out.printf("\tglistmembers\n");
+		System.out.printf("\tfconnect\n");
+		System.out.printf("\tfdisconnect\n");
+		System.out.printf("\tflistfiles\n");
+		System.out.printf("\tfupload\n");
+		System.out.printf("\tfdownload\n");
+		System.out.printf("\tfdelete\n");
+		System.out.printf("\thelp\n");		
+		System.out.printf("\tman\n");
+		
+		System.out.printf("Type \"man COMMAND-NAME\" to see manual information on how to use a command.\n");
+		System.out.printf("Type \"man *\" to see all manual information, including all commands.\n");
+	}
+	
+	/**
+	 * manual() lists help the user requests for available commands.
+	 * @param command is the command the user wants help with. If the user types "man gcreateuser" the user will be
+	 * printed information about that command. It is possible for the user to type "man *" then the user will be 
+	 * presented with information on all of the commands.
+	 */
+	private static void manual(String command)
+	{
+			switch(command)
+			{			
+				case "help":
+					printListOfCommands();
+					break;
+				case "gcreateuser":
+					printTextFile("gcreateuser");
+					break;
+				case "gdeleteuser":		
+					printTextFile("gdeleteuser");
+					break;
+				case "gcreategroup":	
+					printTextFile("gcreategroup");
+					break;
+				case "gdeletegroup":	
+					printTextFile("gdeletegroup");
+					break;
+				case "gaddusertogroup":				
+					printTextFile("gaddusertogroup");
+					break;
+				case "gdeleteuserfromgroup":		
+					printTextFile("gdeleteuserfromgroup");
+					break;
+				case "glistmembers":
+					printTextFile("glistmembers");
+					break;
+				case "fconnect":				
+					printTextFile("fconnect");
+					break;
+				case "fdisconnect":				
+					printTextFile("fdisconnect");
+					break;
+				case "flistfiles":				
+					printTextFile("flistfiles");
+					break;
+				case "fupload":				
+					printTextFile("fupload");
+					break;
+				case "fdownload":				
+					printTextFile("fdownload");
+					break;
+				case "fdelete":				
+					printTextFile("fdelete");
+					break;
+				case "*":
+					printTextFile("gcreateuser");
+					printTextFile("gdeleteuser");
+					printTextFile("gcreategroup");
+					printTextFile("gdeletegroup");		
+					printTextFile("gaddusertogroup");
+					printTextFile("gdeleteuserfromgroup");
+					printTextFile("glistmembers");
+					printTextFile("fconnect");
+					printTextFile("fdisconnect");
+					printTextFile("flistfiles");	
+					printTextFile("fupload");		
+					printTextFile("fdownload");		
+					printTextFile("fdelete");					
+					break;
+				default:
+					System.out.printf("Check that you entered a valid command. Type \"help\" if necessary.\n");
+					break;
+			}
+	}
+
+	/**
+	 * This method is intended to print help files.
+	 * It can be used to print any text file in the PWD for Eclipse.
+	 * The PWD is the project folder where the bin, src, and .settings folders
+	 * are located.
+	 */
+	private static void printTextFile(String fileName) 
+	{		
+		System.out.printf("\t%s:\n", fileName);
+		try
+		{
+			BufferedReader br = new BufferedReader(new FileReader(fileName + ".txt"));
+			String line = "";
+		    while ((line = br.readLine()) != null) 
+		    {
+		      System.out.printf("%s\n", line);
+		    }	
+		    br.close();	    
+		}
+		catch(FileNotFoundException e)
+		{
+			System.out.printf("Unable able to find the file \"" + fileName + ".txt\"\n");
+			e.printStackTrace();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		System.out.printf("\n");
 	}
 }
