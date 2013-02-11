@@ -600,9 +600,8 @@ public class GroupThread extends Thread
 		{
 			return false;
 		}
-		my_gs.groupList.removeUser(group, user);
 		my_gs.userList.removeGroup(user, group);
-		return true;
+		return my_gs.groupList.removeUser(group, user);
 	}
 	
 	// TODO
