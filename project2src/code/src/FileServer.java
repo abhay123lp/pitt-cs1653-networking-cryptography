@@ -10,15 +10,36 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class FileServer extends Server {
-
+/**
+ * Handles connections to the {@link FileClient}.
+ * Creates a listener to accept incoming connections.
+ * Note however that the FileServer does not know who is connecting to it, but will assume that the client understands the protocol.
+ */
+public class FileServer extends Server
+{
+	/**
+	 * The default port for FileServers to listen from.
+	 * This port, should it be used, must be open in the firewall to accept external incoming connections.
+	 */
 	public static final int SERVER_PORT = 4321;	//NOTE: must open port 4321 on firewall for connections
+	
+	/**
+	 * The list of files that the FileServer has.
+	 */
 	public static FileList fileList;
 
+	/**
+	 * Default constructor.
+	 * Uses the default port of 4321
+	 */
 	public FileServer() {
 		super(SERVER_PORT, "FilePile");
 	}
 
+	/**
+	 * Constructor to specify a port.
+	 * @param _port An integer representing the port number to use to accept connections from.
+	 */
 	public FileServer(int _port) {
 		super(_port, "FilePile");
 	}
@@ -99,10 +120,12 @@ public class FileServer extends Server {
 			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
-	}
-}
+	}//end method start
+}//end class FileServer
 
-//This thread saves user and group lists
+/**
+ * This thread saves the file list upon shut down.
+ */
 class ShutDownListenerFS implements Runnable
 {
 	public void run()
@@ -121,18 +144,20 @@ class ShutDownListenerFS implements Runnable
 			e.printStackTrace(System.err);
 		}
 	}
-}
+}//end class ShutDownListenerFS
 
+/**
+ * This thread automatically saves the file list every five minutes.
+ */
 class AutoSaveFS extends Thread
 {
 	public void run()
 	{
-		//NO BAD BAD BAD BAD BAD SHOULD HAVE USED A TIMER FIXME
 		do
 		{
 			try
 			{
-				Thread.sleep(300000); //Save group and user lists every 5 minutes
+				Thread.sleep(300000); //Save user lists every 5 minutes
 				System.out.println("Autosave file list...");
 				ObjectOutputStream outStream;
 				try
@@ -152,5 +177,5 @@ class AutoSaveFS extends Thread
 				System.out.println("Autosave Interrupted");
 			}
 		}while(true);
-	}
-}
+	}//end method run()
+}//end class AutoSaveFS
