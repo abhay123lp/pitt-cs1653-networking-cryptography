@@ -379,10 +379,11 @@ public class GroupThread extends Thread
 		if(requester.equals(username)){
 			return false;
 		}
-
+		
 		//Does requester exist?
 		if(my_gs.userList.checkUser(requester))
 		{
+									
 			ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
 			//requester needs to be an administer
 			if(temp.contains(ADMIN_GROUP_NAME))

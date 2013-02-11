@@ -71,6 +71,7 @@ public class UserCommands {
 			}
 		}		
 		while (!userInput.equals("quit")); // Quit when the user tells us to quit
+		
 		groupClient.disconnect();
 		if(fileClient.isConnected())
 		{
@@ -251,24 +252,30 @@ public class UserCommands {
 						i++;
 						groupName = userCommands[i];
 						//groupClient.createGroup(groupName, userToken);
-						if(groupClient.createGroup(groupName, userToken) == null)
+						newToken = groupClient.createGroup(groupName, userToken);
+						if(newToken == null)
 						{
 							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
 						}
 						else
 						{
+							// update the user token
+							userToken = newToken;
 							s = s + ("Successfully created group \"" + groupName + "\".\n");							
 						}
 						break;
 					case "gdeletegroup":
 						i++;
 						groupName = userCommands[i];
-						if(groupClient.deleteGroup(groupName, userToken) == null)
+						newToken = groupClient.createGroup(groupName, userToken);
+						if(newToken == null)
 						{
 							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
 						}
 						else
 						{
+							// update the user token
+							userToken = newToken;
 							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
 						}
 						break;
@@ -300,6 +307,7 @@ public class UserCommands {
 						newToken = groupClient.deleteUserFromGroup(username, groupName, userToken);
 						if(newToken != null)
 						{
+							// update the user token
 							userToken = newToken;
 							s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
 						}
@@ -460,9 +468,12 @@ public class UserCommands {
 						i++;						
 						manual(userCommands[i]);
 						break;
-					default:		
-						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.";
+					case "quit":
+						s = s + "Quitting UserCommands.java. Disconnecting user from any servers.\n";
 						break;
+					default:		
+						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.\n";
+						return userToken;
 				} 
 			} // end for loop
 		} // end try
