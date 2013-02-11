@@ -64,6 +64,7 @@ public class UserCommands {
 				String[] userCommands = userInput.split(" ");
 				// The userToken gets updated if they add / delete users from a group
 				userToken = parseCommands(userCommands, userToken);
+				System.out.printf("\n>>");
 			}
 			catch(IOException e)
 			{
@@ -472,7 +473,7 @@ public class UserCommands {
 						s = s + "Quitting UserCommands.java. Disconnecting user from any servers.\n";
 						break;
 					default:		
-						s = s + "The command \"" + userCommands[i] + "\" is not a valid command.\n";
+						System.out.printf("The command \"" + userCommands[i] + "\" is not a valid command.\n");
 						return userToken;
 				} 
 			} // end for loop
