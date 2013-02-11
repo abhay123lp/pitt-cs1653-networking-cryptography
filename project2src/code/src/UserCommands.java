@@ -32,7 +32,7 @@ public class UserCommands {
 	
 	public static void main(String [] args)
 	{
-		manual("*");/*
+		manual("*");
 		// TODO: boolean for if user is connected or not
 			// check for file client null? Set to null when they disconnect
 		
@@ -73,8 +73,7 @@ public class UserCommands {
 		}		
 		while (!userInput.equals("quit")); // Quit when the user tells us to quit
 		groupClient.disconnect();
-		fileClient.disconnect();
-		*/
+		fileClient.disconnect();		
 
 	} // end of main()
 
