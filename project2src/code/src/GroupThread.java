@@ -455,12 +455,11 @@ public class GroupThread extends Thread
 
 
 	/**
-	 * This method will create a group for a user.  Any user can create a group.
-	 * @param groupname The name of the group to create.
-	 * @param token The token of the requester.
-	 * @return Returns a boolean indicating if a group was created. 
-	 * True is returned if the group was created, false is returned if the group name alredy exists, 
-	 * and false is also returned if the requester does not exist.
+	 * TODO: createGroup
+	 * Will create a group for a user.  Any user can create a group.
+	 * @param groupname
+	 * @param token
+	 * @return
 	 */
 	private boolean createGroup(String groupname, UserToken token)
 	{
@@ -491,12 +490,11 @@ public class GroupThread extends Thread
 	}
 
 	/**
-	 * This method will delete a group if the user is an admin or owner of the group as specified by UserToken.
-	 * @param groupname The name of the group to delete.
-	 * @param token The token of the requester.
-	 * @return Returns a boolean indicating if a group was deleted. 
-	 * True is returned if the group was deleted, false is returned if the user is not an admin or owner of the group, 
-	 * and false is also returned if the requester does not exist.
+	 * TODO: deleteGroup
+	 * Will delete a group if the user is an admin or owner of the group as specified by UserToken.
+	 * @param groupname
+	 * @param token
+	 * @return
 	 */
 	private boolean deleteGroup(String groupname, UserToken token){
 
@@ -537,13 +535,12 @@ public class GroupThread extends Thread
 	}
 
 	/**
-	 * This method adds a user to a group given the requester owns the group or is an admin. 
-	 * @param user The user to add to the group.
-	 * @param groupname The group to add the user to.
-	 * @param token The token of the requester.
-	 * @return Returns a boolean indicating if a user was added to a group. 
-	 * True is returned if the user was added to a group, false is returned if the user is not an admin or owner of the group, 
-	 * and false is also returned if the requester does not exist.
+	 * TODO: addUserToGroup
+	 * 
+	 * @param user
+	 * @param groupname
+	 * @param token
+	 * @return True if user was added to the group, false if not.
 	 */
 	private boolean addUserToGroup(String user, String group, UserToken token){
 		String requester = token.getSubject();
@@ -582,19 +579,17 @@ public class GroupThread extends Thread
 
 	}
 
-	
+	//Note: does not alter user token here
 	/**
-	 * This method will delete a user from a group given the requester is an admin or owns the group.
-	 * @param user The user to delete from a group.
-	 * @param group The group to delete the user from.
-	 * @param token The token of the requester.
-	 * @return Returns a boolean indicating if a user was deleted from the specified group. 
-	 * True is returned if the user was deleted from the specified group, false is returned if the user is not an admin, if the group does not exist, owner of the group, or
-	 * if the requester does not exist.
+	 * TODO: deleteUserFromGroup
+	 * @param user
+	 * @param group
+	 * @param token
+	 * @return
 	 */
 	private boolean deleteUserFromGroup(String user, String group, UserToken token)
 	{
-		// User does not exist, group does not exist, or token user is not an owner of the group or admin
+		//user does not exist, group does not exist, or token user is not an owner of the group or admin
 		if(!my_gs.userList.checkUser(user) || !my_gs.groupList.checkGroup(group) || !(my_gs.userList.getUserOwnership(token.getSubject()).contains(group) || my_gs.groupList.getGroupUsers(ADMIN_GROUP_NAME).contains(token.getSubject())))
 		{
 			return false;
@@ -605,11 +600,11 @@ public class GroupThread extends Thread
 	}
 
 	/**
-	 * This method will return a list of members of a group if the user is an admin or owner of the group.
-	 * @param group The group to return the list of members from.
-	 * @param yourToken The token of the requester.
-	 * @return Returns a List of type String of members in a specified group.  If the group does not exist or the requester
-	 * is not an owner of the group or admin null is returned.
+	 * TODO: listMembers
+	 * Will return a list of members of a group if the user is an admin or owner of the group.
+	 * @param group
+	 * @param yourToken
+	 * @return a list of members of the group
 	 */
 	private List<String> listMembers(String groupname, UserToken token)
 	{
