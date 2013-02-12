@@ -36,48 +36,52 @@ public class GroupServer extends Server
 	 * The list of groups that the GroupServer has.
 	 */
 	public GroupList groupList;
-    
+	
 	/**
 	 * Default constructor.
 	 * Uses the default port of 4321
 	 */
-	public GroupServer() {
+	public GroupServer()
+	{
 		super(SERVER_PORT, "ALPHA");
 	}
 	
 	/**
 	 * Constructor to specify a port.
+	 * 
 	 * @param _port An integer representing the port number to use to accept connections from.
 	 */
-	public GroupServer(int _port) {
+	public GroupServer(int _port)
+	{
 		super(_port, "ALPHA");
 	}
 	
-	public void start() {
+	public void start()
+	{
 		// Overwrote server.start() because if no user file exists, initial admin account needs to be created
 		
-		//This runs a thread that saves the lists on program exit
+		// This runs a thread that saves the lists on program exit
 		Runtime runtime = Runtime.getRuntime();
 		runtime.addShutdownHook(new ShutDownListener(this));
 		
-		//Open user file to get user list
+		// Open user file to get user list
 		try
 		{
 			String userFile = "UserList.bin";
 			String groupFile = "GroupList.bin";
 			ObjectInputStream userStream;
 			ObjectInputStream groupStream;
-//			FileInputStream fis = new FileInputStream(userFile);
+			// FileInputStream fis = new FileInputStream(userFile);
 			userStream = new ObjectInputStream(new FileInputStream(userFile));
 			userList = (UserList)userStream.readObject();
-//			fis.close();
+			// fis.close();
 			userStream.close();
 			
 			groupStream = new ObjectInputStream(new FileInputStream(groupFile));
 			groupList = (GroupList)groupStream.readObject();
 			groupStream.close();
-		}//end try blcok
-		catch(FileNotFoundException e)
+		}// end try blcok
+		catch (FileNotFoundException e)
 		{
 			System.out.println("UserList File Does Not Exist. Creating UserList...");
 			System.out.println("No users currently exist. Your account will be the administrator.");
@@ -85,7 +89,7 @@ public class GroupServer extends Server
 			Scanner console = new Scanner(System.in);
 			String username = console.next();
 			
-			//Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
+			// Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
 			userList = new UserList();
 			userList.addUser(username);
 			userList.addGroup(username, "ADMIN");
@@ -96,24 +100,24 @@ public class GroupServer extends Server
 			groupList.addUser("ADMIN", username);
 			
 			console.close();
-		}//end catch(FileNotFoundException)
-		catch(IOException e)
+		}// end catch(FileNotFoundException)
+		catch (IOException e)
 		{
 			System.out.println("Error reading from UserList file");
 			System.exit(-1);
 		}
-		catch(ClassNotFoundException e)
+		catch (ClassNotFoundException e)
 		{
 			System.out.println("Error reading from UserList file");
 			System.exit(-1);
 		}
 		
-		//Autosave Daemon. Saves lists every 5 minutes
+		// Autosave Daemon. Saves lists every 5 minutes
 		AutoSave aSave = new AutoSave(this);
 		aSave.setDaemon(true);
 		aSave.start();
 		
-		//This block listens for connections and creates threads on new connections
+		// This block listens for connections and creates threads on new connections
 		try
 		{
 			
@@ -122,21 +126,21 @@ public class GroupServer extends Server
 			Socket sock = null;
 			GroupThread thread = null;
 			
-			while(true)
+			while (true)
 			{
 				sock = serverSock.accept();
 				thread = new GroupThread(sock, this);
 				thread.start();
 			}
-//			serverSock.close();
-		}//end try block
-		catch(Exception e)
+			// serverSock.close();
+		}// end try block
+		catch (Exception e)
 		{
 			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
-	}//end method start()
-}//end class GroupServer
+	}// end method start()
+}// end class GroupServer
 
 /**
  * This thread saves the user and group lists upon shutdown.
@@ -151,9 +155,11 @@ class ShutDownListener extends Thread
 	/**
 	 * The constructor.
 	 * Takes in the GroupServer to write out.
+	 * 
 	 * @param _gs The GroupServer to write out.
 	 */
-	public ShutDownListener (GroupServer _gs) {
+	public ShutDownListener(GroupServer _gs)
+	{
 		my_gs = _gs;
 	}
 	
@@ -172,13 +178,13 @@ class ShutDownListener extends Thread
 			outStream.flush();
 			outStream.close();
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
 			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
-	}//end method run()
-}//end class ShutDownListener
+	}// end method run()
+}// end class ShutDownListener
 
 /**
  * This thread automatically saves the user and group lists every five minutes.
@@ -193,9 +199,11 @@ class AutoSave extends Thread
 	/**
 	 * The constructor.
 	 * Takes in the GroupServer to write out.
+	 * 
 	 * @param _gs The GroupServer to write out.
 	 */
-	public AutoSave (GroupServer _gs) {
+	public AutoSave(GroupServer _gs)
+	{
 		my_gs = _gs;
 	}
 	
@@ -205,7 +213,7 @@ class AutoSave extends Thread
 		{
 			try
 			{
-				Thread.sleep(300000); //Save group and user lists every 5 minutes
+				Thread.sleep(300000); // Save group and user lists every 5 minutes
 				System.out.println("Autosave group and user lists...");
 				ObjectOutputStream outStream;
 				try
@@ -220,16 +228,16 @@ class AutoSave extends Thread
 					outStream.flush();
 					outStream.close();
 				}
-				catch(Exception e)
+				catch (Exception e)
 				{
 					System.err.println("Error: " + e.getMessage());
 					e.printStackTrace(System.err);
 				}
-			}//end try block
-			catch(Exception e)
+			}// end try block
+			catch (Exception e)
 			{
 				System.out.println("Autosave Interrupted");
 			}
-		}while(true); //end do while
-	}//end method run()
-}//end class AutoSave
+		} while (true); // end do while
+	}// end method run()
+}// end class AutoSave
