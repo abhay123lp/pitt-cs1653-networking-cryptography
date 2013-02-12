@@ -59,12 +59,12 @@ public class UserCommands {
 		{
 			try
 			{
+				System.out.printf("\n>>");
 				userInput = br.readLine();
 				// use split() on s to get array
 				String[] userCommands = userInput.split(" ");
 				// The userToken gets updated if they add / delete users from a group
-				userToken = parseCommands(userCommands, userToken);
-				System.out.printf("\n>>");
+				userToken = parseCommands(userCommands, userToken);				
 			}
 			catch(IOException e)
 			{
@@ -85,9 +85,14 @@ public class UserCommands {
 	 * 
 	 * @param args is the arguments specified when the user ran the main method() of UserCommands.java.
 	 * 
-	 * If the user specified no arguments, a default IP and port number are used. If one argument is passed from the
-	 * command line, it is assumed it is the IP address. If two arguments are passed, it is assumed the IP address of the
-	 * group server and port number are being passed (in that order).
+	 * If the user specified no arguments, a default IP and port number are used for the group server. If one argument 
+	 * is passed from the command line, it is assumed it is the IP address. If two arguments are passed, it is assumed 
+	 * the IP address of the group server and port number are being passed (in that order).
+	 * The default command would look like "java UserCommands". Entering "java UserCommands localhost 8765" is
+	 * equivalent.
+	 * 
+	 * Default GroupServer IP: localhost
+	 * Default GroupServer port: 8765
 	 */
 	private static void handleInitialCommandlineArguments(String[] args) {
 		if(args.length == 0)
@@ -138,6 +143,8 @@ public class UserCommands {
 	{
 		try 
 		{
+			System.out.printf("Connecting user to group server:\n");
+			
 			String username = "";
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			UserToken userToken = null;
@@ -160,10 +167,10 @@ public class UserCommands {
 				if (userToken == null) 
 				{
 					System.out.printf("The username \"%s\" was not found in the file list.", username);
-					System.out.printf("Type \"quit\" at any time to quit the program.\n");
+					System.out.printf(" Type \"quit\" at any time to quit the program.\n");
 				}
 			} while (userToken == null);
-			
+			System.out.printf("Successfully connected user \"" + username + "\" to group server.");
 			return userToken;
 		} 
 		catch (IOException e) 
@@ -188,11 +195,18 @@ public class UserCommands {
 		{
 			return userToken;
 		}
+		else if(userCommands[0].length() == 0)
+		{
+			return userToken;
+		}
 		// User is not able to execute file server commands if they are not connected to a file server
-		else if((userCommands[0].charAt(0) == 'f') && !fileClient.isConnected())
+		// THe user can, however, execute fconnect by necessity
+		else if((userCommands[0].charAt(0) == 'f') && !fileClient.isConnected() && !(userCommands[0].equals("fconnect")))
 		{
 			System.out.printf("You are not logged into the file server. Use fconnect to log into the file server.\n");
 			System.out.printf("Specifiy an IP address and port number: \"fconnect IPaddress port_number\"\n");
+			System.out.printf("The default IP address is \"localhost\" and the default port is \"4321\" for the group server\n");
+			System.out.printf("Type \"fconnect default\" to automatically use the default settings.\n");
 			return userToken;
 		}
 		
@@ -230,8 +244,8 @@ public class UserCommands {
 						// User did not have admin privileges
 						else						
 						{
-							s = s + ("Unable to create username \"" + username + "\" due to insufficient privileges." +
-									"Admin privileges are required to create users.\n");
+							s = s + ("Unable to create username \"" + username + "\". " +
+									" Note that Admin privileges are required to create users.\n");
 						} 
 						break;
 					case "gdeleteuser":
@@ -330,14 +344,14 @@ public class UserCommands {
 							// Concatenate the users
 							for(String user : userList)
 							{
-								s = s + user + "\n";
+								s = s + "\t" + user + "\n";
 							}
 						}
 						else
 						{
 						s = s
-								+ ("Insufficient privileges to print users in group \""
-										+ groupName + "\". Only owners can print group members.\n");
+								+ ("Unable to print users in group \""
+										+ groupName + "\". Note that only owners can print group members.\n");
 						}
 						break;
 						// ===== File Server Commands =====
@@ -345,7 +359,7 @@ public class UserCommands {
 						if(fileClient.isConnected())
 						{
 							System.out.printf("Disconnect from the current file server before making a new connection\n");
-							break;
+							return userToken;
 						}
 						i++;
 						// User wanted to use default settings
@@ -390,7 +404,7 @@ public class UserCommands {
 							// Concatenate the files
 							for(String file : fileList)
 							{
-								s = s + file + "\n";
+								s = s + "\t" + file + "\n";
 							}
 						}
 						else
@@ -472,7 +486,10 @@ public class UserCommands {
 					case "quit":
 						s = s + "Quitting UserCommands.java. Disconnecting user from any servers.\n";
 						break;
-					default:		
+					default:	
+						// Empty the buffer s so the user can see anything that happened
+						System.out.printf(s);
+						s = "";
 						System.out.printf("The command \"" + userCommands[i] + "\" is not a valid command.\n");
 						return userToken;
 				} 
@@ -485,7 +502,10 @@ public class UserCommands {
 					+ " For help on how to use the commands, type help followed by a command\n";
 		}		
 		// Here we print out the success and failures of commands. 
-		// Everything gets printed at once after the commands all finish.		
+		// Everything gets printed at once after the commands all finish.
+		// TODO: Fix me. If we don't disconnect and reconnect, there are issues updating the user list.
+		groupClient.disconnect();
+		groupClient.connect(groupServerIP, groupServerPort);
 		System.out.printf(s);
 		return userToken;
 	}
