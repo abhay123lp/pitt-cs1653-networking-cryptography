@@ -79,9 +79,9 @@ public class GroupList implements Serializable
 	 * @param group The name of the group.
 	 * @param username The username to add to the group.
 	 */
-	public synchronized void addUser(String group, String username)
+	public synchronized boolean addUser(String group, String username)
 	{
-		list.get(group).addUser(username);
+		return list.get(group).addUser(username);
 	}
 	
 	/**
@@ -110,7 +110,6 @@ public class GroupList implements Serializable
 	 */
 	class Group implements Serializable
 	{
-		
 		/**
 		 * 
 		 */
@@ -162,9 +161,9 @@ public class GroupList implements Serializable
 		 * 
 		 * @param username The name of the user to add to the group.
 		 */
-		public void addUser(String username)
+		public boolean addUser(String username)
 		{
-			users.add(username);
+			return users.add(username);
 		}
 		
 		/**

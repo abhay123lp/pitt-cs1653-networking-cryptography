@@ -216,6 +216,7 @@ public class GroupThread extends Thread
 								{
 									response = new Envelope("OK"); // Success
 									response.addObject(members); // Add member list to the response
+									response.addObject(new Integer(members.size()));
 								}
 							}
 						}// end if block
@@ -304,6 +305,7 @@ public class GroupThread extends Thread
 					response = new Envelope("FAIL"); // Server does not understand client request
 					output.writeObject(response);
 				}
+//				output.flush();
 			} while (proceed);
 		}// end try block
 		catch (Exception e)
@@ -569,14 +571,11 @@ public class GroupThread extends Thread
 					{
 						return false; // user already exists in group
 					}
-					else
-					{
-						// add the user the group in group list
-						my_gs.groupList.addUser(group, user);
-						// add group to the user
-						my_gs.userList.addGroup(user, group);
-					}
-					return true;
+
+					// add group to the user
+					my_gs.userList.addGroup(user, group);
+					// add the user the group in group list
+					return my_gs.groupList.addUser(group, user);
 				}
 			}// end if block
 		}// end if block
