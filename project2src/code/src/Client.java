@@ -37,7 +37,7 @@ public abstract class Client implements ClientInterface
 			System.out.println("Disconnecting from previous connection...");
 			this.disconnect();
 		}
-		System.out.println("Attempting to connect...");
+//		System.out.println("Attempting to connect...");
 		try
 		{
 			this.sock = new Socket(server, port);
@@ -56,7 +56,7 @@ public abstract class Client implements ClientInterface
 			return false;
 		}
 		
-		System.out.println("Success!  Connected to " + server + " at port " + port);
+//		System.out.println("Success!  Connected to " + server + " at port " + port);
 		return true;
 	}// end method connect(String, int)
 	

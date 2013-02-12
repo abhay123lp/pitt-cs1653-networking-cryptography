@@ -175,12 +175,15 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			message.addObject(group); // Add group name string
 			message.addObject(token); // Add requester's token
 			output.writeObject(message);
+//			output.flush();
 			
 			response = (Envelope)input.readObject();
+//			input.skip(input.available());
 			
 			// If server indicates success, return the member list
 			if (response.getMessage().equals("OK"))
 			{
+				System.out.print(Integer.valueOf((Integer)response.getObjContents().get(1)));
 				return (List<String>)response.getObjContents().get(0); // This cast creates compiler warnings. Sorry.
 			}
 			
