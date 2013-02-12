@@ -17,7 +17,7 @@ import java.util.*;
  *
  */
 public class UserCommands {
-	
+
 	/**
 	 * The main method connects a user to the group server. It then connects the user to the file 
 	 * server. A user must be in the user list before being connected to the group server. To do anything, a user must 
@@ -29,16 +29,16 @@ public class UserCommands {
 	private static GroupClient groupClient;
 	private static String groupServerIP;
 	private static int groupServerPort;
-	
+
 	public static void main(String [] args)
 	{
 		// TODO: boolean for if user is connected or not
-			// check for file client null? Set to null when they disconnect
-		
+		// check for file client null? Set to null when they disconnect
+
 		// TODO: take in commandline for group server
 		// TODO: length 1 == just connect, default "localhost", default port number
 		// TODO: length 2 == they gave me an IP, assume default port number
-			// ^ in loop and from commandline
+		// ^ in loop and from commandline
 		// TODO: URL Exception
 		// TODO: assume default localhost for fileserver if not specified
 		groupServerIP = "";
@@ -72,11 +72,11 @@ public class UserCommands {
 			}
 		}		
 		while (!userInput.equals("quit")); // Quit when the user tells us to quit
-		
+
 		groupClient.disconnect();
 		if(fileClient.isConnected())
 		{
-				fileClient.disconnect();	
+			fileClient.disconnect();	
 		}
 
 	} // end of main()
@@ -144,7 +144,7 @@ public class UserCommands {
 		try 
 		{
 			System.out.printf("Connecting user to group server:\n");
-			
+
 			String username = "";
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			UserToken userToken = null;
@@ -181,7 +181,7 @@ public class UserCommands {
 		// this will never return null
 		return null;
 	}
-	
+
 	/**
 	 * This method is home to a switch statement which will parse the user's input into 
 	 * commands for the group and file servers.
@@ -209,8 +209,8 @@ public class UserCommands {
 			System.out.printf("Type \"fconnect default\" to automatically use the default settings.\n");
 			return userToken;
 		}
-		
-		
+
+
 		// s is a big string of messages of successes and failures of any server operations.
 		// The String will be printed out after all of the commands execute.
 		String s = "";
@@ -230,268 +230,547 @@ public class UserCommands {
 		{
 			for(int i = 0; i < userCommands.length; i++)
 			{
-				switch(userCommands[i])
+				//				switch(userCommands[i])
+				//				{
+				//					// ===== Group Server commands	=====
+				//					case "gcreateuser":
+				//						// should follow with correct String
+				//						i++;
+				//						username = userCommands[i];
+				//						if(groupClient.createUser(username, userToken))
+				//						{
+				//							s = s + ("Successfully created username \"" + username + "\".\n");
+				//						}
+				//						// User did not have admin privileges
+				//						else						
+				//						{
+				//							s = s + ("Unable to create username \"" + username + "\". " +
+				//									" Note that Admin privileges are required to create users.\n");
+				//						} 
+				//						break;
+				//					case "gdeleteuser":
+				//						// should follow with correct String
+				//						i++;
+				//						username = userCommands[i];
+				//						if(groupClient.deleteUser(username, userToken))
+				//						{
+				//							s = s + ("Successfully deleted username \"" + username + "\".\n");
+				//						}
+				//						// User did not have admin privileges
+				//						else						
+				//						{
+				//							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges.\n" +
+				//									"Admin privileges are required to delete users.\n");
+				//						} 
+				//						break;
+				//					case "gcreategroup":
+				//						i++;
+				//						groupName = userCommands[i];
+				//						//groupClient.createGroup(groupName, userToken);
+				//						newToken = groupClient.createGroup(groupName, userToken);
+				//						if(newToken == null)
+				//						{
+				//							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
+				//						}
+				//						else
+				//						{
+				//							// update the user token
+				//							userToken = newToken;
+				//							s = s + ("Successfully created group \"" + groupName + "\".\n");							
+				//						}
+				//						break;
+				//					case "gdeletegroup":
+				//						i++;
+				//						groupName = userCommands[i];
+				//						newToken = groupClient.deleteGroup(groupName, userToken);
+				//						if(newToken == null)
+				//						{
+				//							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
+				//						}
+				//						else
+				//						{
+				//							// update the user token
+				//							userToken = newToken;
+				//							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
+				//						}
+				//						break;
+				//					case "gaddusertogroup":
+				//						i++;	
+				//						username = userCommands[i];
+				//						i++;	
+				//						groupName = userCommands[i];
+				//						// Here we need to 
+				//						newToken = groupClient.addUserToGroup(username, groupName, userToken);
+				//						if(newToken != null)
+				//						{
+				//							// We update the user's token in case they were added to a new group.
+				//							userToken = newToken;
+				//							s = s + ("Successfully added user \"" + username + "\" to group \"" + groupName + "\".\n");
+				//						}
+				//						// Possibly the user wasn't the owner/creator of the group.
+				//						else
+				//						{
+				//							s = s + ("Unsuccesful in adding user \"" + username + "\" to group \"" + groupName + "\".");
+				//							s = s + (" Note that only the owner of a group can add users to a group.\n");
+				//						}
+				//						break;
+				//					case "gdeleteuserfromgroup":
+				//						i++;	
+				//						username = userCommands[i];
+				//						i++;	
+				//						groupName = userCommands[i];
+				//						newToken = groupClient.deleteUserFromGroup(username, groupName, userToken);
+				//						if(newToken != null)
+				//						{
+				//							// update the user token
+				//							userToken = newToken;
+				//							s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
+				//						}
+				//						// Possibly the user wasn't the owner/creator of the group.
+				//						else
+				//						{
+				//							s = s + ("Unsuccesful in deleteing user \"" + username + "\" from group \"" + groupName + "\".");
+				//							s = s + (" Note that only the owner of a group can delete users from a group.\n");
+				//						}
+				//						break;
+				//					case "glistmembers":
+				//						i++;
+				//						groupName = userCommands[i];
+				//						List<String> userList = new ArrayList<String>();
+				//						userList = groupClient.listMembers(groupName, userToken);
+				//						if( userList != null)
+				//						{
+				//							s = s + "There are " + userList.size() + " users in group \"" + groupName + "\":\n";
+				//							// Concatenate the users
+				//							for(String user : userList)
+				//							{
+				//								s = s + "\t" + user + "\n";
+				//							}
+				//						}
+				//						else
+				//						{
+				//						s = s
+				//								+ ("Unable to print users in group \""
+				//										+ groupName + "\". Note that only owners can print group members.\n");
+				//						}
+				//						break;
+				//						// ===== File Server Commands =====
+				//					case "fconnect":
+				//						if(fileClient.isConnected())
+				//						{
+				//							System.out.printf("Disconnect from the current file server before making a new connection\n");
+				//							return userToken;
+				//						}
+				//						i++;
+				//						// User wanted to use default settings
+				//						if(userCommands[i].equals("default"))
+				//						{
+				//							fileClient = new FileClient();						
+				//							fileClient.connect("localhost", 4321);
+				//						}
+				//						// User specified IP address and port number
+				//						else
+				//						{
+				//							fileClient = new FileClient();
+				//							String fileServerIP = userCommands[i];
+				//							int fileServerPort = -1;							
+				//							try
+				//							{
+				//								i++;
+				//								fileServerPort = Integer.parseInt(userCommands[i]);
+				//							}
+				//							catch(NumberFormatException e)
+				//							{
+				//								System.out.printf("Improper format for \"fconnect\".");
+				//								System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
+				//								break;
+				//							}
+				//							fileClient.connect(fileServerIP, fileServerPort);
+				//						}
+				//						break;
+				//					case "fdisconnect":
+				//						if(fileClient.isConnected())
+				//						{
+				//							fileClient.disconnect();
+				//							s = s + "Successfully disconnected from the file server.\n";
+				//						}
+				//						break;
+				//					case "flistfiles":
+				//						List<String> fileList = new ArrayList<String>();
+				//						fileList = fileClient.listFiles(userToken);
+				//						if( fileList != null)
+				//						{
+				//							s = s + "There are " + fileList.size() + " files viewable by you:\n";
+				//							// Concatenate the files
+				//							for(String file : fileList)
+				//							{
+				//								s = s + "\t" + file + "\n";
+				//							}
+				//						}
+				//						else
+				//						{
+				//						s = s
+				//								+ ("Insufficient privileges to print files in group \""
+				//										+ groupName + "\". Only owners can print group members.\n");
+				//						}
+				//						break;
+				//					case "fupload":
+				//						i++;
+				//						sourceFile = userCommands[i];
+				//						i++;
+				//						destFile = userCommands[i];
+				//						i++;
+				//						groupName = userCommands[i];
+				//						// Success
+				//						if(fileClient.upload(sourceFile, destFile, groupName, userToken))
+				//						{
+				//							s = s + "Successfully uploaded local source file \""
+				//									+ sourceFile + "\" as \"" + destFile
+				//									+ "\" to group \"" + groupName
+				//									+ "\" on the file server.\n";
+				//						}
+				//						// Failure
+				//						else
+				//						{
+				//							s = s + "Unsuccesful in uploading local source file \""
+				//									+ sourceFile + "\" as \"" + destFile
+				//									+ "\" to group \"" + groupName
+				//									+ "\" on the file server.\n";
+				//							s = s + "You need to be a part of a group or admin to upload files.\n";
+				//						}
+				//						break;
+				//						// TODO: list assumptions of users and admin privileges 
+				//					case "fdownload":
+				//						i++;
+				//						sourceFile = userCommands[i];
+				//						i++;
+				//						destFile = userCommands[i];
+				//						// Success
+				//						if(fileClient.download(sourceFile, destFile, userToken))
+				//						{
+				//							s = s + "Successfully downloaded to local source file \""
+				//									+ sourceFile + "\" from file \"" + destFile
+				//									+ "\" from the file server.\n";
+				//						}
+				//						// Failure
+				//						else
+				//						{
+				//							s = s + "Unsuccesful in download to local source file \""
+				//									+ sourceFile + "\" from file \"" + destFile
+				//									+ "\" from the file server.\n";
+				//							s = s + "You need to be a part of a group or admin to download files.\n";
+				//						}
+				//						break;
+				//					case "fdelete":
+				//						i++;
+				//						String fileName = userCommands[i];
+				//						// Success
+				//						if(fileClient.delete(fileName, userToken))
+				//						{
+				//							s = s + "Successfully deleted file \"" + fileName + "\" from the file server.\n";
+				//						}
+				//						// Failure
+				//						else
+				//						{
+				//							s = s + "Unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
+				//							s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
+				//						}
+				//						break;
+				//					case "help":
+				//							printListOfCommands();
+				//						break;
+				//					case "man":
+				//						i++;						
+				//						manual(userCommands[i]);
+				//						break;
+				//					case "quit":
+				//						s = s + "Quitting UserCommands.java. Disconnecting user from any servers.\n";
+				//						break;
+				//					default:	
+				//						// Empty the buffer s so the user can see anything that happened
+				//						System.out.printf(s);
+				//						s = "";
+				//						System.out.printf("The command \"" + userCommands[i] + "\" is not a valid command.\n");
+				//						return userToken;
+				//				} 
+				// ===== Group Server commands	=====
+				// Java 6 Compliant
+				if( userCommands[i].equals("gcreateuser"))
 				{
-					// ===== Group Server commands	=====
-					case "gcreateuser":
-						// should follow with correct String
-						i++;
-						username = userCommands[i];
-						if(groupClient.createUser(username, userToken))
+					// should follow with correct String
+					i++;
+					username = userCommands[i];
+					if(groupClient.createUser(username, userToken))
+					{
+						s = s + ("Successfully created username \"" + username + "\".\n");
+					}
+					// User did not have admin privileges
+					else						
+					{
+						s = s + ("Unable to create username \"" + username + "\". " +
+								" Note that Admin privileges are required to create users.\n");
+					} 
+				}
+				else if( userCommands[i].equals("gdeleteuser"))
+				{
+					// should follow with correct String
+					i++;
+					username = userCommands[i];
+					if(groupClient.deleteUser(username, userToken))
+					{
+						s = s + ("Successfully deleted username \"" + username + "\".\n");
+					}
+					// User did not have admin privileges
+					else						
+					{
+						s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges.\n" +
+								"Admin privileges are required to delete users.\n");
+					} 
+				}
+				else if( userCommands[i].equals("gcreategroup"))
+				{
+					i++;
+					groupName = userCommands[i];
+					//groupClient.createGroup(groupName, userToken);
+					newToken = groupClient.createGroup(groupName, userToken);
+					if(newToken == null)
+					{
+						s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
+					}
+					else
+					{
+						// update the user token
+						userToken = newToken;
+						s = s + ("Successfully created group \"" + groupName + "\".\n");							
+					}
+				}
+				else if( userCommands[i].equals("gdeletegroup"))
+				{
+					i++;
+					groupName = userCommands[i];
+					newToken = groupClient.deleteGroup(groupName, userToken);
+					if(newToken == null)
+					{
+						s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
+					}
+					else
+					{
+						// update the user token
+						userToken = newToken;
+						s = s + ("Successfully deleted group \"" + groupName + "\".\n");
+					}
+				}
+				else if( userCommands[i].equals("gaddusertogroup"))
+				{
+					i++;	
+					username = userCommands[i];
+					i++;	
+					groupName = userCommands[i];
+					// Here we need to 
+					newToken = groupClient.addUserToGroup(username, groupName, userToken);
+					if(newToken != null)
+					{
+						// We update the user's token in else if( they were added to a new group.
+						userToken = newToken;
+						s = s + ("Successfully added user \"" + username + "\" to group \"" + groupName + "\".\n");
+					}
+					// Possibly the user wasn't the owner/creator of the group.
+					else
+					{
+						s = s + ("Unsuccesful in adding user \"" + username + "\" to group \"" + groupName + "\".");
+						s = s + (" Note that only the owner of a group can add users to a group.\n");
+					}
+				}
+				else if( userCommands[i].equals("gdeleteuserfromgroup"))
+				{
+					i++;	
+					username = userCommands[i];
+					i++;	
+					groupName = userCommands[i];
+					newToken = groupClient.deleteUserFromGroup(username, groupName, userToken);
+					if(newToken != null)
+					{
+						// update the user token
+						userToken = newToken;
+						s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
+					}
+					// Possibly the user wasn't the owner/creator of the group.
+					else
+					{
+						s = s + ("Unsuccesful in deleteing user \"" + username + "\" from group \"" + groupName + "\".");
+						s = s + (" Note that only the owner of a group can delete users from a group.\n");
+					}
+				}
+				else if( userCommands[i].equals("glistmembers"))
+				{
+					i++;
+					groupName = userCommands[i];
+					List<String> userList = new ArrayList<String>();
+					userList = groupClient.listMembers(groupName, userToken);
+					if( userList != null)
+					{
+						s = s + "There are " + userList.size() + " users in group \"" + groupName + "\":\n";
+						// Concatenate the users
+						for(String user : userList)
 						{
-							s = s + ("Successfully created username \"" + username + "\".\n");
+							s = s + "\t" + user + "\n";
 						}
-						// User did not have admin privileges
-						else						
-						{
-							s = s + ("Unable to create username \"" + username + "\". " +
-									" Note that Admin privileges are required to create users.\n");
-						} 
-						break;
-					case "gdeleteuser":
-						// should follow with correct String
-						i++;
-						username = userCommands[i];
-						if(groupClient.deleteUser(username, userToken))
-						{
-							s = s + ("Successfully deleted username \"" + username + "\".\n");
-						}
-						// User did not have admin privileges
-						else						
-						{
-							s = s + ("Unable to delete username \"" + username + "\" due to insufficient privileges.\n" +
-									"Admin privileges are required to delete users.\n");
-						} 
-						break;
-					case "gcreategroup":
-						i++;
-						groupName = userCommands[i];
-						//groupClient.createGroup(groupName, userToken);
-						newToken = groupClient.createGroup(groupName, userToken);
-						if(newToken == null)
-						{
-							s = s + ("Unsuccesful in creating group \"" + groupName + "\".\n");
-						}
-						else
-						{
-							// update the user token
-							userToken = newToken;
-							s = s + ("Successfully created group \"" + groupName + "\".\n");							
-						}
-						break;
-					case "gdeletegroup":
-						i++;
-						groupName = userCommands[i];
-						newToken = groupClient.createGroup(groupName, userToken);
-						if(newToken == null)
-						{
-							s = s + ("Unsuccesful in deleting group \"" + groupName + "\".\n");
-						}
-						else
-						{
-							// update the user token
-							userToken = newToken;
-							s = s + ("Successfully deleted group \"" + groupName + "\".\n");
-						}
-						break;
-					case "gaddusertogroup":
-						i++;	
-						username = userCommands[i];
-						i++;	
-						groupName = userCommands[i];
-						// Here we need to 
-						newToken = groupClient.addUserToGroup(username, groupName, userToken);
-						if(newToken != null)
-						{
-							// We update the user's token in case they were added to a new group.
-							userToken = newToken;
-							s = s + ("Successfully added user \"" + username + "\" to group \"" + groupName + "\".\n");
-						}
-						// Possibly the user wasn't the owner/creator of the group.
-						else
-						{
-							s = s + ("Unsuccesful in adding user \"" + username + "\" to group \"" + groupName + "\".");
-							s = s + (" Note that only the owner of a group can add users to a group.\n");
-						}
-						break;
-					case "gdeleteuserfromgroup":
-						i++;	
-						username = userCommands[i];
-						i++;	
-						groupName = userCommands[i];
-						newToken = groupClient.deleteUserFromGroup(username, groupName, userToken);
-						if(newToken != null)
-						{
-							// update the user token
-							userToken = newToken;
-							s = s + ("Successfully deleted user \"" + username + "\" from group \"" + groupName + "\".\n");
-						}
-						// Possibly the user wasn't the owner/creator of the group.
-						else
-						{
-							s = s + ("Unsuccesful in deleteing user \"" + username + "\" from group \"" + groupName + "\".");
-							s = s + (" Note that only the owner of a group can delete users from a group.\n");
-						}
-						break;
-					case "glistmembers":
-						i++;
-						groupName = userCommands[i];
-						List<String> userList = new ArrayList<String>();
-						userList = groupClient.listMembers(groupName, userToken);
-						if( userList != null)
-						{
-							s = s + "There are " + userList.size() + " users in group \"" + groupName + "\":\n";
-							// Concatenate the users
-							for(String user : userList)
-							{
-								s = s + "\t" + user + "\n";
-							}
-						}
-						else
-						{
+					}
+					else
+					{
 						s = s
 								+ ("Unable to print users in group \""
 										+ groupName + "\". Note that only owners can print group members.\n");
-						}
-						break;
-						// ===== File Server Commands =====
-					case "fconnect":
-						if(fileClient.isConnected())
+					}
+				}
+				// ===== File Server Commands =====
+				else if( userCommands[i].equals("fconnect"))
+				{
+					if(fileClient.isConnected())
+					{
+						System.out.printf("Disconnect from the current file server before making a new connection\n");
+						return userToken;
+					}
+					i++;
+					// User wanted to use default settings
+					if(userCommands[i].equals("default"))
+					{
+						fileClient = new FileClient();						
+						fileClient.connect("localhost", 4321);
+					}
+					// User specified IP address and port number
+					else
+					{
+						fileClient = new FileClient();
+						String fileServerIP = userCommands[i];
+						int fileServerPort = -1;							
+						try
 						{
-							System.out.printf("Disconnect from the current file server before making a new connection\n");
-							return userToken;
+							i++;
+							fileServerPort = Integer.parseInt(userCommands[i]);
 						}
-						i++;
-						// User wanted to use default settings
-						if(userCommands[i].equals("default"))
+						catch(NumberFormatException e)
 						{
-							fileClient = new FileClient();						
-							fileClient.connect("localhost", 4321);
+							System.out.printf("Improper format for \"fconnect\".");
+							System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
+							continue;
 						}
-						// User specified IP address and port number
-						else
+						fileClient.connect(fileServerIP, fileServerPort);
+					}
+				}
+				else if( userCommands[i].equals("fdisconnect"))
+				{
+					if(fileClient.isConnected())
+					{
+						fileClient.disconnect();
+						s = s + "Successfully disconnected from the file server.\n";
+					}
+				}
+				else if( userCommands[i].equals("flistfiles"))
+				{
+					List<String> fileList = new ArrayList<String>();
+					fileList = fileClient.listFiles(userToken);
+					if( fileList != null)
+					{
+						s = s + "There are " + fileList.size() + " files viewable by you:\n";
+						// Concatenate the files
+						for(String file : fileList)
 						{
-							fileClient = new FileClient();
-							String fileServerIP = userCommands[i];
-							int fileServerPort = -1;							
-							try
-							{
-								i++;
-								fileServerPort = Integer.parseInt(userCommands[i]);
-							}
-							catch(NumberFormatException e)
-							{
-								System.out.printf("Improper format for \"fconnect\".");
-								System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
-								break;
-							}
-							fileClient.connect(fileServerIP, fileServerPort);
+							s = s + "\t" + file + "\n";
 						}
-						break;
-					case "fdisconnect":
-						if(fileClient.isConnected())
-						{
-							fileClient.disconnect();
-							s = s + "Successfully disconnected from the file server.\n";
-						}
-						break;
-					case "flistfiles":
-						List<String> fileList = new ArrayList<String>();
-						fileList = fileClient.listFiles(userToken);
-						if( fileList != null)
-						{
-							s = s + "There are " + fileList.size() + " files viewable by you:\n";
-							// Concatenate the files
-							for(String file : fileList)
-							{
-								s = s + "\t" + file + "\n";
-							}
-						}
-						else
-						{
+					}
+					else
+					{
 						s = s
 								+ ("Insufficient privileges to print files in group \""
 										+ groupName + "\". Only owners can print group members.\n");
-						}
-						break;
-					case "fupload":
-						i++;
-						sourceFile = userCommands[i];
-						i++;
-						destFile = userCommands[i];
-						i++;
-						groupName = userCommands[i];
-						// Success
-						if(fileClient.upload(sourceFile, destFile, groupName, userToken))
-						{
-							s = s + "Successfully uploaded local source file \""
-									+ sourceFile + "\" as \"" + destFile
-									+ "\" to group \"" + groupName
-									+ "\" on the file server.\n";
-						}
-						// Failure
-						else
-						{
-							s = s + "Unsuccesful in uploading local source file \""
-									+ sourceFile + "\" as \"" + destFile
-									+ "\" to group \"" + groupName
-									+ "\" on the file server.\n";
-							s = s + "You need to be a part of a group or admin to upload files.\n";
-						}
-						break;
-						// TODO: list assumptions of users and admin privileges 
-					case "fdownload":
-						i++;
-						sourceFile = userCommands[i];
-						i++;
-						destFile = userCommands[i];
-						// Success
-						if(fileClient.download(sourceFile, destFile, userToken))
-						{
-							s = s + "Successfully downloaded to local source file \""
-									+ sourceFile + "\" from file \"" + destFile
-									+ "\" from the file server.\n";
-						}
-						// Failure
-						else
-						{
-							s = s + "Unsuccesful in download to local source file \""
-									+ sourceFile + "\" from file \"" + destFile
-									+ "\" from the file server.\n";
-							s = s + "You need to be a part of a group or admin to download files.\n";
-						}
-						break;
-					case "fdelete":
-						i++;
-						String fileName = userCommands[i];
-						// Success
-						if(fileClient.delete(fileName, userToken))
-						{
-							s = s + "Successfully deleted file \"" + fileName + "\" from the file server.\n";
-						}
-						// Failure
-						else
-						{
-							s = s + "Unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
-							s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
-						}
-						break;
-					case "help":
-							printListOfCommands();
-						break;
-					case "man":
-						i++;						
-						manual(userCommands[i]);
-						break;
-					case "quit":
-						s = s + "Quitting UserCommands.java. Disconnecting user from any servers.\n";
-						break;
-					default:	
-						// Empty the buffer s so the user can see anything that happened
-						System.out.printf(s);
-						s = "";
-						System.out.printf("The command \"" + userCommands[i] + "\" is not a valid command.\n");
-						return userToken;
+					}
+				}
+				else if( userCommands[i].equals("fupload"))
+				{
+					i++;
+					sourceFile = userCommands[i];
+					i++;
+					destFile = userCommands[i];
+					i++;
+					groupName = userCommands[i];
+					// Success
+					if(fileClient.upload(sourceFile, destFile, groupName, userToken))
+					{
+						s = s + "Successfully uploaded local source file \""
+								+ sourceFile + "\" as \"" + destFile
+								+ "\" to group \"" + groupName
+								+ "\" on the file server.\n";
+					}
+					// Failure
+					else
+					{
+						s = s + "Unsuccesful in uploading local source file \""
+								+ sourceFile + "\" as \"" + destFile
+								+ "\" to group \"" + groupName
+								+ "\" on the file server.\n";
+						s = s + "You need to be a part of a group or admin to upload files.\n";
+					}
+				}
+				// TODO: list assumptions of users and admin privileges 
+				else if( userCommands[i].equals("fdownload"))
+				{
+					i++;
+					sourceFile = userCommands[i];
+					i++;
+					destFile = userCommands[i];
+					// Success
+					if(fileClient.download(sourceFile, destFile, userToken))
+					{
+						s = s + "Successfully downloaded to local source file \""
+								+ sourceFile + "\" from file \"" + destFile
+								+ "\" from the file server.\n";
+					}
+					// Failure
+					else
+					{
+						s = s + "Unsuccesful in download to local source file \""
+								+ sourceFile + "\" from file \"" + destFile
+								+ "\" from the file server.\n";
+						s = s + "You need to be a part of a group or admin to download files.\n";
+					}
+				}
+				else if( userCommands[i].equals("fdelete"))
+				{
+					i++;
+					String fileName = userCommands[i];
+					// Success
+					if(fileClient.delete(fileName, userToken))
+					{
+						s = s + "Successfully deleted file \"" + fileName + "\" from the file server.\n";
+					}
+					// Failure
+					else
+					{
+						s = s + "Unsuccesful in deleting file \"" + fileName + "\" from the file server.\n";
+						s = s + "Note that you must be an admin or part of the correct group to delete a file.\n";
+					}
+				}
+				else if( userCommands[i].equals("help"))
+				{
+					printListOfCommands();
+				}
+				else if( userCommands[i].equals("man"))
+				{
+					i++;						
+					manual(userCommands[i]);
+				}
+				else if( userCommands[i].equals("quit"))
+				{
+					s = s + "Quitting UserCommands.java. Disconnecting user from any servers.\n";
+				}
+				else
+				{
+					// Empty the buffer s so the user can see anything that happened
+					System.out.printf(s);
+					s = "";
+					System.out.printf("The command \"" + userCommands[i] + "\" is not a valid command.\n");
+					return userToken;
 				} 
 			} // end for loop
 		} // end try
@@ -517,7 +796,7 @@ public class UserCommands {
 	{
 		System.out.printf("Here are the supported group and file server commands:");
 		System.out.printf(" g = group server command, f = file server command\n");
-		
+
 		System.out.printf("\tgcreateuser\n");
 		System.out.printf("\tgdeleteuser\n");
 		System.out.printf("\tgcreategroup\n");
@@ -533,11 +812,11 @@ public class UserCommands {
 		System.out.printf("\tfdelete\n");
 		System.out.printf("\thelp\n");		
 		System.out.printf("\tman\n");
-		
+
 		System.out.printf("Type \"man COMMAND-NAME\" to see manual information on how to use a command.\n");
 		System.out.printf("Type \"man *\" to see all manual information, including all commands.\n");
 	}
-	
+
 	/**
 	 * manual() lists help the user requests for available commands.
 	 * @param command is the command the user wants help with. If the user types "man gcreateuser" the user will be
@@ -546,70 +825,83 @@ public class UserCommands {
 	 */
 	private static void manual(String command)
 	{
-		
-			switch(command)
-			{			
-				case "help":
-					printListOfCommands();
-					break;
-				case "gcreateuser":
-					printTextFile("gcreateuser");
-					break;
-				case "gdeleteuser":		
-					printTextFile("gdeleteuser");
-					break;
-				case "gcreategroup":	
-					printTextFile("gcreategroup");
-					break;
-				case "gdeletegroup":	
-					printTextFile("gdeletegroup");
-					break;
-				case "gaddusertogroup":				
-					printTextFile("gaddusertogroup");
-					break;
-				case "gdeleteuserfromgroup":		
-					printTextFile("gdeleteuserfromgroup");
-					break;
-				case "glistmembers":
-					printTextFile("glistmembers");
-					break;
-				case "fconnect":				
-					printTextFile("fconnect");
-					break;
-				case "fdisconnect":				
-					printTextFile("fdisconnect");
-					break;
-				case "flistfiles":				
-					printTextFile("flistfiles");
-					break;
-				case "fupload":				
-					printTextFile("fupload");
-					break;
-				case "fdownload":				
-					printTextFile("fdownload");
-					break;
-				case "fdelete":				
-					printTextFile("fdelete");
-					break;
-				case "*":
-					printTextFile("gcreateuser");
-					printTextFile("gdeleteuser");
-					printTextFile("gcreategroup");
-					printTextFile("gdeletegroup");		
-					printTextFile("gaddusertogroup");
-					printTextFile("gdeleteuserfromgroup");
-					printTextFile("glistmembers");
-					printTextFile("fconnect");
-					printTextFile("fdisconnect");
-					printTextFile("flistfiles");	
-					printTextFile("fupload");		
-					printTextFile("fdownload");		
-					printTextFile("fdelete");					
-					break;
-				default:
-					System.out.printf("Check that you entered a valid command. Type \"help\" if necessary.\n");
-					break;
-			}
+		//Java 6 compliant
+		if(command.equals("help"))
+		{
+			printListOfCommands();
+		}
+		else if(command.equals("gcreateuser"))
+		{
+			printTextFile("gcreateuser");
+		}
+		else if(command.equals("gdeleteuser"))	
+		{
+			printTextFile("gdeleteuser");
+		}
+		else if(command.equals("gcreategroup"))
+		{
+			printTextFile("gcreategroup");
+		}
+		else if(command.equals("gdeletegroup"))
+		{
+			printTextFile("gdeletegroup");
+		}
+		else if(command.equals("gaddusertogroup"))
+		{
+			printTextFile("gaddusertogroup");
+		}
+		else if(command.equals("gdeleteuserfromgroup"))
+		{
+			printTextFile("gdeleteuserfromgroup");
+		}
+		else if(command.equals("glistmembers"))
+		{
+			printTextFile("glistmembers");
+		}
+		else if(command.equals("fconnect"))
+		{
+			printTextFile("fconnect");
+		}
+		else if(command.equals("fdisconnect"))
+		{
+			printTextFile("fdisconnect");
+		}
+		else if(command.equals("flistfiles"))
+		{
+			printTextFile("flistfiles");
+		}
+		else if(command.equals("fupload"))
+		{
+			printTextFile("fupload");
+		}
+		else if(command.equals("fdownload"))
+		{
+			printTextFile("fdownload");
+		}
+		else if(command.equals("fdelete"))
+		{
+			printTextFile("fdelete");
+		}
+		else if(command.equals("*"))
+		{
+			printTextFile("gcreateuser");
+			printTextFile("gdeleteuser");
+			printTextFile("gcreategroup");
+			printTextFile("gdeletegroup");		
+			printTextFile("gaddusertogroup");
+			printTextFile("gdeleteuserfromgroup");
+			printTextFile("glistmembers");
+			printTextFile("fconnect");
+			printTextFile("fdisconnect");
+			printTextFile("flistfiles");	
+			printTextFile("fupload");		
+			printTextFile("fdownload");		
+			printTextFile("fdelete");					
+		}
+		else
+		{
+			System.out.printf("Check that you entered a valid command. Type \"help\" if necessary.\n");
+		}
 	}
 
 	/**
@@ -625,11 +917,11 @@ public class UserCommands {
 		{
 			BufferedReader br = new BufferedReader(new FileReader(fileName + ".txt"));
 			String line = "";
-		    while ((line = br.readLine()) != null) 
-		    {
-		      System.out.printf("%s\n", line);
-		    }	
-		    br.close();	    
+			while ((line = br.readLine()) != null) 
+			{
+				System.out.printf("%s\n", line);
+			}	
+			br.close();	    
 		}
 		catch(FileNotFoundException e)
 		{

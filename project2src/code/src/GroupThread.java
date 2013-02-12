@@ -179,7 +179,6 @@ public class GroupThread extends Thread
 							{
 								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
-								
 								if (deleteGroup(groupname, yourToken))
 								{
 									response = new Envelope("OK"); // Success
