@@ -25,6 +25,7 @@ After retrieving the <ZIPFILENAME>.tgz file, extract the tgz.
 
 --SECTION 2: Compiling--
 Open up Command Prompt for Windows, and Terminal for Mac OSX or Linux, and change directory to the folder that holds the unzipped files.
+Change directory into the "src" folder.
 From there, type "javac *.java" and press Enter.
 
 --SECTION 3: Running--
