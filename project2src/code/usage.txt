@@ -19,5 +19,7 @@ USAGE:
  directory.
  To reset the Group Server, delete UserList.bin.
  
- Note that this implementation supports server side directories.
-
+ To start the client side application, run UserCommands: java UserCommands [IP address][(optional) port number]
+ It will ask for a username, which you should supply, and then you can run the commands.
+ Type "help" to see a list of commands, and type "man [command]" to see a description and its usage.
+ Or you can manually take a look at the text file with the corresponding command name to examine its description and usage, found in "src/help files".

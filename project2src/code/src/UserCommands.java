@@ -915,7 +915,8 @@ public class UserCommands {
 		System.out.printf("\t%s:\n", fileName);
 		try
 		{
-			BufferedReader br = new BufferedReader(new FileReader(fileName + ".txt"));
+			System.out.println(System.getProperty("user.dir"));
+			BufferedReader br = new BufferedReader(new FileReader(/*"" + System.getProperty("user.dir") + System.getProperty("file.separator") +*/ "help files" + System.getProperty("file.separator") + fileName + ".txt"));
 			String line = "";
 			while ((line = br.readLine()) != null) 
 			{
