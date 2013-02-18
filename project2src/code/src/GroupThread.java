@@ -507,7 +507,7 @@ public class GroupThread extends Thread
 		String requester = token.getSubject();
 		
 		// Does requester exist?
-		if (my_gs.userList.checkUser(requester))
+		if (my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname))
 		{
 			ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
 			
