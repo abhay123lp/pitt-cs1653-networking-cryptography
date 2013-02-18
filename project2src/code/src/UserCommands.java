@@ -624,6 +624,8 @@ public class UserCommands {
 					}
 				}
 				// ===== File Server Commands =====
+				
+				// fconnect does not support multiple commands at once
 				else if( userCommands[i].equals("fconnect"))
 				{
 					if(fileClient.isConnected())
@@ -631,18 +633,33 @@ public class UserCommands {
 						System.out.printf("Disconnect from the current file server before making a new connection\n");
 						return userToken;
 					}
+					
+					if(userCommands.length == 1)
+					{
+						System.out.printf("You are using fconnect improperly.\n");
+						System.out.printf("Type \"help\" or type \"man fconnect\" for help.\n");
+						return userToken;
+					}
 					i++;
+					String fileServerIP = userCommands[i];
 					// User wanted to use default settings
 					if(userCommands[i].equals("default"))
 					{
 						fileClient = new FileClient();						
 						fileClient.connect("localhost", 4321);
+					}					
+					// Assume user entered "fconnect fileserverIP" without port number
+					// The default port number 4321 will be used.
+					else if(userCommands.length == 2)
+					{
+						fileClient = new FileClient();
+						fileClient.connect(fileServerIP, 4321);
 					}
+					
 					// User specified IP address and port number
 					else
 					{
-						fileClient = new FileClient();
-						String fileServerIP = userCommands[i];
+						fileClient = new FileClient();						
 						int fileServerPort = -1;							
 						try
 						{
@@ -653,7 +670,7 @@ public class UserCommands {
 						{
 							System.out.printf("Improper format for \"fconnect\".");
 							System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
-							continue;
+							return userToken;
 						}
 						fileClient.connect(fileServerIP, fileServerPort);
 					}

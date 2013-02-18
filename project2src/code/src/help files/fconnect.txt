@@ -1,4 +1,6 @@
 Use this command to connect to a file server. Until a user is connected to a file server, no file-
 server commands (the f-series of commands) can be executed. To connect to another file server,
 a user must disconnect from the current file server with the fdisconnect command.
-Example: "fconnect IPaddress port_number"
+"fconnect default": connects to default "localhost" for the IP at port 4321
+"fconnect IPaddress": the user specifies the IP address. The default port 4321 will be used.
+"fconnect IPaddress port_number": the user specified the IP address and port number
