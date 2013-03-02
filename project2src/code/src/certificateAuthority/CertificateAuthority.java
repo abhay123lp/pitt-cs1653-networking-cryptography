@@ -2,14 +2,18 @@ package certificateAuthority;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class CertificateAuthority extends Server
 {
 	protected ArrayList<String> serverList;
-	protected HashMap<String, String> serverPublicKeyPairs; //server name --> public key
+	protected Hashtable<String, String> serverPublicKeyPairs; //server name --> public key
 	
 	private RSAPrivateKey privateKey;
 	private RSAPublicKey publicKey;
@@ -36,11 +40,18 @@ public class CertificateAuthority extends Server
 	private static final int DEF_PORT = 34567;
 	private static final String NAME = "Certificate Authority";
 	
+	private static final String TEMP_FILE_NAME = "caTemp.tmp";
+	
+	public CertificateAuthority()
+	{
+		this(DEF_PORT);
+	}
+	
 	public CertificateAuthority(int port)
 	{
-		super(DEF_PORT, NAME);
+		super(port, NAME);
 		this.serverList = new ArrayList<>();
-		this.serverPublicKeyPairs = new HashMap<>();
+		this.serverPublicKeyPairs = new Hashtable<>();
 		
 		SecureRandom random = SecureRandom.getInstance(RAND_ALG, PROVIDER);
 		
@@ -56,13 +67,38 @@ public class CertificateAuthority extends Server
 	
 	public void start()
 	{
+		File autoSaved = new File(TEMP_FILE_NAME);
+		if(autoSaved.exists())
+		{
+			//reload everything
+		}
 		Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListenerCA()));
 		ScheduledExecutorService timer = new ScheduledThreadPoolExecutor(1);
 		timer.scheduleAtFixedRate(new AutoSaveCA(this), 0, 3, TimeUnit.SECONDS);
-//		timer.schedule(new AutoSaveCA(this), 30000);
-//		timer.start();
+		
+		final ServerSocket serverSock = new ServerSocket(this.port);
+		
+		try
+		{
+			Socket sock = null;
+			CAThread thread = null;
+			
+			while (true)
+			{
+				sock = serverSock.accept();
+				thread = new CAThread(sock, this);
+				thread.start();
+			}
+		}// end try block
+		catch (Exception e)
+		{
+			System.err.println("Error: " + e.getMessage());
+			e.printStackTrace(System.err);
+		}
+
+		serverSock.close();
+		timer.shutdownNow();
 	}
-	
 }
 
 /**
@@ -93,7 +129,7 @@ class ShutDownListenerCA extends Thread
 		super();
 	}
 	
-	public void run()
+	public final void run()
 	{
 		System.out.println("Shutting down server");
 		File f = new File(TEMP_FILE_NAME);
@@ -124,10 +160,10 @@ class AutoSaveCA extends Thread
 		this.certificateAuthority = certificateAuthority;
 	}
 	
-	public void run()
+	public final void run()
 	{
-		do
-		{
+//		do
+//		{
 			try
 			{
 //				Thread.sleep(300000); // Save group and user lists every 5 minutes
@@ -151,6 +187,27 @@ class AutoSaveCA extends Thread
 			{
 				System.out.println("Autosave Interrupted");
 			}
-		} while (true); // end do while
+//		} while (true); // end do while
 	}// end method run()
 }//end class AutoSave
+
+class CAThread extends Thread
+{
+	private ObjectInputStream input;
+	private ObjectOutputStream output;
+	
+	private CertificateAuthority ca;
+	
+	public CAThread(Socket socket, CertificateAuthority ca) throws IOException
+	{
+		super();
+		this.input = new ObjectInputStream(socket.getInputStream());
+		this.output = new ObjectOutputStream(socket.getOutputStream());
+		this.ca = ca;
+	}
+	
+	public final void run()
+	{
+		//get message, decrypt public key, store in hashmap and key
+	}
+}
