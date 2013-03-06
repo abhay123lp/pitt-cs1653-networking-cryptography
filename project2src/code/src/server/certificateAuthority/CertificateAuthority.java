@@ -7,23 +7,19 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+//import java.security.KeyPair;
+//import java.security.KeyPairGenerator;
+//import java.security.NoSuchAlgorithmException;
+//import java.security.NoSuchProviderException;
 import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.X509EncodedKeySpec;
+//import java.security.SecureRandom;
+//import java.security.interfaces.RSAPrivateKey;
+//import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.crypto.Cipher;
 
 import message.Envelope;
 
@@ -38,13 +34,13 @@ public class CertificateAuthority extends Server
 	protected ArrayList<String> serverList;
 	protected Hashtable<String, PublicKey> serverPublicKeyPairs; //server name --> public key
 	
-	private RSAPrivateKey privateKey;
-	private RSAPublicKey publicKey;
+//	private RSAPrivateKey privateKey;
+//	private RSAPublicKey publicKey;
 	
-	private static final String ALGORITHM = "rsa";
-	private static final String RAND_ALG = "SHA1PRNG";
-	private static final String PROVIDER = "bc";
-	private static final int KEY_SIZE = 1024;
+//	private static final String ALGORITHM = "rsa";
+//	private static final String RAND_ALG = "SHA1PRNG";
+//	private static final String PROVIDER = "bc";
+//	private static final int KEY_SIZE = 1024;
 	
 	private static final int DEF_PORT = 34567;
 	private static final String NAME = "Certificate Authority";
@@ -62,29 +58,29 @@ public class CertificateAuthority extends Server
 		this.serverList = new ArrayList<>();
 		this.serverPublicKeyPairs = new Hashtable<>();
 		
-		KeyPair rsaKeyPair = null;
-		try
-		{
-			SecureRandom random = SecureRandom.getInstance(RAND_ALG, "SUN");
-			KeyPairGenerator rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
-			
-			rsaKeyGenerator.initialize(KEY_SIZE, random);
-			rsaKeyPair = rsaKeyGenerator.generateKeyPair();
-		}
-		catch (NoSuchAlgorithmException e)
-		{
-			System.err.println("FATAL ERROR");
-			e.printStackTrace();
-		}
-		catch (NoSuchProviderException e)
-		{
-			System.err.println("FATAL ERROR");
-			e.printStackTrace();
-		}
-		// Private Key
-		this.privateKey = (RSAPrivateKey)rsaKeyPair.getPrivate();
-		// Public key
-		this.publicKey = (RSAPublicKey)rsaKeyPair.getPublic();
+//		KeyPair rsaKeyPair = null;
+//		try
+//		{
+//			SecureRandom random = SecureRandom.getInstance(RAND_ALG, "SUN");
+//			KeyPairGenerator rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
+//			
+//			rsaKeyGenerator.initialize(KEY_SIZE, random);
+//			rsaKeyPair = rsaKeyGenerator.generateKeyPair();
+//		}
+//		catch (NoSuchAlgorithmException e)
+//		{
+//			System.err.println("FATAL ERROR");
+//			e.printStackTrace();
+//		}
+//		catch (NoSuchProviderException e)
+//		{
+//			System.err.println("FATAL ERROR");
+//			e.printStackTrace();
+//		}
+//		// Private Key
+//		this.privateKey = (RSAPrivateKey)rsaKeyPair.getPrivate();
+//		// Public key
+//		this.publicKey = (RSAPublicKey)rsaKeyPair.getPublic();
 	}
 	
 	public void start()
@@ -118,7 +114,8 @@ public class CertificateAuthority extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-				thread = new CAThread(sock, this, this.privateKey);
+//				thread = new CAThread(sock, this, this.privateKey);
+				thread = new CAThread(sock, this);
 				thread.start();
 			}
 		}// end try block
@@ -241,15 +238,15 @@ class CAThread extends Thread
 	
 	private CertificateAuthority ca;
 	
-	private RSAPrivateKey privateKey;
+//	private RSAPrivateKey privateKey;
 	
-	public CAThread(Socket socket, CertificateAuthority ca, RSAPrivateKey privateKey) throws IOException
+	public CAThread(Socket socket, CertificateAuthority ca) throws IOException
 	{
 		super();
 		this.input = new ObjectInputStream(socket.getInputStream());
 		this.output = new ObjectOutputStream(socket.getOutputStream());
 		this.ca = ca;
-		this.privateKey = privateKey;
+//		this.privateKey = privateKey;
 	}
 	
 	public final void run()
