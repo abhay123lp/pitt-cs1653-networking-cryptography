@@ -1,8 +1,16 @@
+package client;
 /* Implements the GroupClient Interface */
+
 
 import java.util.ArrayList;
 import java.util.List;
 import java.io.ObjectInputStream;
+
+import message.Envelope;
+import message.UserToken;
+
+
+import server.group.GroupServer;
 
 /**
  * Handles connections to the {@link GroupServer}.

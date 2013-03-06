@@ -1,5 +1,7 @@
+package server.group;
 /* This list represents the users on the server */
 import java.util.*;
+
 
 /**
  * A list of all the users in a particular {@link GroupServer}.

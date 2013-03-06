@@ -1,4 +1,4 @@
-package certificateAuthority;
+package server.certificateAuthority;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,6 +19,10 @@ import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import message.Envelope;
+
+import server.Server;
 
 /**
  * Assumes this is up 24/7, so we do not deal with writing out upon shut down.
@@ -208,6 +212,8 @@ class CAThread extends Thread
 	
 	public final void run()
 	{
-		//get message, decrypt public key, store in hashmap and key
-	}
+		//get message, decrypt public key, store in hashmap and key	
+		Envelope response = new Envelope("OK");
+		this.output.writeObject(response);
+	}		
 }

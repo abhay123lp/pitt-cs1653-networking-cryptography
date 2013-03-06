@@ -1,4 +1,10 @@
+package client;
+
+
+
 import java.util.List;
+
+import message.UserToken;
 
 /**
  * Interface describing the operations that must be supported by the client application used to talk with the group server.

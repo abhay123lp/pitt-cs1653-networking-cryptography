@@ -1,8 +1,12 @@
+package client;
+
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
+import message.Envelope;
 
 /**
  * The Client abstract class holds implementation of connecting to a server, but does not hold specific methods on group server or file server requests.

@@ -1,3 +1,7 @@
+package message;
+import server.file.FileServer;
+import server.group.GroupThread;
+
 /**
  * This class holds the file representation for files in the {@link FileServer}.
  * Files have some meta data that handles accessibility, which includes a group and an owner.

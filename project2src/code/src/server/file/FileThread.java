@@ -1,4 +1,6 @@
+package server.file;
 /* File worker thread handles the business of uploading, downloading, and removing files for clients with valid tokens */
+
 
 import java.lang.Thread;
 import java.net.Socket;
@@ -9,6 +11,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
+import message.Envelope;
+import message.ShareFile;
+import message.Token;
+import message.UserToken;
+
+import client.FileClient;
 
 /**
  * The thread spawned by {@link FileServer} after accepting a connection.

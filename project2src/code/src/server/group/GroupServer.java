@@ -1,7 +1,5 @@
-/* Group server. Server loads the users from UserList.bin.
- * If user list does not exists, it creates a new list and makes the user the server administrator.
- * On exit, the server saves the user list to file. 
- */
+package server.group;
+
 
 /*
  * TODO: This file will need to be modified to save state related to
@@ -9,15 +7,19 @@
  *
  */
 
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
 import java.util.*;
 
+import client.GroupClient;
+
+import server.Server;
+
 /**
  * Handles connections to the {@link GroupClient}.
- * Creates a listener to accept incoming connections.
- * Note however that the GroupServer does not know who is connecting to it, but will assume that the client understands the protocol.
+ * Crehowever that the GroupServer does not know who is connecting to it, but will assume that the client understands the protocol.
  */
 public class GroupServer extends Server
 {
