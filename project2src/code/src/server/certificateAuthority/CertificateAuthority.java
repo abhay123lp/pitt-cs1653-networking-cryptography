@@ -7,18 +7,23 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Cipher;
 
 import message.Envelope;
 
@@ -31,7 +36,7 @@ import server.Server;
 public class CertificateAuthority extends Server
 {
 	protected ArrayList<String> serverList;
-	protected Hashtable<String, String> serverPublicKeyPairs; //server name --> public key
+	protected Hashtable<String, PublicKey> serverPublicKeyPairs; //server name --> public key
 	
 	private RSAPrivateKey privateKey;
 	private RSAPublicKey publicKey;
@@ -57,12 +62,25 @@ public class CertificateAuthority extends Server
 		this.serverList = new ArrayList<>();
 		this.serverPublicKeyPairs = new Hashtable<>();
 		
-		SecureRandom random = SecureRandom.getInstance(RAND_ALG, PROVIDER);
-		
-		KeyPairGenerator rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
-		rsaKeyGenerator.initialize(KEY_SIZE, random);
-		KeyPair rsaKeyPair = rsaKeyGenerator.generateKeyPair();
-		
+		KeyPair rsaKeyPair = null;
+		try
+		{
+			SecureRandom random = SecureRandom.getInstance(RAND_ALG, "SUN");
+			KeyPairGenerator rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
+			
+			rsaKeyGenerator.initialize(KEY_SIZE, random);
+			rsaKeyPair = rsaKeyGenerator.generateKeyPair();
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			System.err.println("FATAL ERROR");
+			e.printStackTrace();
+		}
+		catch (NoSuchProviderException e)
+		{
+			System.err.println("FATAL ERROR");
+			e.printStackTrace();
+		}
 		// Private Key
 		this.privateKey = (RSAPrivateKey)rsaKeyPair.getPrivate();
 		// Public key
@@ -80,7 +98,17 @@ public class CertificateAuthority extends Server
 		ScheduledExecutorService timer = new ScheduledThreadPoolExecutor(1);
 		timer.scheduleAtFixedRate(new AutoSaveCA(this), 0, 3, TimeUnit.SECONDS);
 		
-		final ServerSocket serverSock = new ServerSocket(this.port);
+		ServerSocket serverSock = null;
+		try
+		{
+			serverSock = new ServerSocket(this.port);
+		}
+		catch (IOException e1)
+		{
+			System.err.println("FATAL ERROR");
+			e1.printStackTrace();
+			return;
+		}
 		
 		try
 		{
@@ -90,17 +118,28 @@ public class CertificateAuthority extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-				thread = new CAThread(sock, this);
+				thread = new CAThread(sock, this, this.privateKey);
 				thread.start();
 			}
 		}// end try block
 		catch (Exception e)
 		{
+			//TODO
 			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 
-		serverSock.close();
+		try
+		{
+			serverSock.close();
+		}
+		catch (IOException e1)
+		{
+			System.err.println("FATAL ERROR");
+			e1.printStackTrace();
+			return;
+		}
+		
 		timer.shutdownNow();
 	}
 }
@@ -202,18 +241,92 @@ class CAThread extends Thread
 	
 	private CertificateAuthority ca;
 	
-	public CAThread(Socket socket, CertificateAuthority ca) throws IOException
+	private RSAPrivateKey privateKey;
+	
+	public CAThread(Socket socket, CertificateAuthority ca, RSAPrivateKey privateKey) throws IOException
 	{
 		super();
 		this.input = new ObjectInputStream(socket.getInputStream());
 		this.output = new ObjectOutputStream(socket.getOutputStream());
 		this.ca = ca;
+		this.privateKey = privateKey;
 	}
 	
 	public final void run()
 	{
-		//get message, decrypt public key, store in hashmap and key	
-		Envelope response = new Envelope("OK");
-		this.output.writeObject(response);
+		//get message, get public key, store in hashmap and key
+		Envelope input = null;
+		try
+		{
+			input = (Envelope)this.input.readObject();
+		}
+		catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+			System.err.println("FATAL ERROR");
+			return;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			System.err.println("FATAL ERROR");
+			return;
+		}
+		
+		String message = input.getMessage();
+		Envelope response = null;
+		
+		if(message.equals("ADDKEY"))
+		{
+			String serverName = (String)input.getObjContents().get(0);
+			PublicKey pubKey = (PublicKey)input.getObjContents().get(1);
+			if(this.ca.serverList.contains(serverName))
+			{
+				response = new Envelope("FAIL");
+			}
+			else
+			{
+				try
+				{
+					this.ca.serverList.add(serverName);
+					this.ca.serverPublicKeyPairs.put(serverName, pubKey); //FIXME may not be an X509EncodedKeySpec
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+					return;
+				}
+				
+				response = new Envelope("OK");
+			}
+		}
+		else if(message.equals("GETKEY"))
+		{
+			String serverName = (String)input.getObjContents().get(0);
+			if(!this.ca.serverList.contains(serverName))
+			{
+				response = new Envelope("FAIL");
+			}
+			else
+			{
+				response = new Envelope("OK");
+				response.addObject(this.ca.serverPublicKeyPairs.get(serverName));
+			}
+		}
+		else
+		{
+			//unrecognized command
+			response = new Envelope("FAIL");
+		}
+		
+		try
+		{
+			this.output.writeObject(response);
+		}
+		catch (IOException e)
+		{
+			System.err.println("FATAL ERROR");
+			e.printStackTrace();
+		}
 	}		
 }
