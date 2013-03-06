@@ -1,3 +1,5 @@
+package client;
+
 
 import java.io.BufferedReader;  // Buffered Reader used for reading input
 import java.io.FileNotFoundException;
@@ -8,6 +10,9 @@ import java.util.List;
 import java.io.FileReader;
 
 import java.util.*;
+
+import message.UserToken;
+
 
 /**
  * 

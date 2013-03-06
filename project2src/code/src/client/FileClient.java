@@ -1,8 +1,16 @@
+package client;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+
+import message.Envelope;
+import message.UserToken;
+
+
+import server.file.FileServer;
 
 /**
  * Handles connections to the {@link FileServer}.

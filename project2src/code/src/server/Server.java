@@ -1,3 +1,4 @@
+package server;
 /**
  * The Server abstract class holds implementation of accepting connections from a Client, but does not hold specific methods on group client or file client demands.
  * 
@@ -18,7 +19,7 @@ public abstract class Server
 	/**
 	 * The method needs to be defined by any class that extends this method. This method will start the server.
 	 */
-	abstract void start();
+	protected abstract void start();
 	
 	/**
 	 * This constructor initializes the port of the server as well as sets the name of the server.

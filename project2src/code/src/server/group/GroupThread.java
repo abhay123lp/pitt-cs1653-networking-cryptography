@@ -1,10 +1,20 @@
+package server.group;
+
 /* This thread does all the work. It communicates with the client through Envelopes.
  * 
  */
+
 import java.lang.Thread;
 import java.net.Socket;
 import java.io.*;
 import java.util.*;
+
+import message.Envelope;
+import message.Token;
+import message.UserToken;
+
+import client.GroupClient;
+
 
 /**
  * The thread spawned by {@link GroupServer} after accepting a connection.

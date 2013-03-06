@@ -1,5 +1,9 @@
+package server.file;
 /* This list represents the files on the server */
+
 import java.util.*;
+
+import message.ShareFile;
 
 /**
  * A list of all the files in a particular {@link FileServer}.

@@ -1,3 +1,5 @@
+package server.group;
+
 /**
  * Runs the {@link GroupServer}.
  * This class holds the main method to run the GroupServer.
