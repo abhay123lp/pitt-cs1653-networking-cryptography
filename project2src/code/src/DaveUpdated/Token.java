@@ -1,4 +1,3 @@
-
 import java.io.Serializable;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
@@ -68,36 +67,6 @@ public class Token implements UserToken, Serializable
 		return hashedSignedTokenData;
 		
 	}
-	
-	
-	private static byte[] gengerateRSASignature(String algorithm, String provider, RSAPrivateKey privKey, String clearText){
-
-		try{
-
-			// Change the clear text to bytes
-			byte[] clearBytes = clearText.getBytes();
-
-			// Create RSA signature
-			Signature sig = Signature.getInstance(algorithm, provider);
-			sig.initSign(privKey);
-			sig.update(clearBytes);		
-			
-			privKey = null;
-
-			return sig.sign();
-			
-		} catch (Exception ex){
-
-			privKey = null;
-			System.out.println(ex.toString());
-		}
-
-		return null;
-	}
-	
-	
-	
-	
 	
 	
 	private static byte[] gengerateRSASignature(String algorithm, String provider, RSAPrivateKey privKey, String clearText){
