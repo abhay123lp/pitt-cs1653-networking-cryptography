@@ -296,6 +296,36 @@ public abstract class Client implements ClientInterface
 	}
 	
 	
+	/**
+	 * This method will encrypt the data utilizing the public key.
+	 * @param algorithm The algorithm to use.
+	 * @param provider The security provider to use.
+	 * @param pubKey The public key to use.
+	 * @param dataToEncrypt The data to encrypt.
+	 * @return byte[] array of the encrypted data.
+	 */
+	private static byte[] RSAEncrypt(String algorithm, String provider, RSAPublicKey pubKey, byte[] dataToEncrypt){
+
+		try{
+
+			// Create the cipher object
+			Cipher objCipher = Cipher.getInstance(algorithm, provider);
+
+			// Initialize the cipher encryption object, add the key 
+			objCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
+
+			///byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+
+			// Encrypt the data and store in encryptedData
+			return objCipher.doFinal(dataToEncrypt);
+
+		} catch(Exception ex){
+			System.out.println(ex.toString());
+		}
+
+		return null;
+	}
+	
 	
 	
 	// javadoc already handled by ClientInterface
@@ -312,6 +342,19 @@ public abstract class Client implements ClientInterface
 			this.sock = new Socket(server, port);
 			// this.sock.setSoTimeout(1000);
 			this.output = new ObjectOutputStream(this.sock.getOutputStream());
+			
+			
+			CAClient ca = new CAClient(server);
+			ca.connect(server, port);
+			ca.run();
+			
+			ca.disconnect();
+			
+			System.out.println("Connected to CA ");
+			
+			RSAPublicKey serverPublicKey = (RSAPublicKey)ca.getPublicKey();
+			
+			System.out.println("I got the public key " + serverPublicKey);
 						
 			/**** Sending Symmetric Key to Server *******/
 			Envelope request = new Envelope("REQUEST_SECURE_CONNECTION");
@@ -319,14 +362,16 @@ public abstract class Client implements ClientInterface
 			request.addObject(encryptKey(serverPublicKey));
 			
 			//return b.toByteArray(); 
-			byte[] byteArray = convertToByteArray(request);
+			//byte[] byteArray = convertToByteArray(request);
 			
 			// Get the IV to use
 			IvParameterSpec IV = ivAES(IV_BYTES);
 															
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+			
+			//output.writeObject(RSAEncrypt("RSA/None/NoPadding", PROVIDER, serverPublicKey, byteArray));
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 						
-			//output.writeObject(request);
+			output.writeObject(request);
 						
 			this.input = new ObjectInputStream(this.sock.getInputStream());
 			

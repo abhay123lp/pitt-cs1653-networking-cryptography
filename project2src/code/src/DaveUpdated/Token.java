@@ -1,6 +1,7 @@
 import java.io.Serializable;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,7 +60,14 @@ public class Token implements UserToken, Serializable
 		_privKey = null;
 		
 	}
+	
+	
+	public byte[] gethashedSignedTokenData(){
 		
+		return hashedSignedTokenData;
+		
+	}
+	
 	
 	private static byte[] gengerateRSASignature(String algorithm, String provider, RSAPrivateKey privKey, String clearText){
 
@@ -166,6 +174,36 @@ public class Token implements UserToken, Serializable
 		
 		return finalToken;
 		
+	}
+	
+	/**
+	 * This method will verify the signature of the data.
+	 * @param algorithm The algorithm to use.
+	 * @param provider The security provider to use.
+	 * @param pubKey The public key to use.
+	 * @param decryptedData The decrypted data we want to verify.
+	 * @param signature The signature data.
+	 * @return boolean value indicating if the signature has been verified.
+	 */
+	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey, byte[] decryptedData){
+
+		try{
+			
+			// Create new signature instance
+			Signature verificationSig = Signature.getInstance(algorithm, provider);
+			verificationSig.initVerify(pubKey);
+			verificationSig.update(decryptedData);		
+				
+			return verificationSig.verify(hashedSignedTokenData);  //verificationSig.verify(signature);
+				
+		} catch(Exception ex){
+
+			System.out.println(ex.toString());
+
+		}
+
+		return false;
+
 	}
 	
 	

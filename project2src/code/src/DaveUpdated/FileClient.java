@@ -1,12 +1,12 @@
+
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.Key;
-import java.security.SecureRandom;
 import java.util.List;
 
-import javax.crypto.KeyGenerator;
+
 
 /**
  * Handles connections to the {@link FileServer}.
@@ -14,10 +14,6 @@ import javax.crypto.KeyGenerator;
  */
 public class FileClient extends Client implements FileInterface, ClientInterface
 {
-	
-	
-	
-	
 	public boolean delete(String filename, UserToken token)
 	{
 		String remotePath;
