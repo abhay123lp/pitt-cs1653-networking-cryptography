@@ -51,7 +51,7 @@ public abstract class Client implements ClientInterface
 	public RSAPublicKey serverPublicKey;
 	private static final int IV_BYTES = 16;
 	private byte[] challengeBytes;
-	
+	private final String CAServer = "localhost";
 	//private CAClient caClient;
 	
 	public Client(){
@@ -349,7 +349,7 @@ public abstract class Client implements ClientInterface
 			
 			
 			CAClient ca = new CAClient(server);
-			ca.connect(server, port);
+			ca.connect(CAServer, 34567);
 			ca.run();
 			
 			ca.disconnect();
