@@ -1,6 +1,10 @@
-package message;
 import java.io.Serializable;
+import java.security.Signature;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,6 +22,8 @@ public class Token implements UserToken, Serializable
 	 */
 	private final String issuer;
 	
+	private static final String DELIMITER = "~";
+	
 	/**
 	 * subject is a class variable representing the name of the user the token has been awarded to.
 	 */
@@ -28,6 +34,12 @@ public class Token implements UserToken, Serializable
 	 */
 	private final List<String> groups;
 	
+	
+	
+	private byte[] hashedSignedTokenData;
+	
+	 
+	
 	/**
 	 * This constructor initializes the issuer, subject, and groups class variables.
 	 * 
@@ -35,13 +47,55 @@ public class Token implements UserToken, Serializable
 	 * @param subject The name of the user the token was awarded to.
 	 * @param groups The groups associated with the user.
 	 */
-	public Token(String issuer, String subject, List<String> groups)
+	public Token(String issuer, String subject, List<String> groups, RSAPrivateKey _privKey)
 	{
 		
 		this.issuer = issuer;
 		this.subject = subject;
 		this.groups = makeCopyOfGroups(groups);
+		//this.privateKey = _privKey;
+		
+		hashedSignedTokenData = gengerateRSASignature("SHA1withRSA", "BC", _privKey, getDelimitedString());
+		
+		_privKey = null;
+		
 	}
+	
+	
+	public byte[] gethashedSignedTokenData(){
+		
+		return hashedSignedTokenData;
+		
+	}
+	
+	
+	private static byte[] gengerateRSASignature(String algorithm, String provider, RSAPrivateKey privKey, String clearText){
+
+		try{
+
+			// Change the clear text to bytes
+			byte[] clearBytes = clearText.getBytes();
+
+			// Create RSA signature
+			Signature sig = Signature.getInstance(algorithm, provider);
+			sig.initSign(privKey);
+			sig.update(clearBytes);		
+			
+			privKey = null;
+
+			return sig.sign();
+			
+		} catch (Exception ex){
+
+			privKey = null;
+			System.out.println(ex.toString());
+		}
+
+		return null;
+	}
+	
+	
+	
 	
 	/**
 	 * Used to make a deep copy of groups
@@ -95,4 +149,63 @@ public class Token implements UserToken, Serializable
 	{
 		return groups;
 	}
+	
+	public String getDelimitedString(){
+		
+		// Begin creating token
+		String finalToken = this.issuer + DELIMITER + this.subject;
+		
+		// Sort groups
+		Collections.sort(this.groups);
+		
+		// Delimit the groups and concatenate
+		for(String s : this.groups){
+			
+			finalToken += DELIMITER + s;
+			
+		}
+		
+		
+		// Hash here and sign here
+		
+		
+		
+		
+		
+		return finalToken;
+		
+	}
+	
+	/**
+	 * This method will verify the signature of the data.
+	 * @param algorithm The algorithm to use.
+	 * @param provider The security provider to use.
+	 * @param pubKey The public key to use.
+	 * @param decryptedData The decrypted data we want to verify.
+	 * @param signature The signature data.
+	 * @return boolean value indicating if the signature has been verified.
+	 */
+	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey, byte[] decryptedData){
+
+		try{
+			
+			// Create new signature instance
+			Signature verificationSig = Signature.getInstance(algorithm, provider);
+			verificationSig.initVerify(pubKey);
+			verificationSig.update(decryptedData);		
+				
+			return verificationSig.verify(hashedSignedTokenData);  //verificationSig.verify(signature);
+				
+		} catch(Exception ex){
+
+			System.out.println(ex.toString());
+
+		}
+
+		return false;
+
+	}
+	
+	
+	
 }
