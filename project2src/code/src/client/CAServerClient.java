@@ -4,6 +4,10 @@
 package client;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.PublicKey;
 
 import message.Envelope;
@@ -58,4 +62,37 @@ public class CAServerClient extends Client
 			System.out.println("Something went wrong...");
 		}
 	}
+	
+	// javadoc already handled by ClientInterface
+		// had to override this in order to be able to use connect without getting a public key.
+		@Override
+		public boolean connect(final String server, final int port)
+		{
+			if (this.sock != null)
+			{
+				System.out.println("Disconnecting from previous connection...");
+				this.disconnect();
+			}
+//			System.out.println("Attempting to connect...");
+			try
+			{
+				this.sock = new Socket(server, port);
+				// this.sock.setSoTimeout(1000);
+				this.output = new ObjectOutputStream(this.sock.getOutputStream());
+				this.input = new ObjectInputStream(this.sock.getInputStream());
+			}
+			catch (UnknownHostException e)
+			{
+				e.printStackTrace();
+				return false;
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				return false;
+			}
+			
+//			System.out.println("Success!  Connected to " + server + " at port " + port);
+			return true;
+		}// end method connect(String, int)
 }
