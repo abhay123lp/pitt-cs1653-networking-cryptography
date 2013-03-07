@@ -1,5 +1,7 @@
-package server.group;
-
+/* Group server. Server loads the users from UserList.bin.
+ * If user list does not exists, it creates a new list and makes the user the server administrator.
+ * On exit, the server saves the user list to file. 
+ */
 
 /*
  * TODO: This file will need to be modified to save state related to
@@ -7,19 +9,27 @@ package server.group;
  *
  */
 
+package server.group;
 
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
-import client.GroupClient;
+import client.CAServerClient;
 
 import server.Server;
 
 /**
  * Handles connections to the {@link GroupClient}.
- * Crehowever that the GroupServer does not know who is connecting to it, but will assume that the client understands the protocol.
+ * Creates a listener to accept incoming connections.
+ * Note however that the GroupServer does not know who is connecting to it, but will assume that the client understands the protocol.
  */
 public class GroupServer extends Server
 {
@@ -28,6 +38,14 @@ public class GroupServer extends Server
 	 * This port, should it be used, must be open in the firewall to accept external incoming connections.
 	 */
 	public static final int SERVER_PORT = 8765;
+	public static final int CA_SERVER_PORT = 34567;
+	public static final String CA_SERVER_NAME = "localhost";
+	private static final int KEY_SIZE = 1024;
+	private static final String ALGORITHM = "RSA";
+	private static final String PROVIDER = "BC";
+	
+	private RSAPrivateKey privateKey;
+	private RSAPublicKey publicKey;
 	
 	/**
 	 * The list of users that the GroupServer has.
@@ -46,6 +64,7 @@ public class GroupServer extends Server
 	public GroupServer()
 	{
 		super(SERVER_PORT, "ALPHA");
+		generateRSAKeyPair();
 	}
 	
 	/**
@@ -56,7 +75,37 @@ public class GroupServer extends Server
 	public GroupServer(int _port)
 	{
 		super(_port, "ALPHA");
+		generateRSAKeyPair();
 	}
+	
+	public GroupServer(int _port, String name){
+		super(_port, name);
+		generateRSAKeyPair();
+	}
+	
+	private final void generateRSAKeyPair() {
+		
+		// Generate Key Pair 
+		KeyPairGenerator rsaKeyGenerator;
+		
+		try{
+		
+			/***** Generate Key Pair ******/
+			rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
+			rsaKeyGenerator.initialize(KEY_SIZE);
+			KeyPair rsaKeyPair = rsaKeyGenerator.generateKeyPair();
+			
+			// Private Key
+			privateKey = (RSAPrivateKey)rsaKeyPair.getPrivate();
+			// Public key 
+			publicKey = (RSAPublicKey)rsaKeyPair.getPublic();
+		
+		} catch(Exception ex){
+			
+		}
+		
+	}
+	
 	
 	public void start()
 	{
@@ -85,6 +134,41 @@ public class GroupServer extends Server
 		}// end try blcok
 		catch (FileNotFoundException e)
 		{
+			
+			// TODO CREATE PUBLIC/PRIVATE KEY
+						
+			try {
+												
+				// Create new CAClient
+				CAServerClient ca = new CAServerClient();
+				ca.connect(CA_SERVER_NAME, CA_SERVER_PORT);
+				
+				// Pass along this server's name and public key
+				
+				
+				
+				
+				
+				if(ca.passAuthorizationData(this.name, publicKey)){
+					
+					// Everything is cool
+					
+				} else {
+					
+					// Everything is not cool
+					
+				}
+							
+				
+				
+			} catch (Exception ex) {
+				// TODO Auto-generated catch block
+				//e1.printStackTrace();
+			}
+			
+			// Want to connect to CA, pass it both the server's name & public key
+			
+			
 			System.out.println("UserList File Does Not Exist. Creating UserList...");
 			System.out.println("No users currently exist. Your account will be the administrator.");
 			System.out.print("Enter your username: ");
@@ -131,7 +215,7 @@ public class GroupServer extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-				thread = new GroupThread(sock, this);
+				thread = new GroupThread(sock, this, privateKey);
 				thread.start();
 			}
 			// serverSock.close();
