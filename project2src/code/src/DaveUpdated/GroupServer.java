@@ -9,6 +9,7 @@
  *
  */
 
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
@@ -19,6 +20,8 @@ import java.security.NoSuchProviderException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
+
+
 
 /**
  * Handles connections to the {@link GroupClient}.
@@ -100,7 +103,7 @@ public class GroupServer extends Server
 		
 	}
 	
-	
+	// TODO: password support
 	public void start()
 	{
 		// Overwrote server.start() because if no user file exists, initial admin account needs to be created
@@ -125,7 +128,7 @@ public class GroupServer extends Server
 			groupStream = new ObjectInputStream(new FileInputStream(groupFile));
 			groupList = (GroupList)groupStream.readObject();
 			groupStream.close();
-		}// end try blcok
+		}// end try block
 		catch (FileNotFoundException e)
 		{
 			
@@ -134,24 +137,25 @@ public class GroupServer extends Server
 			try {
 												
 				// Create new CAClient
-				CAServerClient ca = new CAServerClient();
+				CAServerClient ca = new CAServerClient(this.name, publicKey);
 				ca.connect(CA_SERVER_NAME, CA_SERVER_PORT);
+				ca.run();
 				
+				ca.disconnect();
+								
 				// Pass along this server's name and public key
 				
+								
 				
-				
-				
-				
-				if(ca.passAuthorizationData(this.name, publicKey)){
+				//if(ca.passAuthorizationData(this.name, publicKey)){
 					
 					// Everything is cool
 					
-				} else {
+				//} else {
 					
 					// Everything is not cool
 					
-				}
+				//}
 							
 				
 				
@@ -168,10 +172,11 @@ public class GroupServer extends Server
 			System.out.print("Enter your username: ");
 			Scanner console = new Scanner(System.in);
 			String username = console.next();
-			
+			System.out.print("\nEnter your password: ");
+			String password = console.next();
 			// Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
 			userList = new UserList();
-			userList.addUser(username);
+			userList.addUser(username, password);
 			userList.addGroup(username, "ADMIN");
 			userList.addOwnership(username, "ADMIN");
 			
@@ -209,7 +214,7 @@ public class GroupServer extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-				thread = new GroupThread(sock, this, privateKey);
+				thread = new GroupThread(sock, this, privateKey, publicKey);
 				thread.start();
 			}
 			// serverSock.close();
