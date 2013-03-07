@@ -1,4 +1,5 @@
 package server;
+
 /**
  * The Server abstract class holds implementation of accepting connections from a Client, but does not hold specific methods on group client or file client demands.
  * 

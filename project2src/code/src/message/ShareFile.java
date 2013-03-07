@@ -1,6 +1,4 @@
 package message;
-import server.file.FileServer;
-import server.group.GroupThread;
 
 /**
  * This class holds the file representation for files in the {@link FileServer}.

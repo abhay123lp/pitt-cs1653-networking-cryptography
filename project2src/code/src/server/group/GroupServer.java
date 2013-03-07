@@ -1,3 +1,5 @@
+package server.group;
+
 /* Group server. Server loads the users from UserList.bin.
  * If user list does not exists, it creates a new list and makes the user the server administrator.
  * On exit, the server saves the user list to file. 
@@ -9,7 +11,6 @@
  *
  */
 
-package server.group;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
@@ -139,24 +140,25 @@ public class GroupServer extends Server
 			try {
 												
 				// Create new CAClient
-				CAServerClient ca = new CAServerClient();
+				CAServerClient ca = new CAServerClient(this.name, publicKey);
 				ca.connect(CA_SERVER_NAME, CA_SERVER_PORT);
+				ca.run();
 				
+				ca.disconnect();
+								
 				// Pass along this server's name and public key
 				
+								
 				
-				
-				
-				
-				if(ca.passAuthorizationData(this.name, publicKey)){
+				//if(ca.passAuthorizationData(this.name, publicKey)){
 					
 					// Everything is cool
 					
-				} else {
+				//} else {
 					
 					// Everything is not cool
 					
-				}
+				//}
 							
 				
 				
@@ -215,7 +217,7 @@ public class GroupServer extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-				thread = new GroupThread(sock, this, privateKey);
+				thread = new GroupThread(sock, this, privateKey, publicKey);
 				thread.start();
 			}
 			// serverSock.close();

@@ -1,10 +1,9 @@
 package client;
 
-
-
 import java.util.List;
 
 import message.UserToken;
+
 
 /**
  * Interface describing the operations that must be supported by the client application used to talk with the group server.
@@ -20,7 +19,7 @@ public interface GroupInterface
 	 * @return A UserToken describing the permissions of "username."
 	 *         If this user does not exist, a null value will be returned.
 	 */
-	public UserToken getToken(final String username);
+	public UserToken getToken(final String username, String password);
 	
 	/**
 	 * Creates a new user.
@@ -30,7 +29,7 @@ public interface GroupInterface
 	 * @param token The token of the user requesting the create operation
 	 * @return true if the new user was created, false otherwise
 	 */
-	public boolean createUser(final String username, final UserToken token);
+	public boolean createUser(final String username, final UserToken token, String password);
 	
 	/**
 	 * Deletes a user.

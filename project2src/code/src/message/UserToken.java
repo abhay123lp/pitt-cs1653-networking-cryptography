@@ -1,4 +1,6 @@
 package message;
+
+import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
 /**
@@ -31,4 +33,8 @@ public interface UserToken
 	 * @return The list of group memberships encoded in this token
 	 */
 	public List<String> getGroups();
+	
+	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey, byte[] decryptedData);
+	
+	
 } // -- end interface UserToken

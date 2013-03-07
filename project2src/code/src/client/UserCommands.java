@@ -1,3 +1,4 @@
+package client;
 
 import java.io.BufferedReader;  // Buffered Reader used for reading input
 import java.io.FileNotFoundException;
@@ -8,6 +9,8 @@ import java.util.List;
 import java.io.FileReader;
 
 import java.util.*;
+
+import message.UserToken;
 
 /**
  * 
@@ -39,7 +42,9 @@ public class UserCommands {
 		handleInitialCommandlineArguments(args);		
 		groupClient = new GroupClient();
 		// The user can define the IP and port number from the commandline.
+		System.out.println("Connecting to group server");
 		groupClient.connect(groupServerIP, groupServerPort);
+		System.out.println("Connected");
 		// The user logs into the group server
 		UserToken userToken = connectUserToGroupServer();
 		fileClient = new FileClient();

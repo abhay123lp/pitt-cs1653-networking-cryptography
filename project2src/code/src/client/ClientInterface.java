@@ -1,4 +1,6 @@
+
 package client;
+
 /**
  * Interface that contains methods relating to all forms of clients to be used by the group-based file sharing application.
  * This interface came from the splitting of the FileClientInterface and the GroupClientInterface.

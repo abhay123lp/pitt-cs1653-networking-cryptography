@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import message.Envelope;
 
 import server.Server;
+import server.group.GroupServer;
 
 /**
  * Assumes this is up 24/7, so we do not deal with writing out upon shut down.
@@ -46,6 +47,31 @@ public class CertificateAuthority extends Server
 	private static final String NAME = "Certificate Authority";
 	
 	private static final String TEMP_FILE_NAME = "caTemp.tmp";
+	
+	
+	public static void main(String[] args)
+	{
+		if (args.length > 0)
+		{
+			try
+			{
+				CertificateAuthority server = new CertificateAuthority(Integer.parseInt(args[0]));
+				server.start();
+			}
+			catch (NumberFormatException e)
+			{
+				System.out.printf("Enter a valid port number or pass no arguments to use the default port (%d)\n", GroupServer.SERVER_PORT);
+			}
+		}
+		else
+		{
+			CertificateAuthority server = new CertificateAuthority();
+			server.start();
+		}
+	}// end method main(String[])
+
+	
+	
 	
 	public CertificateAuthority()
 	{
@@ -92,7 +118,7 @@ public class CertificateAuthority extends Server
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListenerCA()));
 		ScheduledExecutorService timer = new ScheduledThreadPoolExecutor(1);
-		timer.scheduleAtFixedRate(new AutoSaveCA(this), 0, 3, TimeUnit.SECONDS);
+		timer.scheduleAtFixedRate(new AutoSaveCA(this), 0, 3, TimeUnit.MINUTES);
 		
 		ServerSocket serverSock = null;
 		try
@@ -116,6 +142,7 @@ public class CertificateAuthority extends Server
 				sock = serverSock.accept();
 //				thread = new CAThread(sock, this, this.privateKey);
 				thread = new CAThread(sock, this);
+				System.out.println("got connection");
 				thread.start();
 			}
 		}// end try block

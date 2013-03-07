@@ -1,7 +1,9 @@
+package server.group;
+
 /* This thread does all the work. It communicates with the client through Envelopes.
  * 
  */
-package server.group;
+
 import java.lang.Thread;
 import java.net.Socket;
 import java.io.*;
@@ -18,6 +20,7 @@ import javax.crypto.spec.SecretKeySpec;
 import message.Envelope;
 import message.Token;
 import message.UserToken;
+
 
 /**
  * The thread spawned by {@link GroupServer} after accepting a connection.
@@ -45,7 +48,7 @@ public class GroupThread extends Thread
 	private final String PROVIDER = "BC";
 	private final String ASYM_ALGORITHM = "RSA";
 	
-	//private RSAPublicKey publicKey;
+	private RSAPublicKey publicKey;
 	private RSAPrivateKey privateKey; 
 	
 	private Key SYMMETRIC_KEY; 
@@ -59,11 +62,12 @@ public class GroupThread extends Thread
 	 * @param _socket The socket to use.
 	 * @param _gs The group server object to use.
 	 */
-	public GroupThread(Socket _socket, GroupServer _gs, RSAPrivateKey _privKey)
+	public GroupThread(Socket _socket, GroupServer _gs, RSAPrivateKey _privKey, RSAPublicKey _pubKey)
 	{
 		socket = _socket;
 		my_gs = _gs;
 		privateKey = _privKey;
+		publicKey = _pubKey;
 		
 	}
 	
@@ -204,14 +208,29 @@ public class GroupThread extends Thread
 			
 			do
 			{
-							
-				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+				/*
+				byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+				
+				if(envelopeBytes == null){
+					System.out.println("env bytes is null");
+				}
+				
+				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, envelopeBytes);
+				
+				if(decryptedMsg == null){
+					System.out.println("decryptedMsg bytes is null");
+				}
 				
 				Object convertedObj = convertToObject(decryptedMsg);
 				
-				Envelope message = (Envelope)convertedObj;							
+				if(convertedObj == null){
+					System.out.println("convertedObj is null");
+				}
 				
-				//Envelope message = (Envelope)input.readObject();
+				Envelope message = (Envelope)convertedObj;							
+				*/
+				
+				Envelope message = (Envelope)input.readObject();
 				System.out.println("Request received: " + message.getMessage());
 				Envelope response;
 				
@@ -260,6 +279,7 @@ public class GroupThread extends Thread
 				}// end if block
 				else if (message.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
 				{
+					
 					byte[] encryptedChallenge = (byte[])message.getObjContents().get(0); // Get the encrypted challenge
 					byte[] encryptedKey = (byte[])message.getObjContents().get(0); // Get the encrypted key
 					if (encryptedChallenge == null || encryptedKey == null)
@@ -331,22 +351,34 @@ public class GroupThread extends Thread
 							if (message.getObjContents().get(1) != null)
 							{
 								String username = (String)message.getObjContents().get(0); // Extract the username
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token								
-								String password = (String)message.getObjContents().get(2); // Extract the password
-								if (createUser(username, yourToken, password))
-								{
-									response = new Envelope("OK"); // Success
+								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token	
+								
+								//return b.toByteArray(); 
+								byte[] byteToken = convertToByteArray(yourToken);
+								
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+								
+								if(checkToken){						
+								
+									String password = (String)message.getObjContents().get(2); // Extract the password
+									if (createUser(username, yourToken, password))
+									{
+										response = new Envelope("OK"); // Success
+									}
+									
+								} else {
+								
+									System.out.println("Token not authenticated.");
+								
 								}
 							}
 						}// end if block
 					}// end else block
 					
 					 //return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
-																						
+					byte[] byteArray = convertToByteArray(response);																						
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
-					
+					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );					
 					
 				}// end else if block
 				else if (message.getMessage().equals("DUSER")) // Client wants to delete a user
@@ -366,9 +398,22 @@ public class GroupThread extends Thread
 								String username = (String)message.getObjContents().get(0); // Extract the username
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
-								if (deleteUser(username, yourToken))
-								{
-									response = new Envelope("OK"); // Success
+								//return b.toByteArray(); 
+								byte[] byteToken = convertToByteArray(yourToken);
+								
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+								
+								if(checkToken){	
+																
+									if (deleteUser(username, yourToken))
+									{
+										response = new Envelope("OK"); // Success
+									}
+								
+								} else {
+								
+									System.out.println("Token not authenticated.");
+								
 								}
 							}
 						}// end if block
@@ -403,11 +448,24 @@ public class GroupThread extends Thread
 								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
-								if (createGroup(groupname, yourToken))
-								{
-									response = new Envelope("OK"); // Success
-									yourToken.getGroups().add(groupname);
-									response.addObject(yourToken); // Make sure that group client updates its own token
+								//return b.toByteArray(); 
+								byte[] byteToken = convertToByteArray(yourToken);
+								
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+								
+								if(checkToken){	
+																
+									if (createGroup(groupname, yourToken))
+									{
+										response = new Envelope("OK"); // Success
+										yourToken.getGroups().add(groupname);
+										response.addObject(yourToken); // Make sure that group client updates its own token
+									}
+								
+								} else {
+								
+									System.out.println("Token not authenticated.");
+								
 								}
 							}
 						}// end if block
@@ -439,11 +497,25 @@ public class GroupThread extends Thread
 							{
 								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
-								if (deleteGroup(groupname, yourToken))
-								{
-									response = new Envelope("OK"); // Success
-									yourToken.getGroups().remove(groupname); // remove the group from the users token
-									response.addObject(yourToken); // send the updated token in response
+								
+								//return b.toByteArray(); 
+								byte[] byteToken = convertToByteArray(yourToken);
+								
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+								
+								if(checkToken){	
+																	
+									if (deleteGroup(groupname, yourToken))
+									{
+										response = new Envelope("OK"); // Success
+										yourToken.getGroups().remove(groupname); // remove the group from the users token
+										response.addObject(yourToken); // send the updated token in response
+									}
+								
+								} else {
+								
+									System.out.println("Token not authenticated.");
+								
 								}
 							}
 						}// end if block
@@ -476,13 +548,24 @@ public class GroupThread extends Thread
 								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
 								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
+								byte[] byteToken = convertToByteArray(yourToken);
+								
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+								
+								if(checkToken){
+								
 								List<String> members = listMembers(groupname, yourToken);
 								
-								if (members != null)
-								{
-									response = new Envelope("OK"); // Success
-									response.addObject(members); // Add member list to the response
-									response.addObject(new Integer(members.size()));
+									if (members != null)
+									{
+										response = new Envelope("OK"); // Success
+										response.addObject(members); // Add member list to the response
+										response.addObject(new Integer(members.size()));
+									}
+								} else {
+									
+									System.out.println("Token not authenticated.");
+									
 								}
 							}
 						}// end if block
@@ -517,15 +600,27 @@ public class GroupThread extends Thread
 									String groupname = (String)message.getObjContents().get(1); // Extract the groupname
 									UserToken yourToken = (UserToken)message.getObjContents().get(2); // Extract the token
 									
-									if (addUserToGroup(username, groupname, yourToken))
-									{
-										response = new Envelope("OK"); // Success
-										// Add the group name for the user in the token
-										if (username.equals(yourToken.getSubject()))
+									byte[] byteToken = convertToByteArray(yourToken);
+									
+									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+									
+									if(checkToken){
+									
+									
+										if (addUserToGroup(username, groupname, yourToken))
 										{
-											yourToken.getGroups().add(groupname);
+											response = new Envelope("OK"); // Success
+											// Add the group name for the user in the token
+											if (username.equals(yourToken.getSubject()))
+											{
+												yourToken.getGroups().add(groupname);
+											}
+											response.addObject(yourToken);
 										}
-										response.addObject(yourToken);
+									} else {
+										
+										System.out.println("Token not authenticated.");
+										
 									}
 								}// end if block
 							}// end if block
@@ -564,13 +659,26 @@ public class GroupThread extends Thread
 									String groupname = (String)message.getObjContents().get(1); // Extract the groupname
 									UserToken yourToken = (UserToken)message.getObjContents().get(2); // Extract the token
 									
-									if (deleteUserFromGroup(username, groupname, yourToken))
-									{
-										response = new Envelope("OK"); // Success
-										// Remove the groupname from the user in the token
-										yourToken.getGroups().remove(groupname);
-										response.addObject(yourToken);
+									byte[] byteToken = convertToByteArray(yourToken);
+									
+									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey, byteToken);
+									
+									if(checkToken){
+									
+										if (deleteUserFromGroup(username, groupname, yourToken))
+										{
+											response = new Envelope("OK"); // Success
+											// Remove the groupname from the user in the token
+											yourToken.getGroups().remove(groupname);
+											response.addObject(yourToken);
+										}
+									} else {
+										
+										System.out.println("Token not authenticated.");
+										
 									}
+									
+									
 								}// end if block
 							}// end if block
 						}// end if block

@@ -1,3 +1,5 @@
+package server.group;
+
 /* This list represents the users on the server */
 import java.security.MessageDigest;
 import java.security.SecureRandom;

@@ -1,4 +1,5 @@
 package server.file;
+
 /**
  * Runs the {@link FileServer}.
  * This class holds the main method to run the FileServer.
