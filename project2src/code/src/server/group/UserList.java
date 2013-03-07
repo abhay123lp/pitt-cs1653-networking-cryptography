@@ -1,7 +1,7 @@
-package server.group;
 /* This list represents the users on the server */
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.*;
-
 
 /**
  * A list of all the users in a particular {@link GroupServer}.
@@ -16,20 +16,61 @@ public class UserList implements java.io.Serializable
 	 */
 	private static final long serialVersionUID = 7600343803563417992L;
 	
+	// TODO: password support
 	/**
 	 * list is a Hashtable class variable that connects a username (String) to a User object.
 	 */
 	private Hashtable<String, User> list = new Hashtable<String, User>();
+	/**
+	 * passwordList is a Hashtable which holds the passwords of users
+	 * Retrieve the password by entering a username -- .get(username) returns null if that user
+	 * is not in the table
+	 */
+	// TODO: SHA-1 with a salt -- need to have an integer
+	private Hashtable<String, String> passwordList = new Hashtable<String, String>();
+	/**
+	 * saltList is a Hashtable which holds the salts for SHA-1
+	 * We use the salts and concatenate them to the user's password.
+	 * Then we hash the clear-text password concatenated with the salt to get the hash.
+	 * That hash can be compared with the passwordList
+	 */
+	private Hashtable<String, String> saltList = new Hashtable<String, String>();
 	
 	/**
 	 * This method will add a user to the class variable list.
 	 * 
 	 * @param username The username to add.
 	 */
-	public synchronized void addUser(String username)
+	public synchronized void addUser(String username, String password)
 	{
-		User newUser = new User();
-		list.put(username, newUser);
+		try
+		{
+			User newUser = new User();
+			list.put(username, newUser);
+			// Get a random salt
+			SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
+			byte [] salt = new byte[16];
+			
+			random.nextBytes(salt);
+			// Concat the salt to the end of the password
+			String saltedPassword = password + new String(salt);
+			System.out.println("password + salt: " + saltedPassword);
+			MessageDigest msgDigest = MessageDigest.getInstance("SHA1");
+			msgDigest.update(saltedPassword.getBytes());
+			// Now we get the salted, hashed password
+			byte[] saltedHashedPassword = msgDigest.digest();
+			
+			
+			// (Obvious) Store the hashed password -- useless to attacker with hash
+			passwordList.put(username, new String(saltedHashedPassword));
+			// Store the salt for future checks
+			saltList.put(username, new String(salt));
+			//System.out.println("UserList (checkPassword):  password: " + new String(password) + "  salted password: " + saltedPassword + "  salt: " + new String(salt) + "  hashed PW: " + new String(saltedHashedPassword));
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -40,13 +81,16 @@ public class UserList implements java.io.Serializable
 	public synchronized void deleteUser(String username)
 	{
 		list.remove(username);
+		passwordList.remove(username);
+		saltList.remove(username);
 	}
 	
 	/**
 	 * This method will check if a user exists in the list.
 	 * 
 	 * @param username The username to check in the list.
-	 * @return Returns a boolean value indicating if the user exists. If the user exists it returns true, otherwise false.
+	 * @return Returns a boolean value indicating if the user exists. If the user exists it returns true, otherwise 
+	 * false.
 	 */
 	public synchronized boolean checkUser(String username)
 	{
@@ -58,6 +102,58 @@ public class UserList implements java.io.Serializable
 		{
 			return false;
 		}
+	}
+	
+	/**
+	 * This method returns true if the provided password matches the hashed password in the Hashtable.
+	 * 
+	 * @param username The username to check in the passwordList.
+	 * @param password This is the cleartext password. It will be hashed and matched against the 
+	 * hashed password in passwordList.
+	 * @return Returns true if the username and password match.
+	 */
+	// TODO: SHA-1 hashing
+	// TODO: Do we need the list still? Key, value pairs already in passwordList
+	// TODO: comments
+	public synchronized boolean checkPassword(String username, String password)
+	{
+		try
+		{
+			String salt = "";
+			if(passwordList.containsKey(username))
+			{
+				salt = new String(saltList.get(username));
+			}
+			// user not in list. Non-existent users cannot have passwords
+			else
+			{
+				return false;
+			}		
+			
+			// Concat the salt to the end of the password
+			String saltedPassword = password + new String(salt);
+			System.out.println("password + salt: " + saltedPassword);
+			MessageDigest msgDigest = MessageDigest.getInstance("SHA1");
+			msgDigest.update(saltedPassword.getBytes());
+			// Now we get the salted, hashed password
+			String saltedHashedPassword = new String(msgDigest.digest());
+			//System.out.println("UserList (checkPassword):  password: " + new String(password) + "  salted password: " + saltedPassword + "  salt: " + new String(salt) + "  hashed PW: " + new String(saltedHashedPassword));	
+			// Check the hashed password that was entered against the hashed password in the hashList.
+			if (saltedHashedPassword.equals(passwordList.get(username)))
+			{
+				return true;
+			}
+			// Either the hash matched the
+			else
+			{
+				return false;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	/**

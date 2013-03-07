@@ -1,5 +1,7 @@
-package server.group;
-
+/* Group server. Server loads the users from UserList.bin.
+ * If user list does not exists, it creates a new list and makes the user the server administrator.
+ * On exit, the server saves the user list to file. 
+ */
 
 /*
  * TODO: This file will need to be modified to save state related to
@@ -7,19 +9,15 @@ package server.group;
  *
  */
 
-
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
 import java.util.*;
 
-import client.GroupClient;
-
-import server.Server;
-
 /**
  * Handles connections to the {@link GroupClient}.
- * Crehowever that the GroupServer does not know who is connecting to it, but will assume that the client understands the protocol.
+ * Creates a listener to accept incoming connections.
+ * Note however that the GroupServer does not know who is connecting to it, but will assume that the client understands the protocol.
  */
 public class GroupServer extends Server
 {
@@ -58,6 +56,7 @@ public class GroupServer extends Server
 		super(_port, "ALPHA");
 	}
 	
+	// TODO: password support
 	public void start()
 	{
 		// Overwrote server.start() because if no user file exists, initial admin account needs to be created
@@ -82,7 +81,7 @@ public class GroupServer extends Server
 			groupStream = new ObjectInputStream(new FileInputStream(groupFile));
 			groupList = (GroupList)groupStream.readObject();
 			groupStream.close();
-		}// end try blcok
+		}// end try block
 		catch (FileNotFoundException e)
 		{
 			System.out.println("UserList File Does Not Exist. Creating UserList...");
@@ -90,10 +89,11 @@ public class GroupServer extends Server
 			System.out.print("Enter your username: ");
 			Scanner console = new Scanner(System.in);
 			String username = console.next();
-			
+			System.out.print("\nEnter your password: ");
+			String password = console.next();
 			// Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
 			userList = new UserList();
-			userList.addUser(username);
+			userList.addUser(username, password);
 			userList.addGroup(username, "ADMIN");
 			userList.addOwnership(username, "ADMIN");
 			

@@ -1,20 +1,10 @@
-package server.group;
-
 /* This thread does all the work. It communicates with the client through Envelopes.
  * 
  */
-
 import java.lang.Thread;
 import java.net.Socket;
 import java.io.*;
 import java.util.*;
-
-import message.Envelope;
-import message.Token;
-import message.UserToken;
-
-import client.GroupClient;
-
 
 /**
  * The thread spawned by {@link GroupServer} after accepting a connection.
@@ -82,12 +72,23 @@ public class GroupThread extends Thread
 					}
 					else
 					{
-						UserToken yourToken = createToken(username); // Create a token
-						
-						// Respond to the client. On error, the client will receive a null token
-						response = new Envelope("OK");
-						response.addObject(yourToken);
-						output.writeObject(response);
+						String password = (String)message.getObjContents().get(1);
+						if(checkPassword(username, password))
+						{
+							UserToken yourToken = createToken(username); // Create a token
+							
+							// Respond to the client. On error, the client will receive a null token
+							response = new Envelope("OK");
+							response.addObject(yourToken);
+							output.writeObject(response);
+						}
+						// Password did not match
+						else
+						{
+							// Respond to the client. On error, the client will receive a null token
+							response = new Envelope("FAIL");
+							output.writeObject(response);
+						}
 					}
 				}// end if block
 				else if (message.getMessage().equals("CUSER")) // Client wants to create a user
@@ -105,9 +106,9 @@ public class GroupThread extends Thread
 							if (message.getObjContents().get(1) != null)
 							{
 								String username = (String)message.getObjContents().get(0); // Extract the username
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
-								
-								if (createUser(username, yourToken))
+								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token								
+								String password = (String)message.getObjContents().get(2); // Extract the password
+								if (createUser(username, yourToken, password))
 								{
 									response = new Envelope("OK"); // Success
 								}
@@ -330,6 +331,7 @@ public class GroupThread extends Thread
 	 * @param username The String representing the username.
 	 * @return Returns a valid UserToken
 	 */
+	// TODO: password support
 	private UserToken createToken(String username)
 	{
 		// Check that user exists
@@ -345,15 +347,17 @@ public class GroupThread extends Thread
 		}
 	}// end method createToken(String)
 	
+	// TODO: update with password
 	/**
 	 * This method will create a new user in the group server.
 	 * 
 	 * @param username The username to add to the group server.
 	 * @param yourToken The token of the requester.
 	 * @return Returns a boolean value indicating if the user was created. Will return true if the user was created,
-	 *         false if the username already exists, false if the requester is not an admin, and false if the requester does not exist.
+	 *         false if the username already exists, false if the requester is not an admin, and false if the requester
+	 *         does not exist. False if the password does match the username
 	 */
-	private boolean createUser(String username, UserToken yourToken)
+	private boolean createUser(String username, UserToken yourToken, String password)
 	{
 		String requester = yourToken.getSubject();
 		
@@ -372,7 +376,7 @@ public class GroupThread extends Thread
 				}
 				else
 				{
-					my_gs.userList.addUser(username);
+					my_gs.userList.addUser(username, password);
 					return true;
 				}
 			}// end if block
@@ -386,6 +390,11 @@ public class GroupThread extends Thread
 			return false; // requester does not exist
 		}
 	}// end method createUser(String, UserToken)
+	
+	private boolean checkPassword(String username, String password)
+	{
+		return my_gs.userList.checkPassword(username, password);
+	}
 	
 	/**
 	 * This method will delete a user from the group server.
