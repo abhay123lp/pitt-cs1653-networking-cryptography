@@ -1,23 +1,23 @@
-package server.file;
 /* File worker thread handles the business of uploading, downloading, and removing files for clients with valid tokens */
-
 
 import java.lang.Thread;
 import java.net.Socket;
+import java.security.Key;
+import java.security.SecureRandom;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import message.Envelope;
-import message.ShareFile;
-import message.Token;
-import message.UserToken;
-
-import client.FileClient;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * The thread spawned by {@link FileServer} after accepting a connection.
@@ -32,6 +32,20 @@ public class FileThread extends Thread
 	 */
 	private final Socket socket;
 	
+	private final String PROVIDER = "BC";
+	private final String ASYM_ALGORITHM = "RSA";
+	
+	//private RSAPublicKey publicKey;
+	private RSAPrivateKey privateKey; 
+	
+	private Key SYMMETRIC_KEY; 
+	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
+	
+	private static final int IV_BYTES = 16;
+	
+	
+	
+	
 	/**
 	 * This constructor initializes the socket class variable to the socket passed in as a parameter.
 	 * 
@@ -41,6 +55,123 @@ public class FileThread extends Thread
 	{
 		socket = _socket;
 	}
+			
+	
+	private static IvParameterSpec ivAES(int ivBytes){
+
+		// Random Number used for IV
+		SecureRandom randomNumber = new SecureRandom();
+
+		byte[] bytesIV = new byte[ivBytes];	
+		randomNumber.nextBytes(bytesIV);
+
+		// Create the IV
+		return new IvParameterSpec(bytesIV);
+
+	}
+	
+	
+	private static byte[] convertToByteArray(Object objToConvert){
+		
+		try{
+			
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		    ObjectOutputStream oos = new ObjectOutputStream(baos);
+		    oos.writeObject(objToConvert);
+		    //return b.toByteArray(); 
+			return baos.toByteArray();
+		
+		} catch(Exception ex){
+		
+			System.out.println("Error creating byte array envelope: " + ex.toString());
+		}
+		
+		return null;
+		
+	}
+	
+	private static Object convertToObject(byte[] bytesToConvert){
+		
+		try
+		{
+			
+			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
+	        ObjectInputStream ois = new ObjectInputStream(bais);
+	        
+	        return ois.readObject();
+	        
+		} catch(Exception ex){
+			
+			System.out.println("Error byte array to object: " + ex.toString());
+			
+		}
+		
+		return null;
+		
+	}
+	
+	
+	
+	/**
+	 * This method will encrypt data via an AES encryption algorithm utilizing an IV and symmetric key.
+	 * @param algorithm The algorithm to use.
+	 * @param provider The security provider.
+	 * @param key The symmetric key
+	 * @param iv The IV used for encryption.
+	 * @param dataToEncrypt The clear data to encrypt.
+	 * @return byte[] array of encrypted data.
+	 */
+	private static byte[] AESEncrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] byteData){
+
+		try{
+
+			// Create the cipher object
+			Cipher objCipher = Cipher.getInstance(algorithm, provider);
+
+			// Initialize the cipher encryption object, add the key, and add the IV
+			objCipher.init(Cipher.ENCRYPT_MODE, key, iv); 
+			
+			// Encrypt the data and store in encryptedData
+			return objCipher.doFinal(byteData);
+
+
+		} catch(Exception ex){
+			System.out.println(ex.toString());
+		}
+
+		return null;
+	}
+	
+	
+	/**
+	 * This method will decrypt the data.
+	 * @param algorithm The algorithm to use.
+	 * @param provider The security provider.
+	 * @param key The symmetric key to use.
+	 * @param iv The IV to use for decryption.
+	 * @param dataToDecrypt The data to decrypt.
+	 * @return byte[] array of decrypted data.
+	 */
+	private static byte[] AESDecrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] dataToDecrypt){
+
+		try{
+
+			Cipher objCipher = Cipher.getInstance(algorithm, provider);
+
+			// Initialize the cipher encryption object, add the key, and add the IV
+			objCipher.init(Cipher.DECRYPT_MODE, key, iv); 
+
+			// Encrypt the data and store in encryptedData
+			return objCipher.doFinal(dataToDecrypt);
+
+		} catch(Exception ex){
+			System.out.println(ex.toString());
+		}
+
+		return null;
+	}
+	
+	
 	
 	/**
 	 * This method executes the processes associated with serving files such as list files, download a file, delete a file, etc...
@@ -55,9 +186,21 @@ public class FileThread extends Thread
 			final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
 			Envelope response;
 			
+			// Get the IV to use
+			IvParameterSpec IV = ivAES(IV_BYTES);
+			
 			do
 			{
-				Envelope e = (Envelope)input.readObject();
+				
+				
+				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+				
+				Object convertedObj = convertToObject(decryptedMsg);
+				
+				Envelope e = (Envelope)convertedObj;		
+				
+				
+				//Envelope e = (Envelope)input.readObject();
 				System.out.println("Request received: " + e.getMessage());
 				
 				// Handler to list files that this user is allowed to see
@@ -95,8 +238,76 @@ public class FileThread extends Thread
 					
 					response = new Envelope("OK");
 					response.addObject(visibleFiles);
-					output.writeObject(response);
+					
+					//return b.toByteArray(); 
+					byte[] byteArray = convertToByteArray(response);
+																	
+					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					
+					
+					//output.writeObject(response);
 				}// end if block
+				else if (e.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
+				{
+					byte[] encryptedChallenge = (byte[])e.getObjContents().get(0); // Get the encrypted challenge
+					byte[] encryptedKey = (byte[])e.getObjContents().get(0); // Get the encrypted key
+					if (encryptedChallenge == null || encryptedKey == null)
+					{
+						response = new Envelope("FAIL");
+						response.addObject(null);
+						
+						//return b.toByteArray(); 
+						byte[] byteArray = convertToByteArray(response);
+																		
+						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						
+						//output.writeObject(response);
+					}
+					else
+					{
+						
+						// Create the cipher object
+						Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
+
+						// Initialize the cipher encryption object, add the key 
+						objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
+
+						// Encrypt the data and store in encryptedData
+						byte[] decryptedChallenge = objCipher.doFinal(encryptedChallenge);
+												
+						byte[] decryptedKey = objCipher.doFinal(encryptedKey);
+						
+						//SYMMETRIC_KEY = new Key(decryptedKey);
+											
+						// Get the IV to use
+						//IvParameterSpec IV = ivAES(IV_BYTES);
+						
+						//SecretKeySpec secretKeySpec 
+						SYMMETRIC_KEY = new SecretKeySpec(decryptedKey, "AES");
+						
+						// Initialize the cipher encryption object, add the key, and add the IV
+						objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
+
+						//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+
+						// Encrypt the data and store in encryptedData
+						byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
+																		
+						// Respond to the client. On error, the client will receive a null token
+						response = new Envelope("OK");
+						
+						response.addObject(newEncryptedChallenge);
+						
+						//return b.toByteArray(); 
+						byte[] byteArray = convertToByteArray(response);
+																		
+						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						
+						//output.writeObject(response);
+											
+					}
+					
+				}							
 				else if (e.getMessage().equals("UPLOADF"))
 				{
 					if (e.getObjContents().size() < 3)
@@ -141,15 +352,44 @@ public class FileThread extends Thread
 								System.out.printf("Successfully created file %s\n", remotePath.replace('/', '_'));
 								
 								response = new Envelope("READY"); // Success
-								output.writeObject(response);
 								
-								e = (Envelope)input.readObject();
+								//return b.toByteArray(); 
+								byte[] byteArray = convertToByteArray(response);
+																				
+								output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+								
+								//output.writeObject(response);
+								
+								//e = (Envelope)input.readObject();
+								
+								decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+								
+								convertedObj = convertToObject(decryptedMsg);
+								
+								e = (Envelope)convertedObj;	
+								
+								
 								while (e.getMessage().compareTo("CHUNK") == 0)
 								{
 									fos.write((byte[])e.getObjContents().get(0), 0, (Integer)e.getObjContents().get(1));
 									response = new Envelope("READY"); // Success
-									output.writeObject(response);
-									e = (Envelope)input.readObject();
+									
+									//return b.toByteArray(); 
+									byteArray = convertToByteArray(response);
+																					
+									output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+									
+									//output.writeObject(response);
+									
+									decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+									
+									convertedObj = convertToObject(decryptedMsg);
+									
+									//Envelope e = (Envelope)convertedObj;	
+									
+									e = (Envelope)convertedObj;
+									
+									//e = (Envelope)input.readObject();
 								}
 								
 								if (e.getMessage().compareTo("EOF") == 0)
@@ -167,7 +407,11 @@ public class FileThread extends Thread
 							}// end else block
 						}// end else block
 					}// end else block
-					output.writeObject(response);
+					//return b.toByteArray(); 
+					byte[] byteArray = convertToByteArray(response);
+																	
+					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(response);
 				}// end else if block
 				else if (e.getMessage().compareTo("DOWNLOADF") == 0)
 				{
@@ -178,13 +422,23 @@ public class FileThread extends Thread
 					{
 						System.out.printf("Error: File %s doesn't exist\n", remotePath);
 						e = new Envelope("ERROR_FILEMISSING");
-						output.writeObject(e);
+						
+						byte[] byteArray = convertToByteArray(e);
+						
+						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						
+					//	output.writeObject(e);
 					}
 					else if (!t.getGroups().contains(sf.getGroup()))
 					{
 						System.out.printf("Error user %s doesn't have permission\n", t.getSubject());
 						e = new Envelope("ERROR_PERMISSION");
-						output.writeObject(e);
+						
+						byte[] byteArray = convertToByteArray(e);
+						
+						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						
+						//output.writeObject(e);
 					}
 					else
 					{
@@ -195,7 +449,12 @@ public class FileThread extends Thread
 							{
 								System.out.printf("Error file %s missing from disk\n", "_" + remotePath.replace('/', '_'));
 								e = new Envelope("ERROR_NOTONDISK");
-								output.writeObject(e);
+								
+								byte[] byteArray = convertToByteArray(e);
+								
+								output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+								
+								//output.writeObject(e);
 							}
 							else
 							{
@@ -221,10 +480,20 @@ public class FileThread extends Thread
 									
 									e.addObject(buf);
 									e.addObject(new Integer(n));
+																		
+									byte[] byteArray = convertToByteArray(e);
 									
-									output.writeObject(e);
+									output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 									
-									e = (Envelope)input.readObject();
+									//output.writeObject(e);
+									
+									//e = (Envelope)input.readObject();
+									
+									decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+									
+									convertedObj = convertToObject(decryptedMsg);
+									
+									e = (Envelope)convertedObj;
 									
 								} while (fis.available() > 0);
 								
@@ -233,9 +502,22 @@ public class FileThread extends Thread
 								{
 									
 									e = new Envelope("EOF");
-									output.writeObject(e);
 									
-									e = (Envelope)input.readObject();
+									byte[] byteArray = convertToByteArray(e);
+									
+									output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );								
+									
+									//output.writeObject(e);
+									
+									//e = (Envelope)input.readObject();
+									
+									decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+									
+									convertedObj = convertToObject(decryptedMsg);
+									
+									e = (Envelope)convertedObj;
+									
+									
 									if (e.getMessage().compareTo("OK") == 0)
 									{
 										System.out.printf("File data upload successful\n");
@@ -304,7 +586,12 @@ public class FileThread extends Thread
 							e = new Envelope(e1.getMessage());
 						}
 					}// end else block
-					output.writeObject(e);
+
+					byte[] byteArray = convertToByteArray(e);
+					
+					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					
+					//output.writeObject(e);
 				}// end else if block
 				else if (e.getMessage().equals("DISCONNECT"))
 				{

@@ -9,9 +9,6 @@ import java.util.List;
 import message.Envelope;
 import message.UserToken;
 
-
-import server.file.FileServer;
-
 /**
  * Handles connections to the {@link FileServer}.
  * Note however that the FileClient does not know who it is connecting to, but will assume that the server understands the protocol.
