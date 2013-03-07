@@ -1,10 +1,10 @@
+package message;
 
 import java.io.Serializable;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,7 +70,7 @@ public class Token implements UserToken, Serializable
 	}
 	
 	
-	private static byte[] gengerateRSASignature(String algorithm, String provider, RSAPrivateKey privKey, String clearText){
+	private static byte[] generateRSASignature(String algorithm, String provider, RSAPrivateKey privKey, String clearText){
 
 		try{
 
