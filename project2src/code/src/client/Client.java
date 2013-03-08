@@ -42,11 +42,11 @@ public abstract class Client implements ClientInterface
 	 */
 	protected ObjectInputStream input;
 	
-	private final String RSA_ALGORITHM = "RSA/None/NoPadding";
+	protected final String RSA_ALGORITHM = "RSA/None/NoPadding";
 	private final String SYM_ALGORITHM = "AES";
-	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
-	private final String PROVIDER = "BC";
-	private Key SYMMETRIC_KEY;
+	protected final String SYM_KEY_ALG = "AES/CTR/NoPadding";
+	protected final String PROVIDER = "BC";
+	protected Key SYMMETRIC_KEY;
 	private SecureRandom CHALLENGE;
 	public RSAPublicKey serverPublicKey;
 	private static final int IV_BYTES = 16;
@@ -176,6 +176,7 @@ public abstract class Client implements ClientInterface
 		} catch (Exception ex){
 
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 
 		}
 
@@ -214,6 +215,7 @@ public abstract class Client implements ClientInterface
 		} catch(Exception ex){
 		
 			System.out.println("Error creating byte array envelope: " + ex.toString());
+			ex.printStackTrace();
 		}
 		
 		return null;
@@ -233,6 +235,7 @@ public abstract class Client implements ClientInterface
 		} catch(Exception ex){
 			
 			System.out.println("Error byte array to object: " + ex.toString());
+			ex.printStackTrace();
 			
 		}
 		
@@ -267,6 +270,7 @@ public abstract class Client implements ClientInterface
 
 		} catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 
 		return null;
@@ -348,6 +352,7 @@ public abstract class Client implements ClientInterface
 
 		} catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 
 		return null;
@@ -379,6 +384,7 @@ public abstract class Client implements ClientInterface
 
 		} catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 
 		return null;

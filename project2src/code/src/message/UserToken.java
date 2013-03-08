@@ -1,5 +1,6 @@
 package message;
 
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public interface UserToken
 	 */
 	public List<String> getGroups();
 	
-	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey, byte[] decryptedData);
+	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey);
 	
-	
+	public void generateRSASignature(String algorithm, String provider, RSAPrivateKey privKey);
 } // -- end interface UserToken

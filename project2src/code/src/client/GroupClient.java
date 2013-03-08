@@ -27,14 +27,14 @@ import message.UserToken;
  */
 public class GroupClient extends Client implements GroupInterface, ClientInterface {
 
-	private final String PROVIDER = "BC";
-	private final String ASYM_ALGORITHM = "RSA";
+//	private final String PROVIDER = "BC";
+//	private final String ASYM_ALGORITHM = "RSA";
 	
 	private RSAPublicKey publicKey;
 	private RSAPrivateKey privateKey; 
 	
-	private SecretKey SYMMETRIC_KEY; 
-	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
+//	private SecretKey SYMMETRIC_KEY; 
+//	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
 	
 	private static final int IV_BYTES = 16;
 
@@ -115,6 +115,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 
 		} catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 
 		return null;
@@ -136,6 +137,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 		} catch(Exception ex){
 		
 			System.out.println("Error creating byte array envelope: " + ex.toString());
+			ex.printStackTrace();
 		}
 		
 		return null;
@@ -155,6 +157,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 		} catch(Exception ex){
 			
 			System.out.println("Error byte array to object: " + ex.toString());
+			ex.printStackTrace();
 			
 		}
 		
@@ -191,6 +194,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 
 		} catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 
 		return null;
@@ -220,6 +224,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 
 		} catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 
 		return null;
@@ -256,7 +261,9 @@ private static byte[] convertToByteArray(Object objToConvert){
 				
 				//String token = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 				
-				UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+//				Object objectToken = response.getObjContents().get(0);
+//				byte[] byteToken = convertToByteArray(objectToken);
+				token = (UserToken)convertToObject(decryptObjects((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 				
 				
 				// If there is a token in the Envelope, return it
@@ -283,7 +290,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 		catch (Exception e)
 		{
 			System.err.println("Error: " + e.getMessage());
-			e.printStackTrace(System.err);
+			e.printStackTrace();
 			return null;
 		}
 	}// end method getToken(String)
@@ -295,12 +302,12 @@ private static byte[] convertToByteArray(Object objToConvert){
 		{
 			Envelope message = null, response = null;
 			// Tell the server to create a user
-			//message = new Envelope("CUSER");
-			message.addObject(username); // Add user name string
-			message.addObject(token); // Add the requester's token
-			message.addObject(password); // Add the password
+//			message = new Envelope("CUSER");
+//			message.addObject(username); // Add user name string
+//			message.addObject(token); // Add the requester's token
+//			message.addObject(password); // Add the password
 			
-			message = encryptResponseWithSymmetricKey(new Object[]{username, token, password}, "CUSER");
+			message = encryptResponseWithSymmetricKey(new Object[]{username, password, token}, "CUSER");
 			
 			IvParameterSpec IV = ivAES(IV_BYTES);
 			//byte[] byteArray = convertToByteArray(message);
@@ -412,7 +419,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 			if (response.getMessage().equals("OK"))
 			{
 				
-				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				return (UserToken)convertToObject(decryptObjects((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 				
 				
 				
@@ -459,7 +466,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 			if (response.getMessage().equals("OK"))
 			{
 				
-				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				return (UserToken)convertToObject(decryptObjects((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 				
 				
 				//return (UserToken)response.getObjContents().get(0);
@@ -510,9 +517,9 @@ private static byte[] convertToByteArray(Object objToConvert){
 			if (response.getMessage().equals("OK"))
 			{
 				
-				System.out.print(Integer.valueOf(((Integer)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(1))))));
+//				System.out.print(Integer.valueOf(((Integer)convertToObject(decryptObjects((byte[])response.getObjContents().get(1), (byte[])response.getObjContents().get(2))))));
 				
-				return (List<String>)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				return (List<String>)convertToObject(decryptObjects((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(2)));
 				
 				
 				//System.out.print(Integer.valueOf((Integer)response.getObjContents().get(1)));
@@ -559,7 +566,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				return (UserToken)convertToObject(decryptObjects((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 				
 				//return (UserToken)response.getObjContents().get(0);
 			}
@@ -605,7 +612,7 @@ private static byte[] convertToByteArray(Object objToConvert){
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				return (UserToken)convertToObject(decryptObjects((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 				
 				//return (UserToken)response.getObjContents().get(0);
 			}
