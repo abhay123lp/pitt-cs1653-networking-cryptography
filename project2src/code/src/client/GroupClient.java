@@ -14,6 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
 import message.Envelope;
@@ -32,7 +33,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 	private RSAPublicKey publicKey;
 	private RSAPrivateKey privateKey; 
 	
-	private Key SYMMETRIC_KEY; 
+	private SecretKey SYMMETRIC_KEY; 
 	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
 	
 	private static final int IV_BYTES = 16;
@@ -51,8 +52,78 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 
 	}
 	
+	private  Envelope encryptResponseWithSymmetricKey(Object[] objs, String message){
+		
+		try{
+			
+		Envelope response = new Envelope(message);
+		
+		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+					
+		IvParameterSpec IV = ivAES(IV_BYTES);
+		
+		// Initialize the cipher encryption object, add the key, and add the IV
+		objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
+
+		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+
+		for(Object o : objs){
+			
+			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
+			response.addObject(newEncryptedChallenge);
+			
+		}
+		
+		// Encrypt the data and store in encryptedData
+		//byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
+														
+		// Respond to the client. On error, the client will receive a null token
+		//response = new Envelope("OK");
+		
+		//response.addObject(newEncryptedChallenge);
+		response.addObject(IV.getIV());
+		
+        //return b.toByteArray(); 
+//		byte[] byteArray = convertToByteArray(response);
+																
+		return response;
+		
+		//output.writeObject(response);
+		
+		} catch(Exception e){
+			
+			e.printStackTrace();
+			
+		}
+		
+		
+		return null;
+		
+	}
 	
-	private static byte[] convertToByteArray(Object objToConvert){
+	private byte[] decryptObjects(byte[] objByte, byte[] iv)  {
+		
+		try{
+
+			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+
+			// Initialize the cipher encryption object, add the key, and add the IV
+			objCipher.init(Cipher.DECRYPT_MODE, SYMMETRIC_KEY, new IvParameterSpec(iv)); 
+
+			// Encrypt the data and store in encryptedData
+			return objCipher.doFinal(objByte);
+
+		} catch(Exception ex){
+			System.out.println(ex.toString());
+		}
+
+		return null;
+				
+		
+	}
+	
+	
+private static byte[] convertToByteArray(Object objToConvert){
 		
 		try{
 			
@@ -90,6 +161,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		return null;
 		
 	}
+	
+	
 	
 	
 	
@@ -160,18 +233,19 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			Envelope message = null, response = null;
 			
 			// Tell the server to return a token.
-			message = new Envelope("GET");
-			message.addObject(username); // Add user name string
+			message = encryptResponseWithSymmetricKey(new Object[]{username, password}, "GET");
+			//message = new Envelope("GET");
+			//message.addObject(username); // Add user name string
 			// Cleartext password from the user UserCommands.java
-			message.addObject(password);
+			//message.addObject(password);
 			
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			//IvParameterSpec IV = ivAES(IV_BYTES);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
 			
 			
-			//output.writeObject(message);
+			output.writeObject(message);
 			
 			// Get the response from the server
 			response = (Envelope)input.readObject();
@@ -179,16 +253,30 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// Successful response
 			if (response.getMessage().equals("OK"))
 			{
+				
+				//String token = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+				
+				UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				
+				
 				// If there is a token in the Envelope, return it
-				ArrayList<Object> temp = null;
-				temp = response.getObjContents();
+				//ArrayList<Object> temp = null;
+				//temp = response.getObjContents();
 				
 				// TODO: password support
-				if (temp.size() == 1)
-				{
-					token = (UserToken)temp.get(0);
+				//if (temp.size() == 1)
+				//{
+				//	token = (UserToken)temp.get(0);
+					
+					
+				//	String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+					
+				//	UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+					
+					
+					
 					return token;
-				}
+				//}
 			}// end if block
 			return null;
 		}// end try block
@@ -207,26 +295,29 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		{
 			Envelope message = null, response = null;
 			// Tell the server to create a user
-			message = new Envelope("CUSER");
+			//message = new Envelope("CUSER");
 			message.addObject(username); // Add user name string
 			message.addObject(token); // Add the requester's token
 			message.addObject(password); // Add the password
 			
+			message = encryptResponseWithSymmetricKey(new Object[]{username, token, password}, "CUSER");
 			
 			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+						
+			output.writeObject(message);
 			
 			
-			//output.writeObject(message);
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
+			//byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+			//byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			//response = (Envelope)input.readObject();
+			//Object convertedObj = convertToObject(decryptedMsg);
+			//response = (Envelope)convertedObj;
+			
+			response = (Envelope)input.readObject();
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -251,24 +342,28 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			Envelope message = null, response = null;
 			
 			// Tell the server to delete a user
-			message = new Envelope("DUSER");
-			message.addObject(username); // Add user name
-			message.addObject(token); // Add requester's token
+			//message = new Envelope("DUSER");
+			//message.addObject(username); // Add user name
+			//message.addObject(token); // Add requester's token
+			
+			message = encryptResponseWithSymmetricKey(new Object[]{username, token}, "DUSER");
+			
+			
 						
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			//IvParameterSpec IV = ivAES(IV_BYTES);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
 			
-			//output.writeObject(message);
+			output.writeObject(message);
 			
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
+			//byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+			//byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
+			//Object convertedObj = convertToObject(decryptedMsg);
+			//response = (Envelope)convertedObj;
 			
-			//response = (Envelope)input.readObject();
+			response = (Envelope)input.readObject();
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -292,29 +387,36 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		{
 			Envelope message = null, response = null;
 			// Tell the server to create a group
-			message = new Envelope("CGROUP");
-			message.addObject(groupname); // Add the group name string
-			message.addObject(token); // Add the requester's token
+			//message = new Envelope("CGROUP");
+			//message.addObject(groupname); // Add the group name string
+			//message.addObject(token); // Add the requester's token
 			
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			message = encryptResponseWithSymmetricKey(new Object[]{groupname, token}, "CGROUP");
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//IvParameterSpec IV = ivAES(IV_BYTES);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			//output.writeObject(message);
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
 			
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
+			output.writeObject(message);
 			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
+			//byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+			//byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			//response = (Envelope)input.readObject();
+			//Object convertedObj = convertToObject(decryptedMsg);
+			//response = (Envelope)convertedObj;
+			
+			response = (Envelope)input.readObject();
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)response.getObjContents().get(0);
+				
+				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				
+				
+				
+				 //(UserToken)response.getObjContents().get(0);
 			}
 			
 			return null;
@@ -333,29 +435,34 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		{
 			Envelope message = null, response = null;
 			// Tell the server to delete a group
-			message = new Envelope("DGROUP");
-			message.addObject(groupname); // Add group name string
-			message.addObject(token); // Add requester's token
+			//message = new Envelope("DGROUP");
+			message = encryptResponseWithSymmetricKey(new Object[]{groupname, token}, "DGROUP");
+			//message.addObject(groupname); // Add group name string
+			//message.addObject(token); // Add requester's token
 			//output.writeObject(message);
 			
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			//IvParameterSpec IV = ivAES(IV_BYTES);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			
+			output.writeObject(message);
+			//byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+			//byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
+			
+			//Object convertedObj = convertToObject(decryptedMsg);
+			//response = (Envelope)convertedObj;
 			
 			
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
-			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
-			
-			
-			//response = (Envelope)input.readObject();
+			response = (Envelope)input.readObject();
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)response.getObjContents().get(0);
+				
+				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				
+				
+				//return (UserToken)response.getObjContents().get(0);
 			}
 			
 			return null;
@@ -375,33 +482,41 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		{
 			Envelope message = null, response = null;
 			// Tell the server to return the member list
-			message = new Envelope("LMEMBERS");
-			message.addObject(group); // Add group name string
-			message.addObject(token); // Add requester's token
+			//message = new Envelope("LMEMBERS");
+			//message.addObject(group); // Add group name string
+			//message.addObject(token); // Add requester's token
+			
+			message = encryptResponseWithSymmetricKey(new Object[]{group, token}, "LMEMBERS");
 						
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			//IvParameterSpec IV = ivAES(IV_BYTES);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
 			
-			//output.writeObject(message);
+			output.writeObject(message);
 //			output.flush();
 			
 			
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
+		//	byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+			//byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
+		//	Object convertedObj = convertToObject(decryptedMsg);
+			//response = (Envelope)convertedObj;
 			
-		//	response = (Envelope)input.readObject();
+			response = (Envelope)input.readObject();
 //			input.skip(input.available());
 			
 			// If server indicates success, return the member list
 			if (response.getMessage().equals("OK"))
 			{
-				System.out.print(Integer.valueOf((Integer)response.getObjContents().get(1)));
-				return (List<String>)response.getObjContents().get(0); // This cast creates compiler warnings. Sorry.
+				
+				System.out.print(Integer.valueOf(((Integer)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(1))))));
+				
+				return (List<String>)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				
+				
+				//System.out.print(Integer.valueOf((Integer)response.getObjContents().get(1)));
+			//	return (List<String>)response.getObjContents().get(0); // This cast creates compiler warnings. Sorry.
 			}
 			
 			return null;
@@ -419,30 +534,34 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		try
 		{
 			Envelope message = null, response = null;
+			
+			message = encryptResponseWithSymmetricKey(new Object[]{username, groupname,  token}, "AUSERTOGROUP");
 			// Tell the server to add a user to the group
-			message = new Envelope("AUSERTOGROUP");
-			message.addObject(username); // Add user name string
-			message.addObject(groupname); // Add group name string
-			message.addObject(token); // Add requester's token
+			//message = new Envelope("AUSERTOGROUP");
+			//message.addObject(username); // Add user name string
+			//message.addObject(groupname); // Add group name string
+			//message.addObject(token); // Add requester's token
 			
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			//IvParameterSpec IV = ivAES(IV_BYTES);
+			//byte[] byteArray = convertToByteArray(message);
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
 			
-			//output.writeObject(message);
+			output.writeObject(message);
 			
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
+			//byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+			//byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
+			//Object convertedObj = convertToObject(decryptedMsg);
+			//response = (Envelope)convertedObj;
 			
-			//response = (Envelope)input.readObject();
+			response = (Envelope)input.readObject();
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)response.getObjContents().get(0);
+				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				
+				//return (UserToken)response.getObjContents().get(0);
 			}
 			
 			return null;
@@ -461,29 +580,34 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		{
 			Envelope message = null, response = null;
 			// Tell the server to remove a user from the group
-			message = new Envelope("RUSERFROMGROUP");
-			message.addObject(username); // Add user name string
-			message.addObject(groupname); // Add group name string
-			message.addObject(token); // Add requester's token
+			//message = new Envelope("RUSERFROMGROUP");
 			
-			IvParameterSpec IV = ivAES(IV_BYTES);
-			byte[] byteArray = convertToByteArray(message);
+			message = encryptResponseWithSymmetricKey(new Object[]{username, groupname,  token}, "RUSERFROMGROUP");
 			
-			output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
+		//	message.addObject(username); // Add user name string
+		//	message.addObject(groupname); // Add group name string
+		//	message.addObject(token); // Add requester's token
+			
+		//	IvParameterSpec IV = ivAES(IV_BYTES);
+		//	byte[] byteArray = convertToByteArray(message);
+			
+			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV, byteArray) );
 						
-			//output.writeObject(message);
+			output.writeObject(message);
 			
-			byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
-			byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
+		//	byte[] envelopeBytes = convertToByteArray((Envelope)input.readObject());
+		//	byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, envelopeBytes);
 			
-			Object convertedObj = convertToObject(decryptedMsg);
-			response = (Envelope)convertedObj;
+		//	Object convertedObj = convertToObject(decryptedMsg);
+		//	response = (Envelope)convertedObj;
 			
-			//response = (Envelope)input.readObject();
+			response = (Envelope)input.readObject();
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)response.getObjContents().get(0);
+				return (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(1)));
+				
+				//return (UserToken)response.getObjContents().get(0);
 			}
 			
 			return null;
