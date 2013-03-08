@@ -273,6 +273,58 @@ public abstract class Client implements ClientInterface
 	}
 	
 	
+	private  Envelope encryptResponseWithSymmetricKey(Object[] objs, String message){
+				
+		try{
+			
+		Envelope response = new Envelope(message);
+		
+		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+					
+		IvParameterSpec IV = ivAES(IV_BYTES);
+		
+		// Initialize the cipher encryption object, add the key, and add the IV
+		objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
+
+		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+
+		for(Object o : objs){
+			
+			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
+			response.addObject(newEncryptedChallenge);
+			
+		}
+		
+		// Encrypt the data and store in encryptedData
+		//byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
+														
+		// Respond to the client. On error, the client will receive a null token
+		//response = new Envelope("OK");
+		
+		//response.addObject(newEncryptedChallenge);
+		response.addObject(IV.getIV());
+		
+        //return b.toByteArray(); 
+//		byte[] byteArray = convertToByteArray(response);
+																
+		return response;
+		
+		//output.writeObject(response);
+		
+		} catch(Exception e){
+			
+			e.printStackTrace();
+			
+		}
+		
+		
+		return null;
+		
+	}
+	
+	
+	
+	
 	/**
 	 * This method will decrypt the data.
 	 * @param algorithm The algorithm to use.

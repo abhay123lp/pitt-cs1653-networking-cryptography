@@ -190,6 +190,78 @@ public class GroupThread extends Thread
 	
 	
 	
+	
+	private  Envelope encryptResponseWithSymmetricKey(Object[] objs, String message){
+		
+		try{
+			
+		Envelope response = new Envelope(message);
+		
+		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+					
+		IvParameterSpec IV = ivAES(IV_BYTES);
+		
+		// Initialize the cipher encryption object, add the key, and add the IV
+		objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
+
+		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+
+		for(Object o : objs){
+			
+			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
+			response.addObject(newEncryptedChallenge);
+			
+		}
+		
+		// Encrypt the data and store in encryptedData
+		//byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
+														
+		// Respond to the client. On error, the client will receive a null token
+		//response = new Envelope("OK");
+		
+		//response.addObject(newEncryptedChallenge);
+		response.addObject(IV.getIV());
+		
+        //return b.toByteArray(); 
+//		byte[] byteArray = convertToByteArray(response);
+																
+		return response;
+		
+		//output.writeObject(response);
+		
+		} catch(Exception e){
+			
+			e.printStackTrace();
+			
+		}
+		
+		
+		return null;
+		
+	}
+	
+	private byte[] decryptObjects(byte[] objByte, byte[] iv)  {
+		
+		try{
+
+			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+
+			// Initialize the cipher encryption object, add the key, and add the IV
+			objCipher.init(Cipher.DECRYPT_MODE, SYMMETRIC_KEY, new IvParameterSpec(iv)); 
+
+			// Encrypt the data and store in encryptedData
+			return objCipher.doFinal(objByte);
+
+		} catch(Exception ex){
+			System.out.println(ex.toString());
+		}
+
+		return null;
+				
+		
+	}
+	
+	
 	/**
 	 * This method runs all of the group server commands such as adding a user to a group, removing a user from a group, adding a group, etc...
 	 */
@@ -231,43 +303,56 @@ public class GroupThread extends Thread
 				Envelope message = (Envelope)convertedObj;							
 				*/
 				
+				
+				
+				
+				
 				Envelope message = (Envelope)input.readObject();
 				System.out.println("Request received: " + message.getMessage());
 				Envelope response;
 				
 				if (message.getMessage().equals("GET"))// Client wants a token
 				{
-					String username = (String)message.getObjContents().get(0); // Get the username
+					//String username = (String)message.getObjContents().get(0); // Get the username
+					
+					String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+					
 					if (username == null)
 					{
 						response = new Envelope("FAIL");
 						response.addObject(null);
 						
 						//return b.toByteArray(); 
-						byte[] byteArray = convertToByteArray(response);
+						//byte[] byteArray = convertToByteArray(response);
 																		
-						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						output.writeObject(response);
 						
 						//output.writeObject(response);
 					}
 					else
 					{
-						String password = (String)message.getObjContents().get(1);
+						//String password = (String)message.getObjContents().get(1);
+						
+						String password = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+						
 						if(checkPassword(username, password))
 						{
 							UserToken yourToken = createToken(username); // Create a token
 							
 							// Respond to the client. On error, the client will receive a null token
-							response = new Envelope("OK");
-							response.addObject(yourToken);
+							
+							response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+							
+							//response = new Envelope("OK");
+							//response.addObject(yourToken);
 						
 						//return b.toByteArray(); 
-						byte[] byteArray = convertToByteArray(response);
-																							
+						//byte[] byteArray = convertToByteArray(response);
+																	
+											
+						//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 						
-						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
-						
-						//output.writeObject(response);
+						output.writeObject(response);
 						}
 						// Password did not match
 						else
@@ -289,10 +374,10 @@ public class GroupThread extends Thread
 						response.addObject(null);
 						
 						//return b.toByteArray(); 
-						byte[] byteArray = convertToByteArray(response);
+						//byte[] byteArray = convertToByteArray(response);
 														
 						
-						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						output.writeObject(response);
 						
 						//output.writeObject(response);
 					}
@@ -354,8 +439,14 @@ public class GroupThread extends Thread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String username = (String)message.getObjContents().get(0); // Extract the username
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token	
+								
+								String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								
+								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+											
+								
+								//String username = (String)message.getObjContents().get(0); // Extract the username
+								//UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token	
 								
 								//return b.toByteArray(); 
 								byte[] byteToken = convertToByteArray(yourToken);
@@ -364,14 +455,17 @@ public class GroupThread extends Thread
 								
 								if(checkToken){						
 								
-									String password = (String)message.getObjContents().get(2); // Extract the password
+									String password = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+									
+									
+									//String password = (String)message.getObjContents().get(2); // Extract the password
 									if (createUser(username, yourToken, password))
 									{
 										response = new Envelope("OK"); // Success
 									}
 									
 								} else {
-								
+									
 									System.out.println("Token not authenticated.");
 								
 								}
@@ -380,9 +474,9 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					 //return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);																						
-					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );					
+					//byte[] byteArray = convertToByteArray(response);																						
+					output.writeObject(response);
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );					
 					
 				}// end else if block
 				else if (message.getMessage().equals("DUSER")) // Client wants to delete a user
@@ -399,8 +493,15 @@ public class GroupThread extends Thread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String username = (String)message.getObjContents().get(0); // Extract the username
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
+								
+								String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								
+								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								
+								
+								
+								//String username = (String)message.getObjContents().get(0); // Extract the username
+								//UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
 								//return b.toByteArray(); 
 								byte[] byteToken = convertToByteArray(yourToken);
@@ -424,10 +525,10 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
+					//byte[] byteArray = convertToByteArray(response);
 																						
-					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					output.writeObject(response);
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
 					
 					
@@ -448,9 +549,15 @@ public class GroupThread extends Thread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
+								
+								String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								
+								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								
+								
 								// do create a group stuff in here
-								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
+								//String groupname = (String)message.getObjContents().get(0); // Extract the groupname
+								//UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
 								//return b.toByteArray(); 
 								byte[] byteToken = convertToByteArray(yourToken);
@@ -463,7 +570,10 @@ public class GroupThread extends Thread
 									{
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().add(groupname);
-										response.addObject(yourToken); // Make sure that group client updates its own token
+										
+										response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+										
+										//response.addObject(yourToken); // Make sure that group client updates its own token
 									}
 								
 								} else {
@@ -476,13 +586,13 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
+					//byte[] byteArray = convertToByteArray(response);
 																						
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
 					
-					//output.writeObject(response);
+					output.writeObject(response);
 				}// end else if block
 				else if (message.getMessage().equals("DGROUP")) // Client wants to delete a group
 				{
@@ -499,8 +609,13 @@ public class GroupThread extends Thread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
+								
+								String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								
+								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								
+								//String groupname = (String)message.getObjContents().get(0); // Extract the groupname
+								//UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
 								//return b.toByteArray(); 
 								byte[] byteToken = convertToByteArray(yourToken);
@@ -513,7 +628,10 @@ public class GroupThread extends Thread
 									{
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().remove(groupname); // remove the group from the users token
-										response.addObject(yourToken); // send the updated token in response
+										
+										response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+										
+										//response.addObject(yourToken); // send the updated token in response
 									}
 								
 								} else {
@@ -526,12 +644,12 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
+					//byte[] byteArray = convertToByteArray(response);
 																						
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
-					//output.writeObject(response);
+					output.writeObject(response);
 				}// end else if block
 				else if (message.getMessage().equals("LMEMBERS")) // Client wants a list of members in a group
 				{
@@ -548,9 +666,15 @@ public class GroupThread extends Thread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
+								String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								
+								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								
+								
+								
 								// Return a list of members in a group
-								String groupname = (String)message.getObjContents().get(0); // Extract the groupname
-								UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
+								//String groupname = (String)message.getObjContents().get(0); // Extract the groupname
+								//UserToken yourToken = (UserToken)message.getObjContents().get(1); // Extract the token
 								
 								byte[] byteToken = convertToByteArray(yourToken);
 								
@@ -563,8 +687,11 @@ public class GroupThread extends Thread
 									if (members != null)
 									{
 										response = new Envelope("OK"); // Success
-										response.addObject(members); // Add member list to the response
-										response.addObject(new Integer(members.size()));
+										
+										response = encryptResponseWithSymmetricKey(new Object[]{members, new Integer(members.size()) }, "OK");
+										
+										//response.addObject(members); // Add member list to the response
+										//response.addObject(new Integer(members.size()));
 									}
 								} else {
 									
@@ -576,12 +703,12 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
+					//byte[] byteArray = convertToByteArray(response);
 																						
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
-					///output.writeObject(response);
+					output.writeObject(response);
 				}// end else if block
 				else if (message.getMessage().equals("AUSERTOGROUP")) // Client wants to add user to a group
 				{
@@ -600,9 +727,18 @@ public class GroupThread extends Thread
 							{
 								if (message.getObjContents().get(2) != null)
 								{
-									String username = (String)message.getObjContents().get(0); // Extract the username
-									String groupname = (String)message.getObjContents().get(1); // Extract the groupname
-									UserToken yourToken = (UserToken)message.getObjContents().get(2); // Extract the token
+									
+									String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+									
+									String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									
+									UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+										
+									
+									
+									//String username = (String)message.getObjContents().get(0); // Extract the username
+									//String groupname = (String)message.getObjContents().get(1); // Extract the groupname
+									//UserToken yourToken = (UserToken)message.getObjContents().get(2); // Extract the token
 									
 									byte[] byteToken = convertToByteArray(yourToken);
 									
@@ -619,7 +755,10 @@ public class GroupThread extends Thread
 											{
 												yourToken.getGroups().add(groupname);
 											}
-											response.addObject(yourToken);
+											
+											response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+											
+											//response.addObject(yourToken);
 										}
 									} else {
 										
@@ -632,14 +771,14 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
+					//byte[] byteArray = convertToByteArray(response);
 																						
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
 					
 					
-					//output.writeObject(response);
+					output.writeObject(response);
 				}// end else if block
 				else if (message.getMessage().equals("RUSERFROMGROUP")) // Client wants to remove user from a group
 				{
@@ -658,10 +797,20 @@ public class GroupThread extends Thread
 							{
 								if (message.getObjContents().get(2) != null)
 								{
+									
+									
+									String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+									
+									String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									
+									UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+										
+									
+									
 									// Remove a user from a group TODO
-									String username = (String)message.getObjContents().get(0); // Extract the username
-									String groupname = (String)message.getObjContents().get(1); // Extract the groupname
-									UserToken yourToken = (UserToken)message.getObjContents().get(2); // Extract the token
+									//String username = (String)message.getObjContents().get(0); // Extract the username
+									//String groupname = (String)message.getObjContents().get(1); // Extract the groupname
+									//UserToken yourToken = (UserToken)message.getObjContents().get(2); // Extract the token
 									
 									byte[] byteToken = convertToByteArray(yourToken);
 									
@@ -674,7 +823,8 @@ public class GroupThread extends Thread
 											response = new Envelope("OK"); // Success
 											// Remove the groupname from the user in the token
 											yourToken.getGroups().remove(groupname);
-											response.addObject(yourToken);
+											response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+											//response.addObject(yourToken);
 										}
 									} else {
 										
@@ -689,12 +839,12 @@ public class GroupThread extends Thread
 					}// end else block
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);																				
+					//byte[] byteArray = convertToByteArray(response);																				
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//
 					
-					
-					//output.writeObject(response);
+					output.writeObject(response);
 				}// end else if block
 				else if (message.getMessage().equals("DISCONNECT")) // Client wants to disconnect
 				{
@@ -706,13 +856,13 @@ public class GroupThread extends Thread
 					response = new Envelope("FAIL"); // Server does not understand client request
 					
 					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
+					//byte[] byteArray = convertToByteArray(response);
 																						
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+					//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
 					
-					//output.writeObject(response);
+					output.writeObject(response);
 				}
 //				output.flush();
 			} while (proceed);
