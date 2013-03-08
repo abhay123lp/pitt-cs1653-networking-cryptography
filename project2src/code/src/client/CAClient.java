@@ -32,6 +32,17 @@ public class CAClient extends Client
 		Envelope send = new Envelope("GETKEY");
 		send.addObject(this.serverName);
 		
+		try
+		{
+			this.output.writeObject(send);
+			this.output.flush();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+			return;
+		}
+		
 		Envelope response = null;
 		try
 		{
@@ -64,7 +75,7 @@ public class CAClient extends Client
 	// javadoc already handled by ClientInterface
 	// had to override this in order to be able to use connect without getting a public key.
 	@Override
-	public boolean connect(final String server, final int port)
+	public boolean connect(final String server, final int port, final String serverName)
 	{
 		if (this.sock != null)
 		{
@@ -93,4 +104,24 @@ public class CAClient extends Client
 //		System.out.println("Success!  Connected to " + server + " at port " + port);
 		return true;
 	}// end method connect(String, int)
+	
+	@Override
+	public void disconnect()
+	{
+		if (isConnected())
+		{
+			try
+			{
+				this.output.close();
+				this.input.close();
+				this.sock.close();
+			}
+			catch (Exception e)
+			{
+				System.err.println("Error: " + e.getMessage());
+				e.printStackTrace(System.err);
+			}
+			this.sock = null;
+		}
+	}//end method disconnect
 }

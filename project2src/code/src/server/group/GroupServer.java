@@ -38,7 +38,7 @@ public class GroupServer extends Server
 	 * This port, should it be used, must be open in the firewall to accept external incoming connections.
 	 */
 	public static final int SERVER_PORT = 8765;
-	public static final int CA_SERVER_PORT = 34567;
+	public static final int CA_SERVER_PORT = 4999;
 	public static final String CA_SERVER_NAME = "localhost";
 	private static final int KEY_SIZE = 1024;
 	private static final String ALGORITHM = "RSA";
@@ -141,7 +141,7 @@ public class GroupServer extends Server
 												
 				// Create new CAClient
 				CAServerClient ca = new CAServerClient(this.name, publicKey);
-				ca.connect(CA_SERVER_NAME, CA_SERVER_PORT);
+				ca.connect(CA_SERVER_NAME, CA_SERVER_PORT, null);
 				ca.run();
 				
 				ca.disconnect();
