@@ -32,6 +32,7 @@ public class UserCommands {
 	private static GroupClient groupClient;
 	private static String groupServerIP;
 	private static int groupServerPort;
+	private static String groupServerName;
 
 	public static void main(String [] args)
 	{
@@ -43,7 +44,7 @@ public class UserCommands {
 		groupClient = new GroupClient();
 		// The user can define the IP and port number from the commandline.
 		System.out.println("Connecting to group server");
-		groupClient.connect(groupServerIP, groupServerPort, "ALPHA");
+		groupClient.connect(groupServerIP, groupServerPort, groupServerName);
 		System.out.println("Connected");
 		// The user logs into the group server
 		UserToken userToken = connectUserToGroupServer();
@@ -98,13 +99,15 @@ public class UserCommands {
 			// IP = localhost for the groupserver
 			// Default group server port #: 8765
 			groupServerIP = "localhost"; // default
-			groupServerPort = 8765;	// default		
+			groupServerPort = 8765;	// default
+			groupServerName = "ALPHA";
 		}
 		else if(args.length == 1)
 		{
 			// Assume the user specified the group server IP
 			groupServerIP = args[0]; // user defined
 			groupServerPort = 8765; // default
+			groupServerName = "ALPHA";
 		}
 		else if(args.length == 2)
 		{
@@ -120,6 +123,22 @@ public class UserCommands {
 				System.out.printf("type \"java UserCommands IPaddress port_number\n");
 				System.exit(0);
 			}
+			groupServerName = "ALPHA";
+		}
+		else if(args.length == 3)
+		{
+			groupServerIP = args[0]; // user defined
+			try
+			{
+				groupServerPort = Integer.parseInt(args[1]); // user defined
+			}
+			catch(NumberFormatException e)
+			{
+				System.out.printf("To specify the IP and port number for the group server on the commandline,\n");
+				System.out.printf("type \"java UserCommands IPaddress port_number\n");
+				System.exit(0);
+			}
+			groupServerName = args[2];
 		}
 		// Too many arguments
 		else
@@ -370,6 +389,7 @@ public class UserCommands {
 				// ===== File Server Commands =====
 				
 				// fconnect does not support multiple commands at once
+				//TODO change the usage file for fconnect to show that the serverName should be specified.
 				else if( userCommands[i].equals("fconnect"))
 				{
 					if(fileClient.isConnected())
@@ -386,37 +406,52 @@ public class UserCommands {
 					}
 					i++;
 					String fileServerIP = userCommands[i];
-					// User wanted to use default settings
-					if(userCommands[i].equals("default"))
+					if(userCommands.length == 2)
 					{
-						fileClient = new FileClient();						
-						fileClient.connect("localhost", 4321);
-					}					
-					// Assume user entered "fconnect fileserverIP" without port number
-					// The default port number 4321 will be used.
-					else if(userCommands.length == 2)
+						// User wanted to use default settings
+						if(userCommands[i].equals("default"))
+						{
+							fileClient = new FileClient();						
+							fileClient.connect("localhost", 4321, "FilePile");
+						}
+						// Assume user entered "fconnect fileserverIP" without port number
+						// The default port number 4321 will be used.
+						else
+						{
+							fileClient = new FileClient();
+							fileClient.connect(fileServerIP, 4321, "FilePile");
+						}
+					}
+					int fileServerPort = -1;
+					try
 					{
-						fileClient = new FileClient();
-						fileClient.connect(fileServerIP, 4321);
+						i++;
+						fileServerPort = Integer.parseInt(userCommands[i]);
+					}
+					catch(NumberFormatException e)
+					{
+						System.out.printf("Improper format for \"fconnect\".");
+						System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
+						return userToken;
+					}
+					if(fileServerPort <= 0)
+					{
+						System.out.printf("Improper format for \"fconnect\".");
+						System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
+						return userToken;
+					}
+					// User specified IP address and port number
+					if(userCommands.length == 3)
+					{	
+						fileClient.connect(fileServerIP, 4321, "FilePile");
 					}
 					
-					// User specified IP address and port number
-					else
+					i++;
+					String fileServerName = userCommands[i];
+					
+					if(userCommands.length == 4)
 					{
-						fileClient = new FileClient();						
-						int fileServerPort = -1;							
-						try
-						{
-							i++;
-							fileServerPort = Integer.parseInt(userCommands[i]);
-						}
-						catch(NumberFormatException e)
-						{
-							System.out.printf("Improper format for \"fconnect\".");
-							System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
-							return userToken;
-						}
-						fileClient.connect(fileServerIP, fileServerPort);
+						fileClient.connect(fileServerIP, 4321, fileServerName);
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))
@@ -545,7 +580,7 @@ public class UserCommands {
 		// Everything gets printed at once after the commands all finish.
 		// TODO: Fix me. If we don't disconnect and reconnect, there are issues updating the user list.
 		groupClient.disconnect();
-		groupClient.connect(groupServerIP, groupServerPort);
+		groupClient.connect(groupServerIP, groupServerPort, groupServerName);
 		System.out.printf(s);
 		return userToken;
 	}

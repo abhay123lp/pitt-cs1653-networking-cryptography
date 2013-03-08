@@ -54,6 +54,11 @@ public class FileServer extends Server
 		super(_port, "FilePile");
 	}
 	
+	public FileServer(int _port, String serverName)
+	{
+		super(_port, serverName);
+	}
+	
 	public void start()
 	{
 		String fileFile = "FileList.bin";
@@ -76,6 +81,7 @@ public class FileServer extends Server
 			System.out.println("FileList Does Not Exist. Creating FileList...");
 			
 			fileList = new FileList();
+			//Create CAServerClient and send public key.  TODO
 			
 		}
 		catch (IOException e)
