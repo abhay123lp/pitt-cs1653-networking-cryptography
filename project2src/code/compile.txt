@@ -1,0 +1,41 @@
+--SECTION 0: Installing Java--
+In order to compile all associated java files, you will need to download and install the latest 
+version of the Java JDK:
+http://www.oracle.com/technetwork/java/javase/downloads/index.html
+At the time of this writing, the latest version is Java 7u13.
+
+After installing Java, Windows users will need to set their environment variables such that the 
+executable "javac" can be recognized by the Command Prompt.
+Follow the instructions underneath if you need to set the variables.  If not, this section can be 
+skipped.
+
+--SECTION 0.1: Setting Environment Variables on Windows machines--
+Start --> Right-click 
+My Computer --> Properties
+For Windows 7 users, click Advanced System Settings.
+Click the Advanced tab.
+Click the Environment Variables button.
+Under the "System variables" box (NOT "User variables for ..."), find the "Path" variable.
+If it does NOT exist, click the New button and name it "Path".
+If it does exist, click on it, and click the Edit button.
+Under "Variable value", DO NOT DELETE ANYTHING THAT ALREADY EXISTS THERE, move 
+to the end of the line, type a semicolon, and then type the full path to your JDK bin.  (For 
+example, I would type without quotation marks: ";C:\Program Files\Java\jdk1.6.0_33\bin".)
+Click OK, OK, and OK.
+(These instructions came from a homework assignment from another class on how to install Java on a 
+Windows machine)
+
+--SECTION 1: Pre-compilation instructions--
+After retrieving the <ZIPFILENAME>.tgz file, extract the tgz.
+
+--SECTION 2: Compiling--
+Open up Command Prompt for Windows, and Terminal for Mac OSX or Linux, and change directory to the 
+folder that holds the unzipped files.
+Change directory into the "src" folder, entering the following: (slashes may depend on OS)
+	javac server/certificateAuthority/CertificateAuthority.java
+	javac server/group/RunGroupServer.java
+	javac server/file/FileServer.java
+	javac client/UserCommands.java
+
+--SECTION 3: Running--
+Please see usage.txt
