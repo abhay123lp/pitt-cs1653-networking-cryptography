@@ -39,7 +39,7 @@ public class GroupServer extends Server
 	 */
 	public static final int SERVER_PORT = 8765;
 	public static final int CA_SERVER_PORT = 4999;
-	public static final String CA_SERVER_NAME = "localhost";
+	public static final String CA_SERVER_LOC = "localhost";
 	private static final int KEY_SIZE = 1024;
 	private static final String ALGORITHM = "RSA";
 	private static final String PROVIDER = "BC";
@@ -141,30 +141,22 @@ public class GroupServer extends Server
 												
 				// Create new CAClient
 				CAServerClient ca = new CAServerClient(this.name, publicKey);
-				ca.connect(CA_SERVER_NAME, CA_SERVER_PORT, null);
+				ca.connect(CA_SERVER_LOC, CA_SERVER_PORT, null);
 				ca.run();
 				
 				ca.disconnect();
 								
 				// Pass along this server's name and public key
 				
-								
-				
-				//if(ca.passAuthorizationData(this.name, publicKey)){
-					
-					// Everything is cool
-					
-				//} else {
-					
-					// Everything is not cool
-					
-				//}
-							
-				
-				
+				if(!ca.getSuccess())
+				{
+					System.out.println("Error, either CA is not running or there is already a server with the specified name.");
+					System.out.println("Stopping");
+					return;
+				}
 			} catch (Exception ex) {
 				// TODO Auto-generated catch block
-				//e1.printStackTrace();
+				ex.printStackTrace();
 			}
 			
 			// Want to connect to CA, pass it both the server's name & public key

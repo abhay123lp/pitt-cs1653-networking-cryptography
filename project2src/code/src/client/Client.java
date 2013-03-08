@@ -335,7 +335,7 @@ public abstract class Client implements ClientInterface
 	
 	
 	// javadoc already handled by ClientInterface
-	public boolean connect(final String server, final int port, final String serverName)
+	public boolean connect(final String server, final int port, String serverName)
 	{
 		if (this.sock != null)
 		{

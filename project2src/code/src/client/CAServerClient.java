@@ -21,6 +21,7 @@ public class CAServerClient extends Client
 {
 	private PublicKey publicKey;
 	private String serverName;
+	private boolean success;
 	
 	/**
 	 * 
@@ -29,6 +30,7 @@ public class CAServerClient extends Client
 	{
 		this.serverName = serverName;
 		this.publicKey = publicKey;
+		this.success = false;
 	}
 	
 	public void run()
@@ -56,10 +58,12 @@ public class CAServerClient extends Client
 		if(response.getMessage().equals("OK"))
 		{
 			System.out.println("Public Key accepted");
+			this.success = true;
 		}
 		else
 		{
 			System.out.println("Something went wrong...");
+			this.success = false;
 		}
 	}
 	
@@ -115,4 +119,13 @@ public class CAServerClient extends Client
 			this.sock = null;
 		}
 	}//end method disconnect
+	
+	/**
+	 * Whether or not sending the public key succeeded or not after calling run.
+	 * @return
+	 */
+	public boolean getSuccess()
+	{
+		return this.success;
+	}
 }
