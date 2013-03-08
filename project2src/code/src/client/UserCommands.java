@@ -43,7 +43,7 @@ public class UserCommands {
 		groupClient = new GroupClient();
 		// The user can define the IP and port number from the commandline.
 		System.out.println("Connecting to group server");
-		groupClient.connect(groupServerIP, groupServerPort);
+		groupClient.connect(groupServerIP, groupServerPort, "ALPHA");
 		System.out.println("Connected");
 		// The user logs into the group server
 		UserToken userToken = connectUserToGroupServer();

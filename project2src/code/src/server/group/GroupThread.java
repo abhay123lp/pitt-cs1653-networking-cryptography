@@ -14,6 +14,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -51,7 +52,7 @@ public class GroupThread extends Thread
 	private RSAPublicKey publicKey;
 	private RSAPrivateKey privateKey; 
 	
-	private Key SYMMETRIC_KEY; 
+	private SecretKey SYMMETRIC_KEY; 
 	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
 	
 	private static final int IV_BYTES = 16;
@@ -281,7 +282,7 @@ public class GroupThread extends Thread
 				{
 					
 					byte[] encryptedChallenge = (byte[])message.getObjContents().get(0); // Get the encrypted challenge
-					byte[] encryptedKey = (byte[])message.getObjContents().get(0); // Get the encrypted key
+					byte[] encryptedKey = (byte[])message.getObjContents().get(1); // Get the encrypted key
 					if (encryptedChallenge == null || encryptedKey == null)
 					{
 						response = new Envelope("FAIL");
@@ -306,13 +307,15 @@ public class GroupThread extends Thread
 
 						// Encrypt the data and store in encryptedData
 						byte[] decryptedChallenge = objCipher.doFinal(encryptedChallenge);
-												
+						
 						byte[] decryptedKey = objCipher.doFinal(encryptedKey);
 						
 						//SYMMETRIC_KEY = new Key(decryptedKey);
 													
 						//SecretKeySpec secretKeySpec 
 						SYMMETRIC_KEY = new SecretKeySpec(decryptedKey, "AES");
+						
+						objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
 						
 						// Initialize the cipher encryption object, add the key, and add the IV
 						objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
@@ -326,12 +329,13 @@ public class GroupThread extends Thread
 						response = new Envelope("OK");
 						
 						response.addObject(newEncryptedChallenge);
+						response.addObject(IV.getIV());
 						
 				        //return b.toByteArray(); 
-						byte[] byteArray = convertToByteArray(response);
+//						byte[] byteArray = convertToByteArray(response);
 																				
 						
-						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+						output.writeObject(response);
 											
 					}
 					

@@ -64,35 +64,55 @@ public class CAServerClient extends Client
 	}
 	
 	// javadoc already handled by ClientInterface
-		// had to override this in order to be able to use connect without getting a public key.
-		@Override
-		public boolean connect(final String server, final int port)
+	// had to override this in order to be able to use connect without getting a public key.
+	@Override
+	public boolean connect(final String server, final int port, final String serverName)
+	{
+		if (this.sock != null)
 		{
-			if (this.sock != null)
-			{
-				System.out.println("Disconnecting from previous connection...");
-				this.disconnect();
-			}
-//			System.out.println("Attempting to connect...");
+			System.out.println("Disconnecting from previous connection...");
+			this.disconnect();
+		}
+		//			System.out.println("Attempting to connect...");
+		try
+		{
+			this.sock = new Socket(server, port);
+			// this.sock.setSoTimeout(1000);
+			this.output = new ObjectOutputStream(this.sock.getOutputStream());
+			this.input = new ObjectInputStream(this.sock.getInputStream());
+		}
+		catch (UnknownHostException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
+		//			System.out.println("Success!  Connected to " + server + " at port " + port);
+		return true;
+	}// end method connect(String, int)
+	
+	@Override
+	public void disconnect()
+	{
+		if (isConnected())
+		{
 			try
 			{
-				this.sock = new Socket(server, port);
-				// this.sock.setSoTimeout(1000);
-				this.output = new ObjectOutputStream(this.sock.getOutputStream());
-				this.input = new ObjectInputStream(this.sock.getInputStream());
+				this.output.close();
+				this.input.close();
+				this.sock.close();
 			}
-			catch (UnknownHostException e)
+			catch (Exception e)
 			{
-				e.printStackTrace();
-				return false;
+				System.err.println("Error: " + e.getMessage());
+				e.printStackTrace(System.err);
 			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-				return false;
-			}
-			
-//			System.out.println("Success!  Connected to " + server + " at port " + port);
-			return true;
-		}// end method connect(String, int)
+			this.sock = null;
+		}
+	}//end method disconnect
 }

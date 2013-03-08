@@ -15,7 +15,7 @@ public interface ClientInterface
 	 * @param port The port that the server is listening on
 	 * @return true if the connection succeeds, false otherwise
 	 */
-	public boolean connect(final String server, final int port);
+	public boolean connect(final String server, final int port, final String serverName);
 	
 	/**
 	 * Determines whether or not the client is connected to the server.

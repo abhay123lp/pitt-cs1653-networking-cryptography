@@ -42,7 +42,7 @@ public abstract class Client implements ClientInterface
 	 */
 	protected ObjectInputStream input;
 	
-	
+	private final String RSA_ALGORITHM = "RSA/None/NoPadding";
 	private final String SYM_ALGORITHM = "AES";
 	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
 	private final String PROVIDER = "BC";
@@ -100,7 +100,7 @@ public abstract class Client implements ClientInterface
 			//String concatenation = CHALLENGE.toString() + SYMMETRIC_KEY.toString();
 			
 			// cipher object
-			Cipher oCipher = Cipher.getInstance(SYM_ALGORITHM, PROVIDER);
+			Cipher oCipher = Cipher.getInstance(RSA_ALGORITHM, PROVIDER);
 	
 			// cipher encryption object
 			oCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
@@ -113,7 +113,7 @@ public abstract class Client implements ClientInterface
 		
 		} catch(Exception ex){
 			
-			
+			ex.printStackTrace();
 		}
 		
 		return null;
@@ -130,7 +130,7 @@ public abstract class Client implements ClientInterface
 			//String concatenation = CHALLENGE.toString() + SYMMETRIC_KEY.toString();
 			
 			// cipher object
-			Cipher oCipher = Cipher.getInstance(SYM_ALGORITHM, PROVIDER);
+			Cipher oCipher = Cipher.getInstance(RSA_ALGORITHM, PROVIDER);
 	
 			// cipher encryption object
 			oCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
@@ -143,13 +143,15 @@ public abstract class Client implements ClientInterface
 			return oCipher.doFinal(challengeBytes);
 		
 		} catch(Exception ex){
-			
+			ex.printStackTrace();
 			
 		}
 		
 		return null;
 		
 	}
+	
+	//TODO verify challenge
 	
 	/**
 	 * This method will generate a symmetric key for use.
@@ -333,7 +335,7 @@ public abstract class Client implements ClientInterface
 	
 	
 	// javadoc already handled by ClientInterface
-	public boolean connect(final String server, final int port)
+	public boolean connect(final String server, final int port, final String serverName)
 	{
 		if (this.sock != null)
 		{
@@ -347,9 +349,9 @@ public abstract class Client implements ClientInterface
 			// this.sock.setSoTimeout(1000);
 			this.output = new ObjectOutputStream(this.sock.getOutputStream());
 			
-			
-			CAClient ca = new CAClient(server);
-			ca.connect(CAServer, 34567);
+			System.out.println("Connecting to CA");
+			CAClient ca = new CAClient(serverName);
+			ca.connect(CAServer, 4999, null);
 			ca.run();
 			
 			ca.disconnect();
@@ -381,17 +383,18 @@ public abstract class Client implements ClientInterface
 			
 			try{
 				
-				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+//				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
 				
-				Object convertedObj = convertToObject(decryptedMsg);
+//				Object convertedObj = convertToObject(decryptedMsg);
 				
-				Envelope reqResponse = (Envelope)convertedObj;
+//				Envelope reqResponse = (Envelope)convertedObj;
 				
-				//Envelope reqResponse = (Envelope)input.readObject();
+				Envelope reqResponse = (Envelope)input.readObject();
 				
 				if (reqResponse.getMessage().equals("OK")){
 					
 					byte[] encryChallenge = (byte[])reqResponse.getObjContents().get(0); // Get the encrypted challenge
+					IvParameterSpec ivFromServer = new IvParameterSpec((byte[])reqResponse.getObjContents().get(1));
 					
 					if (encryChallenge == null){
 						
@@ -405,10 +408,9 @@ public abstract class Client implements ClientInterface
 						Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
 
 						// Get the IV to use
-						//IvParameterSpec IV = ivAES(IV_BYTES);
 						
 						// Initialize the cipher encryption object, add the key, and add the IV
-						objCipher.init(Cipher.DECRYPT_MODE, SYMMETRIC_KEY, IV); 
+						objCipher.init(Cipher.DECRYPT_MODE, SYMMETRIC_KEY, ivFromServer); 
 
 						// Encrypt the data and store in encryptedData
 						byte[] decryptedChallenge = objCipher.doFinal(encryChallenge);
@@ -442,7 +444,8 @@ public abstract class Client implements ClientInterface
 			
 			} catch(Exception ex){
 				
-				System.out.println(ex.toString());
+//				System.out.println(ex.toString());
+				ex.printStackTrace();
 				
 			}
 			
