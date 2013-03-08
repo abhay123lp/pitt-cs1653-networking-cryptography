@@ -10,8 +10,8 @@ public class Envelope implements java.io.Serializable
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -7726335089122193103L;
-	
+	private static final long serialVersionUID = -1019164405821179970L;
+
 	/**
 	 * String data type that holds the message to store in the envelope.
 	 */
