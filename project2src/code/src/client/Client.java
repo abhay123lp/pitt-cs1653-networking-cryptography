@@ -61,7 +61,7 @@ public abstract class Client implements ClientInterface
 	public Client()
 	{
 		this.random = new SecureRandom();
-		this.symmetricKey = genterateSymmetricKey(SYM_ALGORITHM, PROVIDER);
+		this.symmetricKey = this.genterateSymmetricKey();
 	}
 	
 	private byte[] encryptKey(RSAPublicKey pubKey)
@@ -90,7 +90,7 @@ public abstract class Client implements ClientInterface
 	 * @param provider The security provider
 	 * @return Key The key generated for symmetric cryptography
 	 */
-	private static final Key genterateSymmetricKey(String algorithm, String provider)
+	private final Key genterateSymmetricKey()
 	{
 		try
 		{
@@ -98,7 +98,7 @@ public abstract class Client implements ClientInterface
 			SecureRandom randomNumber = new SecureRandom();	
 
 			// Generate a 128-bit AES Key with Bouncy Castle provider
-			KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm, provider);
+			KeyGenerator keyGenerator = KeyGenerator.getInstance(SYM_ALGORITHM, PROVIDER);
 			keyGenerator.init(128, randomNumber);
 			Key key = keyGenerator.generateKey();
 
@@ -112,9 +112,9 @@ public abstract class Client implements ClientInterface
 		return null;
 	}
 
-	protected IvParameterSpec ivAES(int ivBytes)
+	protected IvParameterSpec ivAES()
 	{
-		byte[] bytesIV = new byte[ivBytes];	
+		byte[] bytesIV = new byte[IV_BYTES];	
 		this.random.nextBytes(bytesIV);
 
 		// Create the IV
@@ -127,7 +127,7 @@ public abstract class Client implements ClientInterface
 		{
 			Envelope response = new Envelope(message);
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-			IvParameterSpec IV = ivAES(IV_BYTES);
+			IvParameterSpec IV = ivAES();
 
 			objCipher.init(Cipher.ENCRYPT_MODE, symmetricKey, IV); 
 
@@ -201,66 +201,66 @@ public abstract class Client implements ClientInterface
 		return null;
 	}
 	
-	/**
-	 * This method will decrypt the data.
-	 * @param algorithm The algorithm to use.
-	 * @param provider The security provider.
-	 * @param key The symmetric key to use.
-	 * @param iv The IV to use for decryption.
-	 * @param dataToDecrypt The data to decrypt.
-	 * @return byte[] array of decrypted data.
-	 */
-	protected static byte[] AESDecrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] dataToDecrypt){
-
-		try{
-
-			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-
-			// Initialize the cipher encryption object, add the key, and add the IV
-			objCipher.init(Cipher.DECRYPT_MODE, key, iv); 
-
-			// Encrypt the data and store in encryptedData
-			return objCipher.doFinal(dataToDecrypt);
-
-		} catch(Exception ex){
-			System.out.println(ex.toString());
-			ex.printStackTrace();
-		}
-
-		return null;
-	}
-	
-	
-	/**
-	 * This method will encrypt the data utilizing the public key.
-	 * @param algorithm The algorithm to use.
-	 * @param provider The security provider to use.
-	 * @param pubKey The public key to use.
-	 * @param dataToEncrypt The data to encrypt.
-	 * @return byte[] array of the encrypted data.
-	 */
-	protected static byte[] RSAEncrypt(String algorithm, String provider, RSAPublicKey pubKey, byte[] dataToEncrypt){
-
-		try{
-
-			// Create the cipher object
-			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-
-			// Initialize the cipher encryption object, add the key 
-			objCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
-
-			///byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
-
-			// Encrypt the data and store in encryptedData
-			return objCipher.doFinal(dataToEncrypt);
-
-		} catch(Exception ex){
-			System.out.println(ex.toString());
-			ex.printStackTrace();
-		}
-
-		return null;
-	}
+//	/**
+//	 * This method will decrypt the data.
+//	 * @param algorithm The algorithm to use.
+//	 * @param provider The security provider.
+//	 * @param key The symmetric key to use.
+//	 * @param iv The IV to use for decryption.
+//	 * @param dataToDecrypt The data to decrypt.
+//	 * @return byte[] array of decrypted data.
+//	 */
+//	protected static byte[] AESDecrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] dataToDecrypt){
+//
+//		try{
+//
+//			Cipher objCipher = Cipher.getInstance(algorithm, provider);
+//
+//			// Initialize the cipher encryption object, add the key, and add the IV
+//			objCipher.init(Cipher.DECRYPT_MODE, key, iv); 
+//
+//			// Encrypt the data and store in encryptedData
+//			return objCipher.doFinal(dataToDecrypt);
+//
+//		} catch(Exception ex){
+//			System.out.println(ex.toString());
+//			ex.printStackTrace();
+//		}
+//
+//		return null;
+//	}
+//	
+//	
+//	/**
+//	 * This method will encrypt the data utilizing the public key.
+//	 * @param algorithm The algorithm to use.
+//	 * @param provider The security provider to use.
+//	 * @param pubKey The public key to use.
+//	 * @param dataToEncrypt The data to encrypt.
+//	 * @return byte[] array of the encrypted data.
+//	 */
+//	protected static byte[] RSAEncrypt(String algorithm, String provider, RSAPublicKey pubKey, byte[] dataToEncrypt){
+//
+//		try{
+//
+//			// Create the cipher object
+//			Cipher objCipher = Cipher.getInstance(algorithm, provider);
+//
+//			// Initialize the cipher encryption object, add the key 
+//			objCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
+//
+//			///byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+//
+//			// Encrypt the data and store in encryptedData
+//			return objCipher.doFinal(dataToEncrypt);
+//
+//		} catch(Exception ex){
+//			System.out.println(ex.toString());
+//			ex.printStackTrace();
+//		}
+//
+//		return null;
+//	}
 	
 	// javadoc already handled by ClientInterface
 	public boolean connect(final String server, final int port, String serverName)
