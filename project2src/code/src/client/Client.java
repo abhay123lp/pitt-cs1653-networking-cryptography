@@ -2,7 +2,11 @@ package client;
 
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
 import java.io.ByteArrayInputStream;
@@ -11,8 +15,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 
 import message.Envelope;
@@ -42,116 +49,40 @@ public abstract class Client implements ClientInterface
 	 */
 	protected ObjectInputStream input;
 	
-	protected final String RSA_ALGORITHM = "RSA/None/NoPadding";
-	private final String SYM_ALGORITHM = "AES";
-	protected final String SYM_KEY_ALG = "AES/CTR/NoPadding";
-	protected final String PROVIDER = "BC";
-	protected Key SYMMETRIC_KEY;
-	private SecureRandom CHALLENGE;
-	public RSAPublicKey serverPublicKey;
+	protected static final String RSA_ALGORITHM = "RSA/None/NoPadding";
+	private static final String SYM_ALGORITHM = "AES";
+	protected static final String SYM_KEY_ALG = "AES/CTR/NoPadding";
+	protected static final String PROVIDER = "BC";
+	protected Key symmetricKey;
+	private SecureRandom random;
 	private static final int IV_BYTES = 16;
-	private byte[] challengeBytes;
 	private final String CAServer = "localhost";
-	//private CAClient caClient;
 	
-	public Client(){
-	
-		/****** TODO *******
-		caClient = new CAClient();
-		caClient.run();
-		serverPublicKey = (RSAPublicKey)caClient.getPublicKey();
-		*********/
-	}
-		
-	public Key getSymmetricKey(){
-		
-		return SYMMETRIC_KEY;
-		
+	public Client()
+	{
+		this.random = new SecureRandom();
+		this.symmetricKey = genterateSymmetricKey(SYM_ALGORITHM, PROVIDER);
 	}
 	
-	public SecureRandom generateChallenge(){
-		
-		return new SecureRandom();
-		
+	private byte[] encryptKey(RSAPublicKey pubKey)
+	{
+		return encryptPublic(pubKey, this.symmetricKey.getEncoded());
 	}
 	
-//	public void getServerPublicKey(String serverName){
-//		
-//		
-//		
-//	}
-	
-	
-	/*	
-	public void createSymmetricKey(){
-				
-		SYMMETRIC_KEY = genterateSymmetricKey(SYM_ALGORITHM, PROVIDER);
-									
-	}
-	*/
-	
-	public byte[] encryptKey(RSAPublicKey pubKey){
-		
-		try{
-			
-			SYMMETRIC_KEY = genterateSymmetricKey(SYM_ALGORITHM, PROVIDER);
-			//CHALLENGE = generateChallenge();
-						
-			//String concatenation = CHALLENGE.toString() + SYMMETRIC_KEY.toString();
-			
-			// cipher object
+	private byte[] encryptPublic(RSAPublicKey pubKey, byte[] encoded)
+	{
+		try
+		{
 			Cipher oCipher = Cipher.getInstance(RSA_ALGORITHM, PROVIDER);
-	
-			// cipher encryption object
 			oCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
-	
-			byte[] dataToEncryptBytes = SYMMETRIC_KEY.getEncoded(); //concatenation.getBytes();
-	
-						
-			// Encrypt the data and store in encryptedData
-			return oCipher.doFinal(dataToEncryptBytes);
-		
-		} catch(Exception ex){
-			
+			return oCipher.doFinal(encoded);
+		}
+		catch(Exception ex)
+		{
 			ex.printStackTrace();
 		}
-		
 		return null;
-		
 	}
-	
-	public byte[] encryptChallenge(RSAPublicKey pubKey){
-		
-		try{
-			
-			//SYMMETRIC_KEY = genterateSymmetricKey(SYM_ALGORITHM, PROVIDER);
-			CHALLENGE = generateChallenge();
-						
-			//String concatenation = CHALLENGE.toString() + SYMMETRIC_KEY.toString();
-			
-			// cipher object
-			Cipher oCipher = Cipher.getInstance(RSA_ALGORITHM, PROVIDER);
-	
-			// cipher encryption object
-			oCipher.init(Cipher.ENCRYPT_MODE, pubKey); 
-	
-			challengeBytes = new byte[20];
-			
-			CHALLENGE.nextBytes(challengeBytes); //SYMMETRIC_KEY.getEncoded(); //concatenation.getBytes();
-										
-			// Encrypt the data and store in encryptedData
-			return oCipher.doFinal(challengeBytes);
-		
-		} catch(Exception ex){
-			ex.printStackTrace();
-			
-		}
-		
-		return null;
-		
-	}
-	
-	//TODO verify challenge
 	
 	/**
 	 * This method will generate a symmetric key for use.
@@ -159,10 +90,10 @@ public abstract class Client implements ClientInterface
 	 * @param provider The security provider
 	 * @return Key The key generated for symmetric cryptography
 	 */
-	private static Key genterateSymmetricKey(String algorithm, String provider){
-
-		try {
-
+	private static final Key genterateSymmetricKey(String algorithm, String provider)
+	{
+		try
+		{
 			// Random Number used to generate key
 			SecureRandom randomNumber = new SecureRandom();	
 
@@ -172,46 +103,33 @@ public abstract class Client implements ClientInterface
 			Key key = keyGenerator.generateKey();
 
 			return key;
-
-		} catch (Exception ex){
-
+		}
+		catch (Exception ex)
+		{
 			System.out.println(ex.toString());
 			ex.printStackTrace();
-
 		}
-
 		return null;
-
 	}
 
-
-	protected static IvParameterSpec ivAES(int ivBytes){
-
-		// Random Number used for IV
-		SecureRandom randomNumber = new SecureRandom();
-
+	protected IvParameterSpec ivAES(int ivBytes)
+	{
 		byte[] bytesIV = new byte[ivBytes];	
-		randomNumber.nextBytes(bytesIV);
+		this.random.nextBytes(bytesIV);
 
 		// Create the IV
 		return new IvParameterSpec(bytesIV);
-
 	}
 
-	protected Envelope encryptResponseWithSymmetricKey(Object[] objs, String message){
-
-		try{
-
+	protected Envelope encryptResponseWithSymmetricKey(Object[] objs, String message)
+	{
+		try
+		{
 			Envelope response = new Envelope(message);
-
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-
 			IvParameterSpec IV = ivAES(IV_BYTES);
 
-			// Initialize the cipher encryption object, add the key, and add the IV
-			objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
-
-			//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+			objCipher.init(Cipher.ENCRYPT_MODE, symmetricKey, IV); 
 
 			for(Object o : objs){
 
@@ -219,241 +137,69 @@ public abstract class Client implements ClientInterface
 				response.addObject(newEncryptedChallenge);
 
 			}
-
-			// Encrypt the data and store in encryptedData
-			//byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
-
-			// Respond to the client. On error, the client will receive a null token
-			//response = new Envelope("OK");
-
-			//response.addObject(newEncryptedChallenge);
 			response.addObject(IV.getIV());
 
-			//return b.toByteArray(); 
-			//		byte[] byteArray = convertToByteArray(response);
-
 			return response;
-
-			//output.writeObject(response);
-
-		} catch(Exception e){
-
-			e.printStackTrace();
-
 		}
-
-
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		return null;
-
 	}
 
-	protected byte[] decryptObjects(byte[] objByte, byte[] iv)  {
-
-		try{
-
+	protected byte[] decryptObjects(byte[] objByte, byte[] iv)
+	{
+		try
+		{
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
 
 			// Initialize the cipher encryption object, add the key, and add the IV
-			objCipher.init(Cipher.DECRYPT_MODE, SYMMETRIC_KEY, new IvParameterSpec(iv)); 
+			objCipher.init(Cipher.DECRYPT_MODE, symmetricKey, new IvParameterSpec(iv)); 
 
 			// Encrypt the data and store in encryptedData
 			return objCipher.doFinal(objByte);
-
-		} catch(Exception ex){
-			System.out.println(ex.toString());
+		}
+		catch(Exception ex)
+		{
 			ex.printStackTrace();
 		}
-
 		return null;
-
-
 	}
 
-
-	protected static byte[] convertToByteArray(Object objToConvert){
-
-		try{
-
+	protected static byte[] convertToByteArray(Object objToConvert)
+	{
+		try
+		{
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(baos);
 			oos.writeObject(objToConvert);
 			//return b.toByteArray(); 
 			return baos.toByteArray();
-
-		} catch(Exception ex){
-
+		}
+		catch(Exception ex)
+		{
 			System.out.println("Error creating byte array envelope: " + ex.toString());
 			ex.printStackTrace();
 		}
-
 		return null;
-
 	}
 
-	protected static Object convertToObject(byte[] bytesToConvert){
-
+	protected static Object convertToObject(byte[] bytesToConvert)
+	{
 		try
 		{
-
 			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
 			ObjectInputStream ois = new ObjectInputStream(bais);
-
 			return ois.readObject();
-
-		} catch(Exception ex){
-
+		}
+		catch(Exception ex)
+		{
 			System.out.println("Error byte array to object: " + ex.toString());
 			ex.printStackTrace();
-
 		}
-
 		return null;
-
 	}
-	
-	
-//	
-//	
-//	private static IvParameterSpec ivAES(int ivBytes){
-//
-//		// Random Number used for IV
-//		SecureRandom randomNumber = new SecureRandom();
-//
-//		byte[] bytesIV = new byte[ivBytes];	
-//		randomNumber.nextBytes(bytesIV);
-//
-//		// Create the IV
-//		return new IvParameterSpec(bytesIV);
-//
-//	}
-//	
-//	
-//	private static byte[] convertToByteArray(Object objToConvert){
-//		
-//		try{
-//			
-//			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//		    ObjectOutputStream oos = new ObjectOutputStream(baos);
-//		    oos.writeObject(objToConvert);
-//		    //return b.toByteArray(); 
-//			return baos.toByteArray();
-//		
-//		} catch(Exception ex){
-//		
-//			System.out.println("Error creating byte array envelope: " + ex.toString());
-//			ex.printStackTrace();
-//		}
-//		
-//		return null;
-//		
-//	}
-//	
-//	private static Object convertToObject(byte[] bytesToConvert){
-//		
-//		try
-//		{
-//			
-//			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
-//	        ObjectInputStream ois = new ObjectInputStream(bais);
-//	        
-//	        return ois.readObject();
-//	        
-//		} catch(Exception ex){
-//			
-//			System.out.println("Error byte array to object: " + ex.toString());
-//			ex.printStackTrace();
-//			
-//		}
-//		
-//		return null;
-//		
-//	}
-//	
-//	
-//	
-//	/**
-//	 * This method will encrypt data via an AES encryption algorithm utilizing an IV and symmetric key.
-//	 * @param algorithm The algorithm to use.
-//	 * @param provider The security provider.
-//	 * @param key The symmetric key
-//	 * @param iv The IV used for encryption.
-//	 * @param dataToEncrypt The clear data to encrypt.
-//	 * @return byte[] array of encrypted data.
-//	 */
-//	private static byte[] AESEncrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] byteData){
-//
-//		try{
-//
-//			// Create the cipher object
-//			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-//
-//			// Initialize the cipher encryption object, add the key, and add the IV
-//			objCipher.init(Cipher.ENCRYPT_MODE, key, iv); 
-//			
-//			// Encrypt the data and store in encryptedData
-//			return objCipher.doFinal(byteData);
-//
-//
-//		} catch(Exception ex){
-//			System.out.println(ex.toString());
-//			ex.printStackTrace();
-//		}
-//
-//		return null;
-//	}
-//	
-//	
-//	private  Envelope encryptResponseWithSymmetricKey(Object[] objs, String message){
-//				
-//		try{
-//			
-//		Envelope response = new Envelope(message);
-//		
-//		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-//					
-//		IvParameterSpec IV = ivAES(IV_BYTES);
-//		
-//		// Initialize the cipher encryption object, add the key, and add the IV
-//		objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
-//
-//		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
-//
-//		for(Object o : objs){
-//			
-//			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
-//			response.addObject(newEncryptedChallenge);
-//			
-//		}
-//		
-//		// Encrypt the data and store in encryptedData
-//		//byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
-//														
-//		// Respond to the client. On error, the client will receive a null token
-//		//response = new Envelope("OK");
-//		
-//		//response.addObject(newEncryptedChallenge);
-//		response.addObject(IV.getIV());
-//		
-//        //return b.toByteArray(); 
-////		byte[] byteArray = convertToByteArray(response);
-//																
-//		return response;
-//		
-//		//output.writeObject(response);
-//		
-//		} catch(Exception e){
-//			
-//			e.printStackTrace();
-//			
-//		}
-//		
-//		
-//		return null;
-//		
-//	}
-	
-	
-	
 	
 	/**
 	 * This method will decrypt the data.
@@ -532,107 +278,72 @@ public abstract class Client implements ClientInterface
 			this.sock = new Socket(server, port);
 			// this.sock.setSoTimeout(1000);
 			this.output = new ObjectOutputStream(this.sock.getOutputStream());
+			this.input = new ObjectInputStream(this.sock.getInputStream());
 			
 			System.out.println("Connecting to CA");
 			CAClient ca = new CAClient(serverName);
 			ca.connect(CAServer, 4999, null);
 			ca.run();
-			
 			ca.disconnect();
-			
-			System.out.println("Connected to CA ");
-			
 			RSAPublicKey serverPublicKey = (RSAPublicKey)ca.getPublicKey();
 			
-			System.out.println("I got the public key " + serverPublicKey);
-						
-			/**** Sending Symmetric Key to Server *******/
+//			System.out.println("I got the public key " + serverPublicKey);
+			
+			System.out.println("Setting up connection to the Server");
+			/* Sending Challenge and Symmetric Key to Server *******/
 			Envelope request = new Envelope("REQUEST_SECURE_CONNECTION");
-			request.addObject(encryptChallenge(serverPublicKey));
+			
+			byte[] challengeBytes = new byte[20];
+			this.random.nextBytes(challengeBytes); //SYMMETRIC_KEY.getEncoded(); //concatenation.getBytes();
+			
+			request.addObject(encryptPublic(serverPublicKey, challengeBytes));
 			request.addObject(encryptKey(serverPublicKey));
-			
-			//return b.toByteArray(); 
-			//byte[] byteArray = convertToByteArray(request);
-			
-			// Get the IV to use
-//			IvParameterSpec IV = ivAES(IV_BYTES);
-															
-			
-			//output.writeObject(RSAEncrypt("RSA/None/NoPadding", PROVIDER, serverPublicKey, byteArray));
-			//output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
-						
-			output.writeObject(request);
-						
-			this.input = new ObjectInputStream(this.sock.getInputStream());
-			
-			try{
-				
-//				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
-				
-//				Object convertedObj = convertToObject(decryptedMsg);
-				
-//				Envelope reqResponse = (Envelope)convertedObj;
-				
-				Envelope reqResponse = (Envelope)input.readObject();
-				
-				if (reqResponse.getMessage().equals("OK")){
-					
-					byte[] encryChallenge = (byte[])reqResponse.getObjContents().get(0); // Get the encrypted challenge
-					IvParameterSpec ivFromServer = new IvParameterSpec((byte[])reqResponse.getObjContents().get(1));
-					
-					if (encryChallenge == null){
-						
-						// We should get out of here
-						disconnect();
-						System.out.println("Entry challenge is null failed.");
-												
-						
-					} else {
-												
-						Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+			this.output.writeObject(request);
+		
+			Envelope reqResponse = (Envelope)this.input.readObject();
+			if (reqResponse.getMessage().equals("OK"))
+			{
+				byte[] encryChallenge = (byte[])reqResponse.getObjContents().get(0); // Get the encrypted challenge
+				IvParameterSpec ivFromServer = new IvParameterSpec((byte[])reqResponse.getObjContents().get(1));
 
-						// Get the IV to use
-						
-						// Initialize the cipher encryption object, add the key, and add the IV
-						objCipher.init(Cipher.DECRYPT_MODE, SYMMETRIC_KEY, ivFromServer); 
-
-						// Encrypt the data and store in encryptedData
-						byte[] decryptedChallenge = objCipher.doFinal(encryChallenge);
-						
-						String originalChallenge = new String(challengeBytes);
-						String returnedChallenge = new String(decryptedChallenge);
-						
-						if(originalChallenge.equals(returnedChallenge)){
-							
-							// Secure connection
-							System.out.println("Success! Secure connection created!");
-							
-						} else {
-							
-							disconnect();
-							System.out.println("Challenge is not equal");
-						}
-						
-					}
-										
-					
-				} else {
-					
-					// It failed
-					
+				if (encryChallenge == null)
+				{
+					// We should get out of here
 					disconnect();
-					System.out.println("Request Response failed.");
-					
+					System.out.println("Entry challenge is null failed.");
 				}
-										
-			
-			} catch(Exception ex){
-				
-//				System.out.println(ex.toString());
-				ex.printStackTrace();
-				
+				else
+				{					
+					Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+
+					// Initialize the cipher encryption object, add the key, and add the IV
+					objCipher.init(Cipher.DECRYPT_MODE, symmetricKey, ivFromServer); 
+
+					// Encrypt the data and store in encryptedData
+					byte[] decryptedChallenge = objCipher.doFinal(encryChallenge);
+
+					String originalChallenge = new String(challengeBytes);
+					String returnedChallenge = new String(decryptedChallenge);
+
+					if(originalChallenge.equals(returnedChallenge))
+					{
+						// Secure connection
+						System.out.println("Success! Secure connection created!");
+
+					}
+					else
+					{
+						disconnect();
+						System.out.println("Challenge is not equal");
+					}
+				}
 			}
-			
+			else
+			{
+				// It failed
+				disconnect();
+				System.out.println("Request Response failed.");
+			}
 		}
 		catch (UnknownHostException e)
 		{
@@ -644,8 +355,47 @@ public abstract class Client implements ClientInterface
 			e.printStackTrace();
 			return false;
 		}
-		
-//		System.out.println("Success!  Connected to " + server + " at port " + port);
+		catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(InvalidAlgorithmParameterException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(InvalidKeyException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(NoSuchPaddingException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(BadPaddingException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(NoSuchProviderException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(IllegalBlockSizeException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(NoSuchAlgorithmException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		System.out.println("Success!  Connected to " + server + " at port " + port);
 		return true;
 	}// end method connect(String, int)
 	
