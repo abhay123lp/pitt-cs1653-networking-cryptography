@@ -163,7 +163,6 @@ public class GroupServer extends Server
 		// This block listens for connections and creates threads on new connections
 		try
 		{
-			
 			final ServerSocket serverSock = new ServerSocket(port);
 			
 			Socket sock = null;
