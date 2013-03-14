@@ -167,7 +167,7 @@ public abstract class Client implements ClientInterface
 		return null;
 	}
 
-	protected static byte[] convertToByteArray(Object objToConvert)
+	private static byte[] convertToByteArray(Object objToConvert)
 	{
 		try
 		{
@@ -261,8 +261,6 @@ public abstract class Client implements ClientInterface
 
 		return null;
 	}
-	
-	
 	
 	// javadoc already handled by ClientInterface
 	public boolean connect(final String server, final int port, String serverName)
