@@ -14,12 +14,6 @@ package server.group;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
 import java.util.*;
 
 import client.CAServerClient;
@@ -40,12 +34,6 @@ public class GroupServer extends Server
 	public static final int SERVER_PORT = 8765;
 	public static final int CA_SERVER_PORT = 4999;
 	public static final String CA_SERVER_LOC = "localhost";
-	private static final int KEY_SIZE = 1024;
-	private static final String ALGORITHM = "RSA";
-	private static final String PROVIDER = "BC";
-	
-	private RSAPrivateKey privateKey;
-	private RSAPublicKey publicKey;
 	
 	/**
 	 * The list of users that the GroupServer has.
@@ -64,7 +52,6 @@ public class GroupServer extends Server
 	public GroupServer()
 	{
 		super(SERVER_PORT, "ALPHA");
-		generateRSAKeyPair();
 	}
 	
 	/**
@@ -75,35 +62,11 @@ public class GroupServer extends Server
 	public GroupServer(int _port)
 	{
 		super(_port, "ALPHA");
-		generateRSAKeyPair();
 	}
 	
-	public GroupServer(int _port, String name){
+	public GroupServer(int _port, String name)
+	{
 		super(_port, name);
-		generateRSAKeyPair();
-	}
-	
-	private final void generateRSAKeyPair() {
-		
-		// Generate Key Pair 
-		KeyPairGenerator rsaKeyGenerator;
-		
-		try{
-		
-			/***** Generate Key Pair ******/
-			rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
-			rsaKeyGenerator.initialize(KEY_SIZE);
-			KeyPair rsaKeyPair = rsaKeyGenerator.generateKeyPair();
-			
-			// Private Key
-			privateKey = (RSAPrivateKey)rsaKeyPair.getPrivate();
-			// Public key 
-			publicKey = (RSAPublicKey)rsaKeyPair.getPublic();
-		
-		} catch(Exception ex){
-			
-		}
-		
 	}
 	
 	// TODO: password support
