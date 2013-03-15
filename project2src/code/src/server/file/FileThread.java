@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.ByteArrayInputStream;
@@ -20,6 +21,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import server.ServerThread;
+
 import message.Envelope;
 import message.ShareFile;
 import message.Token;
@@ -31,153 +34,17 @@ import message.UserToken;
  * 
  * @see FileClient
  */
-public class FileThread extends Thread
+public class FileThread extends ServerThread
 {
-	/**
-	 * Class level variable specifying the socket.
-	 */
-	private final Socket socket;
-	
-	private final String PROVIDER = "BC";
-	private final String ASYM_ALGORITHM = "RSA";
-	
-	//private RSAPublicKey publicKey;
-	private RSAPrivateKey privateKey; 
-	
-	private Key SYMMETRIC_KEY; 
-	private final String SYM_KEY_ALG = "AES/CTR/NoPadding";
-	
-	private static final int IV_BYTES = 16;
-	
-	
-	
-	
 	/**
 	 * This constructor initializes the socket class variable to the socket passed in as a parameter.
 	 * 
 	 * @param _socket The socket to be utilized by this object.
 	 */
-	public FileThread(Socket _socket)
+	public FileThread(Socket _socket, RSAPrivateKey _privKey, RSAPublicKey _pubKey)
 	{
-		socket = _socket;
+		super(_socket, _pubKey, _privKey);
 	}
-			
-	
-	private static IvParameterSpec ivAES(int ivBytes){
-
-		// Random Number used for IV
-		SecureRandom randomNumber = new SecureRandom();
-
-		byte[] bytesIV = new byte[ivBytes];	
-		randomNumber.nextBytes(bytesIV);
-
-		// Create the IV
-		return new IvParameterSpec(bytesIV);
-
-	}
-	
-	
-	private static byte[] convertToByteArray(Object objToConvert){
-		
-		try{
-			
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		    ObjectOutputStream oos = new ObjectOutputStream(baos);
-		    oos.writeObject(objToConvert);
-		    //return b.toByteArray(); 
-			return baos.toByteArray();
-		
-		} catch(Exception ex){
-		
-			System.out.println("Error creating byte array envelope: " + ex.toString());
-		}
-		
-		return null;
-		
-	}
-	
-	private static Object convertToObject(byte[] bytesToConvert){
-		
-		try
-		{
-			
-			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
-	        ObjectInputStream ois = new ObjectInputStream(bais);
-	        
-	        return ois.readObject();
-	        
-		} catch(Exception ex){
-			
-			System.out.println("Error byte array to object: " + ex.toString());
-			
-		}
-		
-		return null;
-		
-	}
-	
-	
-	
-	/**
-	 * This method will encrypt data via an AES encryption algorithm utilizing an IV and symmetric key.
-	 * @param algorithm The algorithm to use.
-	 * @param provider The security provider.
-	 * @param key The symmetric key
-	 * @param iv The IV used for encryption.
-	 * @param dataToEncrypt The clear data to encrypt.
-	 * @return byte[] array of encrypted data.
-	 */
-	private static byte[] AESEncrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] byteData){
-
-		try{
-
-			// Create the cipher object
-			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-
-			// Initialize the cipher encryption object, add the key, and add the IV
-			objCipher.init(Cipher.ENCRYPT_MODE, key, iv); 
-			
-			// Encrypt the data and store in encryptedData
-			return objCipher.doFinal(byteData);
-
-
-		} catch(Exception ex){
-			System.out.println(ex.toString());
-		}
-
-		return null;
-	}
-	
-	
-	/**
-	 * This method will decrypt the data.
-	 * @param algorithm The algorithm to use.
-	 * @param provider The security provider.
-	 * @param key The symmetric key to use.
-	 * @param iv The IV to use for decryption.
-	 * @param dataToDecrypt The data to decrypt.
-	 * @return byte[] array of decrypted data.
-	 */
-	private static byte[] AESDecrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] dataToDecrypt){
-
-		try{
-
-			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-
-			// Initialize the cipher encryption object, add the key, and add the IV
-			objCipher.init(Cipher.DECRYPT_MODE, key, iv); 
-
-			// Encrypt the data and store in encryptedData
-			return objCipher.doFinal(dataToDecrypt);
-
-		} catch(Exception ex){
-			System.out.println(ex.toString());
-		}
-
-		return null;
-	}
-	
-	
 	
 	/**
 	 * This method executes the processes associated with serving files such as list files, download a file, delete a file, etc...
@@ -193,7 +60,7 @@ public class FileThread extends Thread
 			Envelope response;
 			
 			// Get the IV to use
-			IvParameterSpec IV = ivAES(IV_BYTES);
+			IvParameterSpec IV = ivAES();
 			
 			do
 			{
@@ -255,64 +122,7 @@ public class FileThread extends Thread
 				}// end if block
 				else if (e.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
 				{
-					byte[] encryptedChallenge = (byte[])e.getObjContents().get(0); // Get the encrypted challenge
-					byte[] encryptedKey = (byte[])e.getObjContents().get(0); // Get the encrypted key
-					if (encryptedChallenge == null || encryptedKey == null)
-					{
-						response = new Envelope("FAIL");
-						response.addObject(null);
-						
-						//return b.toByteArray(); 
-						byte[] byteArray = convertToByteArray(response);
-																		
-						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
-						
-						//output.writeObject(response);
-					}
-					else
-					{
-						
-						// Create the cipher object
-						Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
-
-						// Initialize the cipher encryption object, add the key 
-						objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
-
-						// Encrypt the data and store in encryptedData
-						byte[] decryptedChallenge = objCipher.doFinal(encryptedChallenge);
-												
-						byte[] decryptedKey = objCipher.doFinal(encryptedKey);
-						
-						//SYMMETRIC_KEY = new Key(decryptedKey);
-											
-						// Get the IV to use
-						//IvParameterSpec IV = ivAES(IV_BYTES);
-						
-						//SecretKeySpec secretKeySpec 
-						SYMMETRIC_KEY = new SecretKeySpec(decryptedKey, "AES");
-						
-						// Initialize the cipher encryption object, add the key, and add the IV
-						objCipher.init(Cipher.ENCRYPT_MODE, SYMMETRIC_KEY, IV); 
-
-						//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
-
-						// Encrypt the data and store in encryptedData
-						byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
-																		
-						// Respond to the client. On error, the client will receive a null token
-						response = new Envelope("OK");
-						
-						response.addObject(newEncryptedChallenge);
-						
-						//return b.toByteArray(); 
-						byte[] byteArray = convertToByteArray(response);
-																		
-						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
-						
-						//output.writeObject(response);
-											
-					}
-					
+					output.writeObject(this.setUpSecureConnection(e));
 				}							
 				else if (e.getMessage().equals("UPLOADF"))
 				{
