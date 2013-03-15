@@ -57,7 +57,6 @@ public class FileThread extends ServerThread
 			System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
 			final ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 			final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-			Envelope response;
 			
 			// Get the IV to use
 			IvParameterSpec IV = ivAES();
@@ -65,16 +64,21 @@ public class FileThread extends ServerThread
 			do
 			{
 				
+//				
+//				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+//				
+//				Object convertedObj = convertToObject(decryptedMsg);
+//				
+//				Envelope e = (Envelope)convertedObj;		
 				
-				byte[] decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
+				Envelope e = (Envelope)input.readObject();
+				System.out.println("Request received: " + e.getMessage());
+				Envelope response = null;
 				
-				Object convertedObj = convertToObject(decryptedMsg);
-				
-				Envelope e = (Envelope)convertedObj;		
-				
+				//TODO decrypt depending on the message!
 				
 				//Envelope e = (Envelope)input.readObject();
-				System.out.println("Request received: " + e.getMessage());
+//				System.out.println("Request received: " + e.getMessage());
 				
 				// Handler to list files that this user is allowed to see
 				// RETURNS MESSAGE OK AND LIST OF FILES
@@ -109,21 +113,23 @@ public class FileThread extends ServerThread
 						}
 					}
 					
-					response = new Envelope("OK");
-					response.addObject(visibleFiles);
+					output.writeObject(encryptResponseWithSymmetricKey(new Object[]{visibleFiles}, "OK"));
 					
-					//return b.toByteArray(); 
-					byte[] byteArray = convertToByteArray(response);
-																	
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
-					
+//					response = new Envelope("OK");
+//					response.addObject(visibleFiles);
+//					
+//					//return b.toByteArray(); 
+//					byte[] byteArray = convertToByteArray(response);
+//																	
+//					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, this.symmetricKey, IV,byteArray) );
 					
 					//output.writeObject(response);
 				}// end if block
 				else if (e.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
 				{
 					output.writeObject(this.setUpSecureConnection(e));
-				}							
+				}
+				//TODO
 				else if (e.getMessage().equals("UPLOADF"))
 				{
 					if (e.getObjContents().size() < 3)
@@ -229,6 +235,7 @@ public class FileThread extends ServerThread
 					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					//output.writeObject(response);
 				}// end else if block
+				//TODO
 				else if (e.getMessage().compareTo("DOWNLOADF") == 0)
 				{
 					String remotePath = (String)e.getObjContents().get(0);
@@ -356,7 +363,7 @@ public class FileThread extends ServerThread
 						}
 					}// end else block
 				}// end else if block
-					// TODO replace all / with System.getProperty("path.separator")
+				// TODO replace all / with System.getProperty("path.separator")
 				else if (e.getMessage().compareTo("DELETEF") == 0)
 				{
 					String remotePath = (String)e.getObjContents().get(0);
@@ -403,11 +410,11 @@ public class FileThread extends ServerThread
 						}
 					}// end else block
 
-					byte[] byteArray = convertToByteArray(e);
+//					byte[] byteArray = convertToByteArray(e);
 					
-					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
+//					output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 					
-					//output.writeObject(e);
+					output.writeObject(e);
 				}// end else if block
 				else if (e.getMessage().equals("DISCONNECT"))
 				{

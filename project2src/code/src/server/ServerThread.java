@@ -70,7 +70,7 @@ public abstract class ServerThread extends Thread
 
 	}
 	
-	private static byte[] convertToByteArray(Object objToConvert){
+	protected static byte[] convertToByteArray(Object objToConvert){
 		
 		try{
 			
