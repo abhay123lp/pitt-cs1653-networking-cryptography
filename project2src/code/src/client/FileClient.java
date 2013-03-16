@@ -26,9 +26,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		{
 			remotePath = filename;
 		}
-		Envelope env = new Envelope("DELETEF"); // Success
-		env.addObject(remotePath);
-		env.addObject(token);
+//		Envelope env = new Envelope("DELETEF"); // Success
+//		env.addObject(remotePath);
+//		env.addObject(token);
+		Envelope env = this.encryptResponseWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF");
 		try
 		{
 			output.writeObject(env);
@@ -70,12 +71,12 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				file.createNewFile();
 				FileOutputStream fos = new FileOutputStream(file);
 				
-				Envelope env = new Envelope("DOWNLOADF"); // Success
-				env.addObject(sourceFile);
-				env.addObject(token);
-				output.writeObject(env);
+//				Envelope env = new Envelope("DOWNLOADF"); // Success
+//				env.addObject(sourceFile);
+//				env.addObject(token);
+				output.writeObject(this.encryptResponseWithSymmetricKey(new Object[]{sourceFile, token}, "DOWNLOADF"));
 				
-				env = (Envelope)input.readObject();
+				Envelope env = (Envelope)input.readObject();
 				
 				// Why can't you just use .equals()?
 				while (env.getMessage().compareTo("CHUNK") == 0)
@@ -127,13 +128,13 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 	{
 		try
 		{
-			Envelope message = null, e = null;
+//			Envelope message = null, e = null;
 			// Tell the server to return the member list
-			message = new Envelope("LFILES");
-			message.addObject(token); // Add requester's token
-			output.writeObject(message);
+//			message = new Envelope("LFILES");
+//			message.addObject(token); // Add requester's token
+			output.writeObject(this.encryptResponseWithSymmetricKey(new Object[]{token}, "LFILES"));
 			
-			e = (Envelope)input.readObject();
+			Envelope e = (Envelope)input.readObject();
 			
 			// If server indicates success, return the member list
 			if (e.getMessage().equals("OK"))
@@ -159,17 +160,17 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		
 		try
 		{
-			Envelope message = null, env = null;
-			// Tell the server to return the member list
-			message = new Envelope("UPLOADF");
-			message.addObject(destFile);
-			message.addObject(group);
-			message.addObject(token); // Add requester's token
-			output.writeObject(message);
+//			Envelope message = null, env = null;
+//			// Tell the server to return the member list
+//			message = new Envelope("UPLOADF");
+//			message.addObject(destFile);
+//			message.addObject(group);
+//			message.addObject(token); // Add requester's token
+			output.writeObject(this.encryptResponseWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
 			
 			FileInputStream fis = new FileInputStream(sourceFile); // FIXME never closed
 			
-			env = (Envelope)input.readObject();
+			Envelope env = (Envelope)input.readObject();
 			
 			// If server indicates success, return the member list
 			if (env.getMessage().equals("READY"))
@@ -192,7 +193,6 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					System.out.printf("Server error: %s\n", env.getMessage());
 					return false;
 				}
-				message = new Envelope("CHUNK");
 				int n = fis.read(buf); // can throw an IOException
 				if (n > 0)
 				{
@@ -204,18 +204,19 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					return false;
 				}
 				
-				message.addObject(buf);
-				message.addObject(new Integer(n));
+//				Envelope message = new Envelope("CHUNK");
+//				message.addObject(buf);
+//				message.addObject(new Integer(n));
 				
-				output.writeObject(message);
+				output.writeObject(this.encryptResponseWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
 				
-				env = (Envelope)input.readObject();
+//				env = (Envelope)input.readObject();	//FIXME is this supposed to happen twice?
 			} while (fis.available() > 0);
 			
 			// If server indicates success, return the member list
 			if (env.getMessage().compareTo("READY") == 0)
 			{
-				message = new Envelope("EOF");
+				Envelope message = new Envelope("EOF");
 				output.writeObject(message);
 				
 				env = (Envelope)input.readObject();
