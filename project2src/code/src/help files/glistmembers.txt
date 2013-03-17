@@ -1,3 +1,0 @@
-This method will return a list of all users that are currently members of a group. Only the owner of 
-a group can request to list the users in that group.
-Example: "glistmembers groupname"

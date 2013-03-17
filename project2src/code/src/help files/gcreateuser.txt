@@ -1,4 +1,0 @@
-This method creates a new user at the group server. This should only succeed if the requesting user
-is a member of the administrative group. That is, not all users should be allowed to create other 
-user accounts.
-Example: "gcreateuser abc123"

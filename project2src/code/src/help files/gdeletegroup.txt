@@ -1,3 +1,0 @@
-This method allows the owner of a group to delete the specified group, provided that they are the 
-owner of that group. After deleting a group, no user should be a member of that group.
-Example: "gdeletegroup mygroupname"

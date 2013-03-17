@@ -1,2 +1,0 @@
-This method enables the owner of a group to add a user to a group.
-Example: "gaddusertogroup username groupname"
