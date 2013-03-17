@@ -1,4 +1,0 @@
-This method allows the owner of a group to upload a file to be shared with members of a group,
-provided that he or she is also a member of that group. The sourceFile parameter points to a file on
-the local file system, while destFile is simply a name used to identify the file on the server.
-Example: "fupload sourcefile destfile groupname"

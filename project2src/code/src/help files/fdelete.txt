@@ -1,3 +1,0 @@
-This method allows a user to delete a file provided that he or she is a member of the group with 
-which this file is shared.
-Example: "fdelete filename"

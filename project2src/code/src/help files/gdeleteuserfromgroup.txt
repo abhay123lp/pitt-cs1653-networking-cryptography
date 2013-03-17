@@ -1,2 +1,0 @@
-This method enables the owner of a group to remove a user from a group. 
-Example: "gdeleteuserfromgroup username groupname"

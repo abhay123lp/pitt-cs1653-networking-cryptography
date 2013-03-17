@@ -1,2 +1,0 @@
-Any user can create a group and will be flagged as the new owner of the group.
-Example: "gcreategroup mygroupname"

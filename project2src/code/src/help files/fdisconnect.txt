@@ -1,3 +1,0 @@
-Use this command to disconnect from the current file server. In order to connect to another file
-server, the user must disconnect from the current file server first.
-Example: "fdisconnect"
