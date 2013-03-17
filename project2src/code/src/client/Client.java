@@ -121,7 +121,7 @@ public abstract class Client implements ClientInterface
 		return new IvParameterSpec(bytesIV);
 	}
 
-	protected Envelope encryptResponseWithSymmetricKey(Object[] objs, String message)
+	protected Envelope encryptMessageWithSymmetricKey(Object[] objs, String message)
 	{
 		try
 		{
@@ -148,7 +148,7 @@ public abstract class Client implements ClientInterface
 		return null;
 	}
 
-	protected byte[] decryptObjects(byte[] objByte, byte[] iv)
+	protected byte[] decryptObjectBytes(byte[] objByte, byte[] iv)
 	{
 		try
 		{
@@ -262,8 +262,14 @@ public abstract class Client implements ClientInterface
 //		return null;
 //	}
 	
+	public boolean connect(final String server, final int port, final String serverName)
+	{
+		return this.connect(server, port, serverName, null);
+	}
+	
 	// javadoc already handled by ClientInterface
-	public boolean connect(final String server, final int port, String serverName)
+	// groupServerName is for the FileServer to retrieve the group server's public key.  It is ignored otherwise.
+	public boolean connect(final String server, final int port, final String serverName, final String groupServerName)
 	{
 		if (this.sock != null)
 		{
@@ -296,6 +302,7 @@ public abstract class Client implements ClientInterface
 			
 			request.addObject(encryptPublic(serverPublicKey, challengeBytes));
 			request.addObject(encryptKey(serverPublicKey));
+			request.addObject(encryptPublic(serverPublicKey, groupServerName.getBytes()));
 			this.output.writeObject(request);
 		
 			Envelope reqResponse = (Envelope)this.input.readObject();

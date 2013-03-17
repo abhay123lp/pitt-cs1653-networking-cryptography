@@ -13,6 +13,8 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import client.CAServerClient;
+
 import server.Server;
 
 
@@ -34,6 +36,9 @@ public class FileServer extends Server
 	 * The list of files that the FileServer has.
 	 */
 	public static FileList fileList;
+	
+	private static final String CA_LOC = "localhost";
+	private static final int DEF_CA_PORT = 4999;
 	
 	/**
 	 * Default constructor.
@@ -81,8 +86,10 @@ public class FileServer extends Server
 			System.out.println("FileList Does Not Exist. Creating FileList...");
 			
 			fileList = new FileList();
-			//Create CAServerClient and send public key.  TODO
-			
+			CAServerClient caServerClient = new CAServerClient(this.name, this.publicKey);
+			caServerClient.connect(CA_LOC, DEF_CA_PORT, null);
+			caServerClient.run();
+			caServerClient.disconnect();
 		}
 		catch (IOException e)
 		{

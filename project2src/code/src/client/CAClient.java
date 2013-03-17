@@ -72,6 +72,11 @@ public class CAClient extends Client
 		}
 	}
 	
+	public boolean connect()
+	{
+		return this.connect(CA_NAME, CA_PORT, null);
+	}
+	
 	// javadoc already handled by ClientInterface
 	// had to override this in order to be able to use connect without getting a public key.
 	@Override
@@ -118,7 +123,7 @@ public class CAClient extends Client
 			}
 			catch (Exception e)
 			{
-				System.err.println("Error: " + e.getMessage());
+//				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace(System.err);
 			}
 			this.sock = null;
