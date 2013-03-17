@@ -265,8 +265,8 @@ class CAThread extends Thread
 	 */
 	private final Socket socket;
 	
-	private ObjectInputStream input;
-	private ObjectOutputStream output;
+//	private ObjectInputStream input;
+//	private ObjectOutputStream output;
 	
 	private CertificateAuthority ca;
 	

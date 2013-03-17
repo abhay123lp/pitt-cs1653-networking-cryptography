@@ -76,7 +76,7 @@ public class GroupThread extends ServerThread
 				{
 					//String username = (String)message.getObjContents().get(0); // Get the username
 					
-					String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+					String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 					
 					if (username == null)
 					{
@@ -87,14 +87,14 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						String password = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+						String password = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 						
 						if(checkPassword(username, password))
 						{
 							UserToken yourToken = createToken(username); // Create a token
 							
 							// Respond to the client. On error, the client will receive a null token
-							response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+							response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 							output.writeObject(response);
 						}
 						// Password did not match
@@ -124,15 +124,15 @@ public class GroupThread extends ServerThread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
 								System.out.println(username);
-								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 								
 								if(checkToken)
 								{					
-									String password = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									String password = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
 									if (createUser(username, yourToken, password))
 									{
 										response = new Envelope("OK"); // Success
@@ -161,8 +161,8 @@ public class GroupThread extends ServerThread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 								
@@ -197,9 +197,9 @@ public class GroupThread extends ServerThread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
-								Token yourToken = (Token)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 								if(checkToken)
@@ -209,7 +209,7 @@ public class GroupThread extends ServerThread
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().add(groupname);
 										yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
-										response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+										response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 									}
 								}
 								else
@@ -237,9 +237,9 @@ public class GroupThread extends ServerThread
 							if (message.getObjContents().get(1) != null)
 							{
 								
-								String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
-								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 								if(checkToken)
@@ -250,7 +250,7 @@ public class GroupThread extends ServerThread
 										yourToken.getGroups().remove(groupname); // remove the group from the users token
 										yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
 										
-										response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+										response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 									}
 								}
 								else
@@ -277,9 +277,9 @@ public class GroupThread extends ServerThread
 						{
 							if (message.getObjContents().get(1) != null)
 							{
-								String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
-								UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 								
@@ -291,7 +291,7 @@ public class GroupThread extends ServerThread
 									{
 										response = new Envelope("OK"); // Success
 										
-										response = encryptResponseWithSymmetricKey(new Object[]{members, new Integer(members.size()) }, "OK");
+										response = encryptMessageWithSymmetricKey(new Object[]{members, new Integer(members.size()) }, "OK");
 									}
 								}
 								else
@@ -320,10 +320,10 @@ public class GroupThread extends ServerThread
 							{
 								if (message.getObjContents().get(2) != null)
 								{
-									String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-									String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+									String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
 									
-									UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+									UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 									
 									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 									
@@ -338,7 +338,7 @@ public class GroupThread extends ServerThread
 												yourToken.getGroups().add(groupname);
 											}
 											yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
-											response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+											response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 										}
 									}
 									else
@@ -368,10 +368,10 @@ public class GroupThread extends ServerThread
 							{
 								if (message.getObjContents().get(2) != null)
 								{
-									String username = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-									String groupname = (String)convertToObject(decryptObjects((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+									String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
 									
-									UserToken yourToken = (UserToken)convertToObject(decryptObjects((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+									UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 									
 									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
 									
@@ -383,7 +383,7 @@ public class GroupThread extends ServerThread
 											// Remove the groupname from the user in the token
 											yourToken.getGroups().remove(groupname);
 											yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
-											response = encryptResponseWithSymmetricKey(new Object[]{yourToken}, "OK");
+											response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 										}
 									}
 									else

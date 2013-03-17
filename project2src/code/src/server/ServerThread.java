@@ -24,7 +24,10 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import client.CAClient;
+
 import message.Envelope;
+import message.UserToken;
 
 /**
  * @author ongnathan
@@ -39,6 +42,11 @@ public abstract class ServerThread extends Thread
 	
 	protected final RSAPublicKey publicKey;
 	protected final RSAPrivateKey privateKey;
+	
+	private RSAPublicKey groupServerPublicKey;
+	
+	private static final String CA_NAME = "localhost";
+	private static final int CA_PORT = 34567;
 	
 	protected final Socket socket;
 	
@@ -56,6 +64,7 @@ public abstract class ServerThread extends Thread
 		this.privateKey = privateKey;
 		this.random = new SecureRandom();
 		this.symmetricKey = null;
+		this.groupServerPublicKey = null;
 	}
 	
 	public abstract void run();
@@ -172,7 +181,7 @@ public abstract class ServerThread extends Thread
 //		return null;
 //	}
 	
-	protected Envelope encryptResponseWithSymmetricKey(Object[] objs, String message){
+	protected Envelope encryptMessageWithSymmetricKey(Object[] objs, String message){
 		
 		try{
 			
@@ -204,7 +213,7 @@ public abstract class ServerThread extends Thread
 		return null;
 	}
 	
-	protected byte[] decryptObjects(byte[] objByte, byte[] iv)  {
+	protected byte[] decryptObjectBytes(byte[] objByte, byte[] iv)  {
 		
 		try{
 
@@ -221,14 +230,13 @@ public abstract class ServerThread extends Thread
 		}
 
 		return null;
-				
-		
 	}
 	
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
 	{
 		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
 		byte[] encryptedKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
+		byte[] encryptedGroupServerName = (byte[])requestSecureConnection.getObjContents().get(2); //get the encrypted server name
 		Envelope response = null;
 		try
 		{
@@ -248,6 +256,16 @@ public abstract class ServerThread extends Thread
 				byte[] decryptedChallenge = objCipher.doFinal(encryptedChallenge);
 
 				byte[] decryptedKey = objCipher.doFinal(encryptedKey);
+				
+				if(encryptedGroupServerName != null)
+				{
+					String decryptedGroupServerName = new String(objCipher.doFinal(encryptedGroupServerName));
+					CAClient caClient = new CAClient(decryptedGroupServerName);
+					caClient.connect(CA_NAME, CA_PORT, null);
+					caClient.run();
+					caClient.disconnect();
+					this.groupServerPublicKey = (RSAPublicKey)caClient.getPublicKey();
+				}
 
 				//SecretKeySpec secretKeySpec 
 				this.symmetricKey = new SecretKeySpec(decryptedKey, "AES");
@@ -309,4 +327,9 @@ public abstract class ServerThread extends Thread
 		return response;
 	}
 	
+	//FOR USE ONLY WITH FILETHREAD
+	protected boolean verifyTokenSignature(UserToken t)
+	{
+		return t.RSAVerifySignature("SHA1withRSA", "BC", this.groupServerPublicKey);
+	}
 }
