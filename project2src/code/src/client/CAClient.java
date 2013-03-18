@@ -15,7 +15,7 @@ public class CAClient extends Client
 	private PublicKey publicKey;
 	
 	private static final String CA_NAME = "localhost";
-	private static final int CA_PORT = 34567;
+	private static final int CA_PORT = 4999;
 	
 	public CAClient(String serverName)
 	{
@@ -90,7 +90,20 @@ public class CAClient extends Client
 //		System.out.println("Attempting to connect...");
 		try
 		{
-			this.sock = new Socket(server, port);
+//			boolean tryAgain = true;
+//			while(tryAgain)
+//			{
+//				try
+//				{
+					this.sock = new Socket(server, port);
+//					tryAgain = false;
+//				}
+//				catch(ConnectException e)
+//				{
+//					e.printStackTrace();
+//				}
+//			}
+			
 			// this.sock.setSoTimeout(1000);
 			this.output = new ObjectOutputStream(this.sock.getOutputStream());
 			this.input = new ObjectInputStream(this.sock.getInputStream());
