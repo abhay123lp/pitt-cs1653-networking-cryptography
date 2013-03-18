@@ -36,6 +36,8 @@ public class UserCommands {
 
 	public static void main(String [] args)
 	{
+		
+		System.out.println(System.getProperty("user.dir"));
 		// TODO: Make user log in. Password needed. Edit userlist.bin.
 		groupServerIP = "";
 		groupServerPort = -1;
@@ -412,14 +414,14 @@ public class UserCommands {
 						if(userCommands[i].equals("default"))
 						{
 							fileClient = new FileClient();						
-							fileClient.connect("localhost", 4321, "FilePile");
+							fileClient.connect("localhost", 4321, "FilePile", "ALPHA");
 						}
 						// Assume user entered "fconnect fileserverIP" without port number
 						// The default port number 4321 will be used.
 						else
 						{
 							fileClient = new FileClient();
-							fileClient.connect(fileServerIP, 4321, "FilePile");
+							fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA");
 						}
 						return userToken;
 					}
@@ -444,7 +446,7 @@ public class UserCommands {
 					// User specified IP address and port number
 					if(userCommands.length == 3)
 					{	
-						fileClient.connect(fileServerIP, 4321, "FilePile");
+						fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA");
 					}
 					
 					i++;
@@ -452,7 +454,7 @@ public class UserCommands {
 					
 					if(userCommands.length == 4)
 					{
-						fileClient.connect(fileServerIP, 4321, fileServerName);
+						fileClient.connect(fileServerIP, 4321, fileServerName, "ALPHA");
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))

@@ -81,8 +81,8 @@ public class CertificateAuthority extends Server
 	public CertificateAuthority(int port)
 	{
 		super(port, NAME);
-		this.serverList = new ArrayList<>();
-		this.serverPublicKeyPairs = new Hashtable<>();
+		this.serverList = new ArrayList<String>();
+		this.serverPublicKeyPairs = new Hashtable<String, PublicKey>();
 		
 //		KeyPair rsaKeyPair = null;
 //		try
