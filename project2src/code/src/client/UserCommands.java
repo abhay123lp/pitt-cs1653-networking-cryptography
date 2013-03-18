@@ -421,6 +421,7 @@ public class UserCommands {
 							fileClient = new FileClient();
 							fileClient.connect(fileServerIP, 4321, "FilePile");
 						}
+						return userToken;
 					}
 					int fileServerPort = -1;
 					try
@@ -575,6 +576,7 @@ public class UserCommands {
 			s = s
 					+ "You entered an improperly formatted command. For a list of commands, type help.\n"
 					+ " For help on how to use the commands, type help followed by a command\n";
+			e.printStackTrace();
 		}		
 		// Here we print out the success and failures of commands. 
 		// Everything gets printed at once after the commands all finish.
