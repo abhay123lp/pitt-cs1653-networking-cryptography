@@ -302,7 +302,10 @@ public abstract class Client implements ClientInterface
 			
 			request.addObject(encryptPublic(serverPublicKey, challengeBytes));
 			request.addObject(encryptKey(serverPublicKey));
-			request.addObject(encryptPublic(serverPublicKey, groupServerName.getBytes()));
+			if(groupServerName != null)
+			{
+				request.addObject(encryptPublic(serverPublicKey, groupServerName.getBytes()));
+			}
 			this.output.writeObject(request);
 		
 			Envelope reqResponse = (Envelope)this.input.readObject();
