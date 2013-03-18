@@ -236,7 +236,11 @@ public abstract class ServerThread extends Thread
 	{
 		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
 		byte[] encryptedKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
-		byte[] encryptedGroupServerName = (byte[])requestSecureConnection.getObjContents().get(2); //get the encrypted server name
+		byte[] encryptedGroupServerName = null;
+		if(requestSecureConnection.getObjContents().size() > 2)
+		{
+			encryptedGroupServerName = (byte[])requestSecureConnection.getObjContents().get(2); //get the encrypted server name
+		}
 		Envelope response = null;
 		try
 		{
