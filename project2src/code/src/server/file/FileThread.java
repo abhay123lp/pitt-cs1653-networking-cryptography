@@ -151,9 +151,15 @@ public class FileThread extends ServerThread
 						else
 						{
 							byte[] iv = (byte[])e.getObjContents().get(3);
-							String remotePath = new String(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
-							String group = new String(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
+							String remotePath = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
+							String group = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 							Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(2), iv));
+//							for(int i = 0; i < yourToken.getGroups().size(); i++)
+//							{
+//								System.out.println(yourToken.getGroups().get(i));
+//							}
+//							remotePath = remotePath.substring(7);
+//							group = group.substring(7);//FIXME for some reason, seven characters preceeding are trash...
 							if(!this.verifyTokenSignature(yourToken))
 							{
 								output.writeObject(new Envelope("ERROR"));
@@ -201,7 +207,7 @@ public class FileThread extends ServerThread
 								while (chunk.getMessage().compareTo("CHUNK") == 0)
 								{
 									byte[] ivChunk = (byte[])chunk.getObjContents().get(2);
-									byte[] inBytes = decryptObjectBytes((byte[])chunk.getObjContents().get(0), ivChunk);
+									byte[] inBytes = (byte[])convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(0), ivChunk));
 									Integer lastIndex = (Integer)convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(1), ivChunk));
 									fos.write(inBytes, 0, lastIndex);
 									response = new Envelope("READY"); // Success
@@ -250,7 +256,7 @@ public class FileThread extends ServerThread
 //					String remotePath = (String)e.getObjContents().get(0);
 //					Token t = (Token)e.getObjContents().get(1);
 					byte[] iv = (byte[])e.getObjContents().get(2);
-					String remotePath = new String(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
+					String remotePath = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 					Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					if(!this.verifyTokenSignature(t))
 					{
@@ -389,7 +395,7 @@ public class FileThread extends ServerThread
 //					String remotePath = (String)e.getObjContents().get(0);
 //					Token t = (Token)e.getObjContents().get(1);
 					byte[] iv = (byte[])e.getObjContents().get(2);
-					String remotePath = new String(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
+					String remotePath = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 					Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					if(!this.verifyTokenSignature(t))
 					{
