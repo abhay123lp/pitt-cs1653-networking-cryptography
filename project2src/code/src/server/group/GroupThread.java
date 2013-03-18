@@ -35,7 +35,7 @@ public class GroupThread extends ServerThread
 	/**
 	 * ADMIN_GROUP_NAME is a constant representing the name of the administrative group in the group server.
 	 */
-	private static final String ADMIN_GROUP_NAME = "ADMIN"; 
+	private static final String ADMIN_GROUP_NAME = "ADMIN";
 	
 	/**
 	 * This constructor sets the socket class variable and GroupServer class variable.
@@ -128,7 +128,7 @@ public class GroupThread extends ServerThread
 								System.out.println(username);
 								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
 								if(checkToken)
 								{					
@@ -164,7 +164,7 @@ public class GroupThread extends ServerThread
 								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
 								if(checkToken)
 								{
@@ -201,14 +201,14 @@ public class GroupThread extends ServerThread
 								
 								Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								if(checkToken)
 								{
 									if (createGroup(groupname, yourToken))
 									{
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().add(groupname);
-										yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
+										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 									}
 								}
@@ -241,14 +241,14 @@ public class GroupThread extends ServerThread
 								
 								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								if(checkToken)
 								{																	
 									if (deleteGroup(groupname, yourToken))
 									{
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().remove(groupname); // remove the group from the users token
-										yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
+										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										
 										response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 									}
@@ -281,7 +281,7 @@ public class GroupThread extends ServerThread
 								
 								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
 								if(checkToken){
 								
@@ -325,7 +325,7 @@ public class GroupThread extends ServerThread
 									
 									UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 									
-									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 									
 									if(checkToken)
 									{
@@ -337,7 +337,7 @@ public class GroupThread extends ServerThread
 											{
 												yourToken.getGroups().add(groupname);
 											}
-											yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
+											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 											response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 										}
 									}
@@ -373,7 +373,7 @@ public class GroupThread extends ServerThread
 									
 									UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 									
-									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", "BC", publicKey);
+									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 									
 									if(checkToken){
 									
@@ -382,7 +382,7 @@ public class GroupThread extends ServerThread
 											response = new Envelope("OK"); // Success
 											// Remove the groupname from the user in the token
 											yourToken.getGroups().remove(groupname);
-											yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
+											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 											response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 										}
 									}
@@ -430,7 +430,7 @@ public class GroupThread extends ServerThread
 		{
 			// Issue a new token with server's name, user's name, and user's groups
 			UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
-			yourToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
+			yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 			return yourToken;
 		}
 		else
@@ -547,7 +547,7 @@ public class GroupThread extends ServerThread
 					{
 						// Use the delete group method. Token must be created for this action
 						Token newToken = new Token(my_gs.name, username, deleteOwnedGroup);
-						newToken.generateRSASignature("SHA1withRSA", "BC", privateKey);
+						newToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 						deleteGroup(deleteOwnedGroup.get(index), newToken);
 					}
 					

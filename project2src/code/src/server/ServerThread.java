@@ -46,7 +46,7 @@ public abstract class ServerThread extends Thread
 	private RSAPublicKey groupServerPublicKey;
 	
 	private static final String CA_NAME = "localhost";
-	private static final int CA_PORT = 34567;
+	private static final int CA_PORT = 4999;
 	
 	protected final Socket socket;
 	
@@ -266,6 +266,7 @@ public abstract class ServerThread extends Thread
 					String decryptedGroupServerName = new String(objCipher.doFinal(encryptedGroupServerName));
 					CAClient caClient = new CAClient(decryptedGroupServerName);
 					caClient.connect(CA_NAME, CA_PORT, null);
+//					caClient.connect();
 					caClient.run();
 					caClient.disconnect();
 					this.groupServerPublicKey = (RSAPublicKey)caClient.getPublicKey();
@@ -334,6 +335,6 @@ public abstract class ServerThread extends Thread
 	//FOR USE ONLY WITH FILETHREAD
 	protected boolean verifyTokenSignature(UserToken t)
 	{
-		return t.RSAVerifySignature("SHA1withRSA", "BC", this.groupServerPublicKey);
+		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, this.groupServerPublicKey);
 	}
 }
