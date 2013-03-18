@@ -131,11 +131,12 @@ public abstract class Client implements ClientInterface
 
 			objCipher.init(Cipher.ENCRYPT_MODE, symmetricKey, IV); 
 
-			for(Object o : objs){
-
-				byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
-				response.addObject(newEncryptedChallenge);
-
+			for(Object o : objs)
+			{
+//				byte[] plain = convertToByteArray(o);
+//				System.out.println("Converting from object to: " + new String(plain));
+				byte[] objBytes = objCipher.doFinal(convertToByteArray(o));
+				response.addObject(objBytes);
 			}
 			response.addObject(IV.getIV());
 
@@ -158,7 +159,10 @@ public abstract class Client implements ClientInterface
 			objCipher.init(Cipher.DECRYPT_MODE, symmetricKey, new IvParameterSpec(iv)); 
 
 			// Encrypt the data and store in encryptedData
-			return objCipher.doFinal(objByte);
+			byte[] decrypted = objCipher.doFinal(objByte);
+//			System.out.println("DECRYPTED AS: " + new String(decrypted));
+//			return objCipher.doFinal(objByte);
+			return decrypted;
 		}
 		catch(Exception ex)
 		{
@@ -175,6 +179,7 @@ public abstract class Client implements ClientInterface
 			ObjectOutputStream oos = new ObjectOutputStream(baos);
 			oos.writeObject(objToConvert);
 			//return b.toByteArray(); 
+//			System.out.println("CONVERTING TO: " + new String(baos.toByteArray()));
 			return baos.toByteArray();
 		}
 		catch(Exception ex)
@@ -189,6 +194,7 @@ public abstract class Client implements ClientInterface
 	{
 		try
 		{
+			System.out.println("Object created is: " + new String(bytesToConvert));
 			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
 			ObjectInputStream ois = new ObjectInputStream(bais);
 			return ois.readObject();
