@@ -317,7 +317,7 @@ class CAThread extends Thread
 				{
 					String serverName = (String)received.getObjContents().get(0);
 					PublicKey pubKey = (PublicKey)received.getObjContents().get(1);
-					if(this.ca.serverList.contains(serverName))
+					if(this.ca.serverList.contains(serverName) || serverName == null || pubKey == null)
 					{
 						response = new Envelope("FAIL");
 					}
