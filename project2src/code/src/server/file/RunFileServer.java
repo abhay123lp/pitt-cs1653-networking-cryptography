@@ -1,5 +1,7 @@
 package server.file;
 
+import java.security.Security;
+
 /**
  * Runs the {@link FileServer}.
  * This class holds the main method to run the FileServer.
@@ -14,6 +16,7 @@ public class RunFileServer
 	 */
 	public static void main(String[] args)
 	{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		if (args.length > 0)
 		{
 			try

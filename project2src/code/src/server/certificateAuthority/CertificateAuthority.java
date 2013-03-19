@@ -12,6 +12,7 @@ import java.net.Socket;
 //import java.security.NoSuchAlgorithmException;
 //import java.security.NoSuchProviderException;
 import java.security.PublicKey;
+import java.security.Security;
 //import java.security.SecureRandom;
 //import java.security.interfaces.RSAPrivateKey;
 //import java.security.interfaces.RSAPublicKey;
@@ -375,6 +376,7 @@ class CAThread extends Thread
 	
 	public static void main(String[] args)
 	{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		if (args.length > 0)
 		{
 			try
