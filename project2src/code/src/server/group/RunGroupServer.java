@@ -1,5 +1,7 @@
 package server.group;
 
+import java.security.Security;
+
 /**
  * Runs the {@link GroupServer}.
  * This class holds the main method to run the GroupServer.
@@ -14,6 +16,7 @@ public class RunGroupServer
 	 */
 	public static void main(String[] args)
 	{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		if (args.length > 0)
 		{
 			try

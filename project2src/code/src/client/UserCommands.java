@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException; // In the case that the group or file server times out
 // or doesn't respond, we import IOException.
 import java.io.InputStreamReader; // Used for Buffered Reader 
-//import java.security.Security;
+import java.security.Security;
 import java.util.List;
 import java.io.FileReader;
 
@@ -37,7 +37,7 @@ public class UserCommands {
 
 	public static void main(String [] args)
 	{
-//		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		System.out.println(System.getProperty("user.dir"));
 		// TODO: Make user log in. Password needed. Edit userlist.bin.
 		groupServerIP = "";
