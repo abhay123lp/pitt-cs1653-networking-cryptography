@@ -52,9 +52,9 @@ public class CertificateAuthority extends Server
 	
 	public static void main(String[] args)
 	{
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		if (args.length > 0)
 		{
-			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 			try
 			{
 				CertificateAuthority server = new CertificateAuthority(Integer.parseInt(args[0]));
