@@ -33,7 +33,7 @@ public class GroupServer extends Server
 	 */
 	public static final int SERVER_PORT = 8765;
 	public static final int CA_SERVER_PORT = 4999;
-	public static final String CA_SERVER_LOC = "localhost";
+	public static final String CA_LOC = "localhost";
 	
 	/**
 	 * The list of users that the GroupServer has.

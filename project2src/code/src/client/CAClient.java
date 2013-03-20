@@ -14,7 +14,7 @@ public class CAClient extends Client
 	private String serverName;
 	private PublicKey publicKey;
 	
-	private static final String CA_NAME = "localhost";
+	private static final String CA_LOC = "localhost";
 	private static final int CA_PORT = 4999;
 	
 	public CAClient(String serverName)

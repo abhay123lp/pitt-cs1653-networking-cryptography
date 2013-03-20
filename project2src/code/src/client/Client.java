@@ -56,7 +56,7 @@ public abstract class Client implements ClientInterface
 	protected Key symmetricKey;
 	private SecureRandom random;
 	private static final int IV_BYTES = 16;
-	private final String CAServer = "localhost";
+	private static final String CA_LOC = "localhost";
 	
 	public Client()
 	{

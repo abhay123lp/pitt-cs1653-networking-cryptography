@@ -45,7 +45,7 @@ public abstract class ServerThread extends Thread
 	
 	private RSAPublicKey groupServerPublicKey;
 	
-	private static final String CA_NAME = "localhost";
+	private static final String CA_LOC = "localhost";
 	private static final int CA_PORT = 4999;
 	
 	protected final Socket socket;
