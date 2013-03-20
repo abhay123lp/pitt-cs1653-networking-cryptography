@@ -265,7 +265,7 @@ public abstract class ServerThread extends Thread
 				{
 					String decryptedGroupServerName = new String(objCipher.doFinal(encryptedGroupServerName));
 					CAClient caClient = new CAClient(decryptedGroupServerName);
-					caClient.connect(CA_NAME, CA_PORT, null);
+					caClient.connect(CA_LOC, CA_PORT, null);
 //					caClient.connect();
 					caClient.run();
 					caClient.disconnect();

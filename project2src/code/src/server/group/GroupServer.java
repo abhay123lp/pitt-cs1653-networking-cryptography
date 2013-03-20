@@ -104,7 +104,7 @@ public class GroupServer extends Server
 												
 				// Create new CAClient
 				CAServerClient ca = new CAServerClient(this.name, publicKey);
-				ca.connect(CA_SERVER_LOC, CA_SERVER_PORT, null);
+				ca.connect(CA_LOC, CA_SERVER_PORT, null);
 				ca.run();
 				
 				ca.disconnect();

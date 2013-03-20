@@ -74,7 +74,7 @@ public class CAClient extends Client
 	
 	public boolean connect()
 	{
-		return this.connect(CA_NAME, CA_PORT, null);
+		return this.connect(CA_LOC, CA_PORT, null);
 	}
 	
 	// javadoc already handled by ClientInterface
