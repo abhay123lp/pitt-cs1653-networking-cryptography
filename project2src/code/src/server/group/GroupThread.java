@@ -125,7 +125,7 @@ public class GroupThread extends ServerThread
 							if (message.getObjContents().get(1) != null)
 							{
 								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-								System.out.println(username);
+//								System.out.println(username);
 								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
@@ -411,7 +411,7 @@ public class GroupThread extends ServerThread
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method run()

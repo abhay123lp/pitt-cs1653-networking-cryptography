@@ -149,7 +149,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}

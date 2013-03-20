@@ -89,7 +89,8 @@ public class Token implements UserToken, Serializable
 		} catch (Exception ex){
 
 			privKey = null;
-			System.out.println(ex.toString());
+//			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 	}
 	
@@ -194,7 +195,7 @@ public class Token implements UserToken, Serializable
 				
 		} catch(Exception ex){
 
-			System.out.println(ex.toString());
+//			System.out.println(ex.toString());
 			ex.printStackTrace();
 
 		}

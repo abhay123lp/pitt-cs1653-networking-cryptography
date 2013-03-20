@@ -178,7 +178,7 @@ public class GroupServer extends Server
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method start()
@@ -222,7 +222,7 @@ class ShutDownListener extends Thread
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method run()
@@ -272,7 +272,7 @@ class AutoSave extends Thread
 				}
 				catch (Exception e)
 				{
-					System.err.println("Error: " + e.getMessage());
+//					System.err.println("Error: " + e.getMessage());
 					e.printStackTrace(System.err);
 				}
 			}// end try block

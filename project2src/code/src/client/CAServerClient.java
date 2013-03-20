@@ -113,7 +113,7 @@ public class CAServerClient extends Client
 			}
 			catch (Exception e)
 			{
-				System.err.println("Error: " + e.getMessage());
+//				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace(System.err);
 			}
 			this.sock = null;
