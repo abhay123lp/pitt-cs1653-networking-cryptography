@@ -54,6 +54,7 @@ public class CertificateAuthority extends Server
 	{
 		if (args.length > 0)
 		{
+			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 			try
 			{
 				CertificateAuthority server = new CertificateAuthority(Integer.parseInt(args[0]));
@@ -374,25 +375,25 @@ class CAThread extends Thread
 		}
 	}
 	
-	public static void main(String[] args)
-	{
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-		if (args.length > 0)
-		{
-			try
-			{
-				CertificateAuthority server = new CertificateAuthority(Integer.parseInt(args[0]));
-				server.start();
-			}
-			catch (NumberFormatException e)
-			{
-				System.out.printf("Enter a valid port number or pass no arguments to use the default port (%d)\n", GroupServer.SERVER_PORT);
-			}
-		}
-		else
-		{
-			CertificateAuthority server = new CertificateAuthority();
-			server.start();
-		}
-	}// end method main(String[])
+//	public static void main(String[] args)
+//	{
+//		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+//		if (args.length > 0)
+//		{
+//			try
+//			{
+//				CertificateAuthority server = new CertificateAuthority(Integer.parseInt(args[0]));
+//				server.start();
+//			}
+//			catch (NumberFormatException e)
+//			{
+//				System.out.printf("Enter a valid port number or pass no arguments to use the default port (%d)\n", GroupServer.SERVER_PORT);
+//			}
+//		}
+//		else
+//		{
+//			CertificateAuthority server = new CertificateAuthority();
+//			server.start();
+//		}
+//	}// end method main(String[])
 }
