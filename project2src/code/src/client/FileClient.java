@@ -83,7 +83,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				while (env.getMessage().compareTo("CHUNK") == 0)
 				{
 					byte[] iv = (byte[])env.getObjContents().get(2);
-					byte[] inBytes = decryptObjectBytes((byte[])env.getObjContents().get(0), iv);
+					byte[] inBytes = (byte[])convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(0), iv));
 					Integer lastIndex = (Integer)convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(1), iv));
 					fos.write(inBytes, 0, lastIndex);
 					System.out.printf(".");
