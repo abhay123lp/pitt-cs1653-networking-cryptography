@@ -20,6 +20,17 @@ example, I would type without quotation marks: ";C:\Program Files\Java\jdk1.6.0_
 Click OK, OK, and OK.
 (These instructions came from a homework assignment from another class on how to install Java on a Windows machine)
 
+-- SECTION 0.2: Changing Certificate Authority Location
+To setup the correct certificate authority location you must change the files:
+-  FileServer.java
+-  GroupServer.java
+-  ServerThread.java
+-  CaClient.java
+-  Client.java
+
+In each one of these files there is a private static final String variable named CA_LOC all of which have the hard coded value "localhost".  Depending on where the Certificate Authority is running from, change the value to the appropriate IP address.  You must recompile if you did not run this step before compiling.
+
+
 --SECTION 1: Pre-compilation instructions--
 After retrieving the <ZIPFILENAME>.tgz file, extract the tgz.
 
@@ -30,3 +41,5 @@ From there, type "javac *.java" and press Enter.
 
 --SECTION 3: Running--
 Please see usage.txt
+
+
