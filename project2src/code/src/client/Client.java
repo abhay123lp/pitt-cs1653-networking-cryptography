@@ -292,7 +292,7 @@ public abstract class Client implements ClientInterface
 			
 			System.out.println("Connecting to CA");
 			CAClient ca = new CAClient(serverName);
-			ca.connect(CAServer, 4999, null);
+			ca.connect(CA_LOC, 4999, null);
 			ca.run();
 			ca.disconnect();
 			RSAPublicKey serverPublicKey = (RSAPublicKey)ca.getPublicKey();
