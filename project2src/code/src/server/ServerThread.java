@@ -91,7 +91,7 @@ public abstract class ServerThread extends Thread
 		
 		} catch(Exception ex){
 		
-			System.out.println("Error creating byte array envelope: " + ex.toString());
+//			System.out.println("Error creating byte array envelope: " + ex.toString());
 			ex.printStackTrace();
 		}
 		
@@ -111,7 +111,7 @@ public abstract class ServerThread extends Thread
 	        
 		} catch(Exception ex){
 			
-			System.out.println("Error byte array to object: " + ex.toString());
+//			System.out.println("Error byte array to object: " + ex.toString());
 			ex.printStackTrace();
 			
 		}

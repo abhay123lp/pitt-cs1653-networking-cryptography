@@ -143,7 +143,7 @@ public class FileServer extends Server
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method start
@@ -166,7 +166,7 @@ class ShutDownListenerFS implements Runnable
 		}
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}
@@ -193,7 +193,7 @@ class AutoSaveFS extends Thread
 				}
 				catch (Exception e)
 				{
-					System.err.println("Error: " + e.getMessage());
+//					System.err.println("Error: " + e.getMessage());
 					e.printStackTrace(System.err);
 				}
 				

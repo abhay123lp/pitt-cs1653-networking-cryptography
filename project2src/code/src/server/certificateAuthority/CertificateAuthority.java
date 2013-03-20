@@ -151,7 +151,7 @@ public class CertificateAuthority extends Server
 		catch (Exception e)
 		{
 			//TODO
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 
@@ -248,7 +248,7 @@ class AutoSaveCA extends Thread
 				}
 				catch (Exception e)
 				{
-					System.err.println("Error: " + e.getMessage());
+//					System.err.println("Error: " + e.getMessage());
 					e.printStackTrace(System.err);
 				}
 			}// end try block
@@ -366,6 +366,7 @@ class CAThread extends Thread
 				{
 					System.err.println("FATAL ERROR");
 					e.printStackTrace();
+					return;
 				}
 //			}while(true);
 		}
