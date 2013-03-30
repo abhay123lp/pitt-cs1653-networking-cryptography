@@ -1,0 +1,53 @@
+FileSharing Usage Information
+
+USAGE:
+1) Run CertificateAuthority (CA): java CertificateAuthority
+
+The port for the CA is 4999.
+
+The Cerficate Authority's public key is hard-coded the other members so nobody can impersonate the
+CA. The CA keeps track of public keys for other members. The CA uses public-private-key encryption
+(RSA) to set up a private channel with a client at which point symmetric keys are exchanged.
+
+2) Start Group Server: java RunGroupServer [(optional) port number]
+ When the group server is first started, there are no users or groups. Since  there must be an 
+ administer of the system, the user is prompted via the console to enter a username and password. 
+ This name  becomes the first user and is a member of the ADMIN group.  Also, no groups exist.  The 
+ group server will by default run on port 8765, but a custom port can be passed as the first command 
+ line argument.
+ 
+ The first admin creates other users. The admin enters a password for users. We do not support 
+ changing the password.
+
+3) Start File Server: java RunFileServer [(optional) port number]
+ The file server will create a shared_files inside the working directory if one 
+ does not exist. The file server is now online.  The file server will by default
+ run on port 4321, but a custom port can be passed as the first command line
+ argument.
+ 
+4) Start UserCommands: java UserCommands (default of "localhost" for IP and 8765 for the port,
+"ALPHA" for name of Certificate Authority)
+
+Optionally, you can either specify an IP address and port number or just an IP address for the group
+server. If you only specify an IP address, then the default port of 8765 will be assigned for the
+Group Server. The same applyies for the Certifcate Authority.
+	a) java UserCommands IP_ADDRESS IP_NUMBER CA_NAME (CA_NAME can be changed but should be "ALPHA")
+	b) java UserCommands IP_ADDRESS (default of 8765 for the port, default of "ALPHA" for CA name)
+It will ask for a username, which you should supply, and then you can run the commands.
+Type "help" to see a list of commands, and type "man [command]" to see a description and its usage.
+Or you can manually take a look at the text file with the corresponding command name to examine its 
+description and usage, found in "src/help files".
+
+UserCommands is essentially a terminal. Users log in here with a username and password to the Group
+Server. Users can then log into a File Server if desired.
+
+5) Resetting the Servers
+
+	a) To reset the File server completely, delete FileList.bin and the shared_files 
+	directory. 
+ 
+	b) To reset the Group Server, delete UserList.bin.
+	
+	c) To reset the Certificate Authority, delete CATemp.tmp. 
+	
+	
