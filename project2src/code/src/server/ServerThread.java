@@ -245,17 +245,31 @@ public abstract class ServerThread extends Thread
 				
 				byte[] intBytes = convertToByteArray(numberOfMessage);
 				
+				byte[] tokenBytes = convertToByteArray(token);
+				
 				int sizeOfVarLenData = 0;
 				
 				ArrayList<byte[]> alVarData = new ArrayList<byte[]>();
 				
-				for(int i = 0; i < data.length; i++){
-					byte[] varLenData = convertToByteArray(data[i]);
-					alVarData.add(varLenData);
-					sizeOfVarLenData+= varLenData.length;
+				if(data != null){
+					for(int i = 0; i < data.length; i++){
+						byte[] varLenData = convertToByteArray(data[i]);
+						alVarData.add(varLenData);
+						sizeOfVarLenData+= varLenData.length;
+					}
 				}
 				
-				byte[] masterArray = new byte[sizeOfVarLenData + msgBytes.length + ivBytes.length + intBytes.length];
+				
+				byte[] masterArray;
+				
+				if(data != null){
+					
+					masterArray = new byte[sizeOfVarLenData + msgBytes.length + ivBytes.length + intBytes.length];
+					
+				} else {
+					
+					masterArray = new byte[msgBytes.length + ivBytes.length + intBytes.length];				
+				}
 				
 				int indexToStart = 0;
 				
@@ -274,16 +288,22 @@ public abstract class ServerThread extends Thread
 					indexToStart++;
 				}
 				
+				for(int i = 0; i < tokenBytes.length; i++){
+					masterArray[indexToStart] = tokenBytes[i];
+					indexToStart++;
+				}
 				
-				for(int i = 0; i < alVarData.size(); i++){
-					
-					byte[] loopArray = alVarData.get(i);
-					
-					for(int j = 0; j < loopArray.length; j++){
-						masterArray[indexToStart] = loopArray[j];
-						indexToStart++;
+				if(data != null){
+					for(int i = 0; i < alVarData.size(); i++){
+						
+						byte[] loopArray = alVarData.get(i);
+						
+						for(int j = 0; j < loopArray.length; j++){
+							masterArray[indexToStart] = loopArray[j];
+							indexToStart++;
+						}
+						
 					}
-					
 				}
 								
 				// Add HMAC to envelope
