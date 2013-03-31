@@ -112,7 +112,8 @@ public class FileThread extends ServerThread
 						}
 					}
 					
-					output.writeObject(encryptMessageWithSymmetricKey(new Object[]{visibleFiles}, "OK"));
+					//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{visibleFiles}, "OK"));
+					output.writeObject(encryptMessageWithSymmetricKey("OK", uToken, new Object[]{visibleFiles}));
 					
 //					response = new Envelope("OK");
 //					response.addObject(visibleFiles);
@@ -333,7 +334,8 @@ public class FileThread extends ServerThread
 //									
 //									output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 									
-									output.writeObject(encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
+									//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
+									output.writeObject(encryptMessageWithSymmetricKey("OK", t, new Object[]{buf, new Integer(n)}));
 									
 									//e = (Envelope)input.readObject();
 									
