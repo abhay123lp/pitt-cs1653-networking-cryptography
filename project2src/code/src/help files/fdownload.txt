@@ -1,0 +1,4 @@
+This method allows a user to download the specified file, provided that he or she is a member of the
+group with which this file is shared. The sourceFile is the name of the file on the file server, and 
+the destFile will be the name given to the file in the local directory.
+Example: "fdownload sourcefile destfile"
