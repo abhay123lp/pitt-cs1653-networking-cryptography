@@ -88,10 +88,12 @@ public abstract class ServerThread extends Thread
 		return new IvParameterSpec(bytesIV);
 	}
 	
-	// unencrypt message enveloope store in Object[] lastMessageContents array
+	
 	Object[] lastMessageContents = new Object[envelopeContentSize] ;
 	
 	private void unencryptMessage(Envelope env){
+		
+		// Decrypt message enveloope store in Object[] lastMessageContents array
 		
 		// Get the IV we will use for decryption
 		byte[] ivByteArray = convertToByteArray((IvParameterSpec)env.getObjContents().get(1));
@@ -122,22 +124,21 @@ public abstract class ServerThread extends Thread
 	
 	/**
 	 * 
-	 * @param incomingMessageNumber
+	 * @param Envelope env
 	 * @return
 	 */
 	private boolean checkValidityOfMessage(Envelope env){
 						
 		boolean isHMACValid = true;
 		boolean isMsgNumValid = true;
-		//boolean
+		boolean isTokenValid = true;
 		
 		// Unencrypt Message Envelope
 		unencryptMessage(env);
 			
 		/**** Check HMAC ****/
 		byte[] HMAC = convertToByteArray(lastMessageContents[0]);
-		
-		
+				
 		//Key integrityKey = genterateSymmetricKey();
 		int lengthOfMastArray = 0;
 		
@@ -251,15 +252,27 @@ public abstract class ServerThread extends Thread
 		}
 		
 		// Check Token
+		if(lastMessageContents[3] != null){
+			
+			UserToken checkToken = (UserToken)lastMessageContents[3];
+			// Group Server public key
+			if(!verifyTokenSignature(checkToken)){
+				// Token is not valid....return false
+				isTokenValid = false;
+				return isTokenValid;
+			}
+			
+			
+		}
+				
+		return true;
+				
+	}
+	
+	protected Object getFromEnvironment(Field f){
 		
-		
-		
-		
-		
-		
-		
-		
-		
+		return lastMessageContents[f.ordinal()];	
+				
 	}
 	
 		
