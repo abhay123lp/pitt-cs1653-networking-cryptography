@@ -44,27 +44,23 @@ public abstract class ServerThread extends Thread
 	protected static final String PROVIDER = "BC";
 	protected static final String ASYM_ALGORITHM = "RSA";
 	private static final int IV_BYTES = 16;
-	
-	private String HMAC_ALGORITHM = "HmacSHA1";
-	
-	private int numberOfMessage;
-	
-	protected final RSAPublicKey publicKey;
-	protected final RSAPrivateKey privateKey;
-	
 	private static final int envelopeContentSize = 5;
-	
-	private RSAPublicKey groupServerPublicKey;
 	
 	private static final String CA_LOC = "localhost";
 	private static final int CA_PORT = 4999;
-	
-	protected final Socket socket;
+	private static final String HMAC_ALGORITHM = "HmacSHA1";
 	
 	private final SecureRandom random;
 	
+	protected final Socket socket;
+	protected final RSAPublicKey publicKey;
+	protected final RSAPrivateKey privateKey;
+	
+	private RSAPublicKey groupServerPublicKey; //FOR USE BY NON GROUP SERVERS ONLY
+	private int numberOfMessage;
 	private Key confidentialKey;
 	private Key integrityKey;
+	private byte[] challengeBytes;
 	
 	/**
 	 * 
@@ -77,6 +73,8 @@ public abstract class ServerThread extends Thread
 		this.random = new SecureRandom();
 		this.confidentialKey = null;
 		this.groupServerPublicKey = null;
+		this.numberOfMessage = 0;
+		this.challengeBytes = new byte[20];
 	}
 	
 	public abstract void run();
@@ -88,7 +86,6 @@ public abstract class ServerThread extends Thread
 
 		// Create the IV
 		return new IvParameterSpec(bytesIV);
-
 	}
 	
 	// unencrypt message enveloope store in Object[] lastMessageContents array
@@ -563,8 +560,26 @@ public abstract class ServerThread extends Thread
 		return null;
 	}
 	
+	//From the client
+	//NULL MEANS ERROR AND SHOULD TERMINATE
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
 	{
+		if(requestSecureConnection.getObjContents().size() == 1)
+		{
+			byte[] serversChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be unencrypted
+			if(serversChallenge == null || serversChallenge.length != 20)
+			{
+				return null;
+			}
+			for(int i = 0; i < serversChallenge.length; i++)
+			{
+				if(this.challengeBytes[i] != serversChallenge[i])
+				{
+					return null;
+				}
+			}
+			return new Envelope("OK");
+		}
 		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
 		byte[] encryptedConfidentialKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
 		byte[] encryptedIntegrityKey = (byte[])requestSecureConnection.getObjContents().get(2); //Get the integrity key
@@ -608,25 +623,28 @@ public abstract class ServerThread extends Thread
 				//SecretKeySpec secretKeySpec 
 				this.confidentialKey = new SecretKeySpec(decryptedConfidentialKey, "AES");
 				this.integrityKey = new SecretKeySpec(decryptedIntegrityKey, "AES");
-
-				objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
 				
+				//getting a random integer
+				this.random.nextBytes(this.challengeBytes);
+
 				//TODO encrypt all material and send it back
-
-				// Get the IV to use
-				IvParameterSpec IV = ivAES();
-
-				// Initialize the cipher encryption object, add the key, and add the IV
-				objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
-
-				// Encrypt the data and store in encryptedData
-				byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
-
-				// Respond to the client. On error, the client will receive a null token
-				response = new Envelope("OK");
-
-				response.addObject(newEncryptedChallenge);
-				response.addObject(IV.getIV());
+				return encryptMessageWithSymmetricKey("OK", null, new Object[] {decryptedChallenge, this.challengeBytes});
+				
+//				objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+//				// Get the IV to use
+//				IvParameterSpec IV = ivAES();
+//
+//				// Initialize the cipher encryption object, add the key, and add the IV
+//				objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
+//
+//				// Encrypt the data and store in encryptedData
+//				byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
+//
+//				// Respond to the client. On error, the client will receive a null token
+//				response = new Envelope("OK");
+//
+//				response.addObject(newEncryptedChallenge);
+//				response.addObject(IV.getIV());
 			}
 		}
 		catch(NoSuchAlgorithmException e)
@@ -634,11 +652,11 @@ public abstract class ServerThread extends Thread
 			e.printStackTrace();
 			response = null;
 		}
-		catch(InvalidAlgorithmParameterException e)
-		{
-			e.printStackTrace();
-			response = null;
-		}
+//		catch(InvalidAlgorithmParameterException e)
+//		{
+//			e.printStackTrace();
+//			response = null;
+//		}
 		catch(NoSuchPaddingException e)
 		{
 			e.printStackTrace();
