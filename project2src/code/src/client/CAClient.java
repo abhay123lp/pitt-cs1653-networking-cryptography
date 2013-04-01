@@ -63,6 +63,7 @@ public class CAClient extends Client
 		
 		if(response.getMessage().equals("OK"))
 		{
+			/****** WE MADE NEED TO ADJUST THIS TO ACCOUNT FOR CHECK VALIDITITY ******/
 			this.publicKey = (PublicKey)response.getObjContents().get(0);
 			System.out.println("Public key was successfully retrieved");
 		}
