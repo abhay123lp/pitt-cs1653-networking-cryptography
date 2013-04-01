@@ -44,7 +44,7 @@ public abstract class ServerThread extends Thread
 	protected static final String PROVIDER = "BC";
 	protected static final String ASYM_ALGORITHM = "RSA";
 	private static final int IV_BYTES = 16;
-	private static final int envelopeContentSize = 5;
+	private static final int ENV_CONTENTS_SIZE = 5;
 	
 	private static final String CA_LOC = "localhost";
 	private static final int CA_PORT = 4999;
@@ -61,6 +61,7 @@ public abstract class ServerThread extends Thread
 	private Key confidentialKey;
 	private Key integrityKey;
 	private byte[] challengeBytes;
+	private Object[] lastMessageContents;
 	
 	/**
 	 * 
@@ -75,6 +76,7 @@ public abstract class ServerThread extends Thread
 		this.groupServerPublicKey = null;
 		this.numberOfMessage = 0;
 		this.challengeBytes = new byte[20];
+		this.lastMessageContents = null;
 	}
 	
 	public abstract void run();
@@ -88,12 +90,10 @@ public abstract class ServerThread extends Thread
 		return new IvParameterSpec(bytesIV);
 	}
 	
-	
-	private Object[] lastMessageContents = new Object[envelopeContentSize] ;
-	
 	private void unencryptMessage(Envelope env){
 		
 		// Decrypt message enveloope store in Object[] lastMessageContents array
+		lastMessageContents = new Object[ENV_CONTENTS_SIZE];
 		
 		// Get the IV we will use for decryption
 		byte[] ivByteArray = (byte[])env.getObjContents().get(1);
