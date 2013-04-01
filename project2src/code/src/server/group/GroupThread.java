@@ -15,6 +15,7 @@ import java.util.List;
 import server.ServerThread;
 
 import message.Envelope;
+import message.Field;
 import message.Token;
 import message.UserToken;
 
@@ -66,17 +67,39 @@ public class GroupThread extends ServerThread
 			System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
 			final ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 			final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+			
 			do
 			{
 				Envelope message = (Envelope)input.readObject();
 				System.out.println("Request received: " + message.getMessage());
 				Envelope response;
 				
+				if(message.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
+					
+					continue;					
+					
+				} else {
+							
+					if(!checkValidityOfMessage(message)){
+												 
+						response = new Envelope("DISCONNECT"); // Server does not understand client request
+						output.writeObject(response);
+						
+						socket.close();
+						return;
+						
+					}
+					
+				}
+												
+				
 				if (message.getMessage().equals("GET"))// Client wants a token
 				{
 					//String username = (String)message.getObjContents().get(0); // Get the username
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					String username = (String)objData[0];
 					
-					String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+					//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 					
 					if (username == null)
 					{
@@ -87,7 +110,9 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						String password = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+						
+						String password = (String)objData[1];
+								//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 						
 						if(checkPassword(username, password))
 						{
@@ -113,7 +138,10 @@ public class GroupThread extends ServerThread
 				}
 				else if (message.getMessage().equals("CUSER")) // Client wants to create a user
 				{
-					if (message.getObjContents().size() < 3)
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+										
+					if (message.getObjContents().size() < 5 && objData.length < 2)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -121,23 +149,33 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
+						if (objData[0] != null)
+						//if (message.getObjContents().get(0) != null)
 						{
-							if (message.getObjContents().get(1) != null)
+							if(objData[1] != null)
+							//if (message.getObjContents().get(1) != null)
 							{
-								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+								
+								String username = (String)objData[0];
+								
+								//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
 //								System.out.println(username);
-								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+								
+								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+										//(UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
 								if(checkToken)
 								{					
-									String password = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									String password = (String)objData[1];
+											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									
 									if (createUser(username, yourToken, password))
 									{
 										response = new Envelope("OK"); // Success
 									}
+									
 								}
 								else
 								{
@@ -150,7 +188,11 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("DUSER")) // Client wants to delete a user
 				{
-					if (message.getObjContents().size() < 2)
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
+					if (message.getObjContents().size() < 5)
+					//if (message.getObjContents().size() < 2)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -158,12 +200,17 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
-						{
-							if (message.getObjContents().get(1) != null)
+						if(objData[0] != null)
+						//if (message.getObjContents().get(0) != null)
+						{							
+							if(getFromEnvelope(Field.TOKEN) != null);
+							//if (message.getObjContents().get(1) != null)
 							{
-								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								String username = (String)objData[0];
+										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								
+								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+										//(UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
@@ -185,8 +232,12 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("CGROUP")) // Client wants to create a group
 				{
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
 					/* TODO: Write this handler */
-					if (message.getObjContents().size() < 2)
+					if (message.getObjContents().size() < 5)
+					//if (message.getObjContents().size() < 2)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -194,13 +245,18 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
+						if(objData[0] != null)
+						//if (message.getObjContents().get(0) != null)
 						{
-							if (message.getObjContents().get(1) != null)
+							
+							if (getFromEnvelope(Field.TOKEN) != null)
+							//if (message.getObjContents().get(1) != null)
 							{
-								String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								String groupname = (String)objData[0];
+										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
-								Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+								//Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								if(checkToken)
@@ -225,8 +281,12 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("DGROUP")) // Client wants to delete a group
 				{
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
 					/* TODO: Write this handler */
-					if (message.getObjContents().size() < 2)
+					if (message.getObjContents().size() < 5)
+					//if (message.getObjContents().size() < 2)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -234,14 +294,18 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
+						if (objData[0] != null)
 						{
-							if (message.getObjContents().get(1) != null)
+							
+							if (getFromEnvelope(Field.TOKEN) != null)
+							//if (message.getObjContents().get(1) != null)
 							{
 								
-								String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								String groupname = (String)objData[0];
+										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
-								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+								//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								if(checkToken)
@@ -267,8 +331,12 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("LMEMBERS")) // Client wants a list of members in a group
 				{
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
 					/* TODO: Write this handler */
-					if (message.getObjContents().size() < 2)
+					if (message.getObjContents().size() < 5)
+					//if (message.getObjContents().size() < 2)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -276,13 +344,18 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
+						if(objData[0] != null)
+						//if (message.getObjContents().get(0) != null)
 						{
-							if (message.getObjContents().get(1) != null)
+							
+							if(getFromEnvelope(Field.TOKEN) != null)
+							//if (message.getObjContents().get(1) != null)
 							{
-								String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+								String groupname = (String)objData[0];
+										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
-								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+								//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
@@ -309,8 +382,12 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("AUSERTOGROUP")) // Client wants to add user to a group
 				{
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
 					/* TODO: Write this handler */
-					if (message.getObjContents().size() < 3)
+					if (message.getObjContents().size() < 5)
+					//if (message.getObjContents().size() < 3)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -318,16 +395,23 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
+						if(objData[0] != null)
+						//if (message.getObjContents().get(0) != null)
 						{
-							if (message.getObjContents().get(1) != null)
+							if(objData[1] != null)
+							//if (message.getObjContents().get(1) != null)
 							{
-								if (message.getObjContents().get(2) != null)
+								
+								if(getFromEnvelope(Field.TOKEN) != null)
+								//if (message.getObjContents().get(2) != null)
 								{
-									String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-									String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									String username = (String)objData[0];
+											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+									String groupname = (String)objData[1];
+											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
 									
-									UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+									UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+									//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 									
 									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 									
@@ -358,8 +442,11 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("RUSERFROMGROUP")) // Client wants to remove user from a group
 				{
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
 					/* TODO: Write this handler */
-					if (message.getObjContents().size() < 3)
+					if (message.getObjContents().size() < 5)
+					//if (message.getObjContents().size() < 3)
 					{
 						response = new Envelope("FAIL");
 					}
@@ -367,16 +454,24 @@ public class GroupThread extends ServerThread
 					{
 						response = new Envelope("FAIL");
 						
-						if (message.getObjContents().get(0) != null)
+						if(objData[0] != null)
+						//if (message.getObjContents().get(0) != null)
 						{
-							if (message.getObjContents().get(1) != null)
+							
+							if(objData[1] != null)
+							//if (message.getObjContents().get(1) != null)
 							{
-								if (message.getObjContents().get(2) != null)
+								
+								if (getFromEnvelope(Field.TOKEN) != null)
+								//if (message.getObjContents().get(2) != null)
 								{
-									String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-									String groupname = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
+									String username = (String)objData[0];
+											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
+									String groupname = (String)objData[1];
+											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
 									
-									UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
+									UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+									//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 									
 									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 									
