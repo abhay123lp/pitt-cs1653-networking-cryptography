@@ -15,6 +15,7 @@ import java.io.ObjectOutputStream;
 import server.ServerThread;
 
 import message.Envelope;
+import message.Field;
 import message.ShareFile;
 import message.Token;
 import message.UserToken;
@@ -68,7 +69,24 @@ public class FileThread extends ServerThread
 				System.out.println("Request received: " + e.getMessage());
 				Envelope response = null;
 				
-				
+				if(e.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
+					
+					continue;					
+					
+				} else {
+							
+					if(!checkValidityOfMessage(e)){
+												 
+						response = new Envelope("DISCONNECT"); // Server does not understand client request
+						output.writeObject(response);
+						
+						socket.close();
+						return;
+						
+					}
+					
+				}
+								
 				//Envelope e = (Envelope)input.readObject();
 //				System.out.println("Request received: " + e.getMessage());
 				
@@ -90,7 +108,12 @@ public class FileThread extends ServerThread
 					
 					// (2) Get the token of the user
 //					UserToken uToken = (UserToken)e.getObjContents().get(0);
-					UserToken uToken = (UserToken)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1)));
+					
+					//Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
+					UserToken uToken = (UserToken)getFromEnvelope(Field.DATA);
+					
+					//UserToken uToken = (UserToken)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1)));
 					if(!this.verifyTokenSignature(uToken))
 					{
 						output.writeObject(new Envelope("ERROR"));
@@ -131,30 +154,40 @@ public class FileThread extends ServerThread
 				}
 				else if (e.getMessage().equals("UPLOADF"))
 				{
-					if (e.getObjContents().size() < 3)
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);					
+										
+					if (e.getObjContents().size() < 5)
+					//if (e.getObjContents().size() < 3)
 					{
 						response = new Envelope("FAIL-BADCONTENTS");
 					}
 					else
 					{
-						if (e.getObjContents().get(0) == null)
+						if(objData[0] == null)
+						//if (e.getObjContents().get(0) == null)
 						{
 							response = new Envelope("FAIL-BADPATH");
 						}
-						if (e.getObjContents().get(1) == null)
+						if(objData[1] == null)
+						//if (e.getObjContents().get(1) == null)
 						{
 							response = new Envelope("FAIL-BADGROUP");
 						}
-						if (e.getObjContents().get(2) == null)
+						if(getFromEnvelope(Field.TOKEN) == null)
+						//if (e.getObjContents().get(2) == null)
 						{
 							response = new Envelope("FAIL-BADTOKEN");
 						}
 						else
 						{
 							byte[] iv = (byte[])e.getObjContents().get(3);
-							String remotePath = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
-							String group = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
-							Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(2), iv));
+							String remotePath = (String)objData[0];
+									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
+							String group = (String)objData[1];
+									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.DATA);
+									//(Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(2), iv));
 //							for(int i = 0; i < yourToken.getGroups().size(); i++)
 //							{
 //								System.out.println(yourToken.getGroups().get(i));
@@ -207,9 +240,35 @@ public class FileThread extends ServerThread
 								//TODO think about requiring that the user send his token every time to verify
 								while (chunk.getMessage().compareTo("CHUNK") == 0)
 								{
-									byte[] ivChunk = (byte[])chunk.getObjContents().get(2);
-									byte[] inBytes = (byte[])convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(0), ivChunk));
-									Integer lastIndex = (Integer)convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(1), ivChunk));
+									
+									if(chunk.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
+										
+										continue;					
+										
+									} else {
+												
+										if(!checkValidityOfMessage(chunk)){
+																	 
+											response = new Envelope("DISCONNECT"); // Server does not understand client request
+											output.writeObject(response);
+											
+											socket.close();
+											return;
+											
+										}
+										
+									}
+									
+									
+									Object[] objChunkData = (Object[])getFromEnvelope(Field.DATA);	
+									
+									
+									byte[] ivChunk = (byte[])getFromEnvelope(Field.IV);
+											//(byte[])chunk.getObjContents().get(2);
+									byte[] inBytes = (byte[])objChunkData[0];
+											//(byte[])convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(0), ivChunk));
+									Integer lastIndex = (Integer)objData[1];
+											//(Integer)convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(1), ivChunk));
 									fos.write(inBytes, 0, lastIndex);
 									response = new Envelope("READY"); // Success
 									
@@ -254,11 +313,18 @@ public class FileThread extends ServerThread
 				}// end else if block
 				else if (e.getMessage().compareTo("DOWNLOADF") == 0)
 				{
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
 //					String remotePath = (String)e.getObjContents().get(0);
 //					Token t = (Token)e.getObjContents().get(1);
-					byte[] iv = (byte[])e.getObjContents().get(2);
-					String remotePath = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
-					Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
+					byte[] iv = (byte[])getFromEnvelope(Field.IV);
+							//(byte[])e.getObjContents().get(2);
+					
+					String remotePath = (String)objData[0];
+							//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
+					UserToken t = (UserToken)getFromEnvelope(Field.TOKEN);
+					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					if(!this.verifyTokenSignature(t))
 					{
 						output.writeObject(new Envelope("ERROR"));
@@ -396,9 +462,15 @@ public class FileThread extends ServerThread
 				{
 //					String remotePath = (String)e.getObjContents().get(0);
 //					Token t = (Token)e.getObjContents().get(1);
-					byte[] iv = (byte[])e.getObjContents().get(2);
-					String remotePath = (String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
-					Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
+					
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
+					byte[] iv = (byte[])getFromEnvelope(Field.IV);
+							//(byte[])e.getObjContents().get(2);
+					String remotePath = (String)objData[0];
+							//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
+					UserToken t = (UserToken)getFromEnvelope(Field.TOKEN);
+					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					if(!this.verifyTokenSignature(t))
 					{
 						output.writeObject(new Envelope("ERROR"));
