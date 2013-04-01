@@ -61,12 +61,9 @@ public abstract class ServerThread extends Thread
 	
 	private final SecureRandom random;
 	
-	private Key symmetricKey;
-	
-	
+	private Key confidentialKey;
 	private Key integrityKey;
 	
-
 	/**
 	 * 
 	 */
@@ -76,7 +73,7 @@ public abstract class ServerThread extends Thread
 		this.publicKey = publicKey;
 		this.privateKey = privateKey;
 		this.random = new SecureRandom();
-		this.symmetricKey = null;
+		this.confidentialKey = null;
 		this.groupServerPublicKey = null;
 	}
 	
@@ -229,7 +226,7 @@ public abstract class ServerThread extends Thread
 		IvParameterSpec IV = ivAES();
 		
 		// Initialize the cipher encryption object, add the key, and add the IV
-		objCipher.init(Cipher.ENCRYPT_MODE, this.symmetricKey, IV); 
+		objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
 		
 		for(Field f : Field.values()){
 			
@@ -364,7 +361,7 @@ public abstract class ServerThread extends Thread
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
 
 			// Initialize the cipher encryption object, add the key, and add the IV
-			objCipher.init(Cipher.DECRYPT_MODE, this.symmetricKey, new IvParameterSpec(iv)); 
+			objCipher.init(Cipher.DECRYPT_MODE, this.confidentialKey, new IvParameterSpec(iv)); 
 
 			// Encrypt the data and store in encryptedData
 			return objCipher.doFinal(objByte);
@@ -379,16 +376,17 @@ public abstract class ServerThread extends Thread
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
 	{
 		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
-		byte[] encryptedKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
+		byte[] encryptedConfidentialKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
+		byte[] encryptedIntegrityKey = (byte[])requestSecureConnection.getObjContents().get(2); //Get the integrity key
 		byte[] encryptedGroupServerName = null;
-		if(requestSecureConnection.getObjContents().size() > 2)
+		if(requestSecureConnection.getObjContents().size() > 3)
 		{
-			encryptedGroupServerName = (byte[])requestSecureConnection.getObjContents().get(2); //get the encrypted server name
+			encryptedGroupServerName = (byte[])requestSecureConnection.getObjContents().get(3); //get the encrypted server name
 		}
 		Envelope response = null;
 		try
 		{
-			if (encryptedChallenge == null || encryptedKey == null)
+			if (encryptedChallenge == null || encryptedConfidentialKey == null || encryptedIntegrityKey == null)
 			{
 				response = new Envelope("FAIL");
 			}
@@ -402,9 +400,10 @@ public abstract class ServerThread extends Thread
 
 				// Encrypt the data and store in encryptedData
 				byte[] decryptedChallenge = objCipher.doFinal(encryptedChallenge);
-
-				byte[] decryptedKey = objCipher.doFinal(encryptedKey);
+				byte[] decryptedConfidentialKey = objCipher.doFinal(encryptedConfidentialKey);
+				byte[] decryptedIntegrityKey = objCipher.doFinal(encryptedIntegrityKey);
 				
+				//For non-group servers
 				if(encryptedGroupServerName != null)
 				{
 					String decryptedGroupServerName = new String(objCipher.doFinal(encryptedGroupServerName));
@@ -417,15 +416,18 @@ public abstract class ServerThread extends Thread
 				}
 
 				//SecretKeySpec secretKeySpec 
-				this.symmetricKey = new SecretKeySpec(decryptedKey, "AES");
+				this.confidentialKey = new SecretKeySpec(decryptedConfidentialKey, "AES");
+				this.integrityKey = new SecretKeySpec(decryptedIntegrityKey, "AES");
 
 				objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+				
+				//TODO encrypt all material and send it back
 
 				// Get the IV to use
 				IvParameterSpec IV = ivAES();
 
 				// Initialize the cipher encryption object, add the key, and add the IV
-				objCipher.init(Cipher.ENCRYPT_MODE, this.symmetricKey, IV); 
+				objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
 
 				// Encrypt the data and store in encryptedData
 				byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
