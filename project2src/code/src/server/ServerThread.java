@@ -16,13 +16,10 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -30,7 +27,6 @@ import javax.crypto.spec.SecretKeySpec;
 import client.CAClient;
 
 import message.Envelope;
-import message.Field;
 import message.UserToken;
 
 /**
@@ -43,10 +39,6 @@ public abstract class ServerThread extends Thread
 	protected static final String PROVIDER = "BC";
 	protected static final String ASYM_ALGORITHM = "RSA";
 	private static final int IV_BYTES = 16;
-	
-	private String HMAC_ALGORITHM = "HmacSHA1";
-	
-	private int numberOfMessage;
 	
 	protected final RSAPublicKey publicKey;
 	protected final RSAPrivateKey privateKey;
@@ -189,63 +181,7 @@ public abstract class ServerThread extends Thread
 //		return null;
 //	}
 	
-	
-	/**
-	 * This method will generate a symmetric key for use.
-	 * @param algorithm The encryption algorithm to use
-	 * @param provider The security provider
-	 * @return Key The key generated for symmetric cryptography
-	 */
-	private final Key genterateSymmetricKey()
-	{
-		try
-		{
-			// Random Number used to generate key
-			SecureRandom randomNumber = new SecureRandom();	
-
-			// Generate a 128-bit AES Key with Bouncy Castle provider
-			KeyGenerator keyGenerator = KeyGenerator.getInstance(SYM_KEY_ALG, PROVIDER);
-			keyGenerator.init(128, randomNumber);
-			Key key = keyGenerator.generateKey();
-
-			return key;
-		}
-		catch (Exception ex)
-		{
-//			System.out.println(ex.toString());
-			ex.printStackTrace();
-		}
-		return null;
-	}
-	
-	
-	
-	private byte[] createHMAC(Key symmetricIntegrityKey, byte[] msgData){
-		
-		
-		try{
-			Mac HMAC = Mac.getInstance(HMAC_ALGORITHM, PROVIDER);
-			HMAC.init(symmetricIntegrityKey);
-			
-			return HMAC.doFinal(msgData);
-			
-		}catch(Exception ex){
-			ex.printStackTrace();
-		}
-		
-		return null;
-		
-		
-		
-		
-	}
-	
-	
-	
-	
-	
-	
-	protected Envelope encryptMessageWithSymmetricKey(String message, UserToken token, Object[] data){
+	protected Envelope encryptMessageWithSymmetricKey(Object[] objs, String message){
 		
 		try{
 			
@@ -257,59 +193,9 @@ public abstract class ServerThread extends Thread
 		
 		// Initialize the cipher encryption object, add the key, and add the IV
 		objCipher.init(Cipher.ENCRYPT_MODE, this.symmetricKey, IV); 
-		ArrayList<byte[]> alHMAC = new ArrayList<byte[]>();
-		
-		for(Field f : Field.values()){
-			
-			switch(f){
-			case HMAC:
-				
-				Key integrityKey = genterateSymmetricKey();
-				// Encrypt key add to 0
-				response.addObject(objCipher.doFinal(convertToByteArray(integrityKey)));				
-				// 
-				byte[] msgBytes = convertToByteArray(message);
-				alHMAC.add(msgBytes);
-				byte[] ivBytes = convertToByteArray(IV);
-				alHMAC.add(ivBytes);
-				byte[] intBytes = convertToByteArray(numberOfMessage);
-				alHMAC.add(intBytes);
-				for(int i = 0; i < data.length; i++){
-					alHMAC.add(convertToByteArray(data[i]));
-				}
-				
-				// Add HMAC to envelope
-				response.addObject(createHMAC(integrityKey, alHMAC.toArray()));
-				
-				break;
-			case IV:
-				response.addObject(objCipher.doFinal(convertToByteArray(IV)));
-				
-			break;
-			case INT:
-				response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));
-			break;
-			case TOKEN:
-				response.addObject(objCipher.doFinal(convertToByteArray(token)));
-				break;
-			case DATA:
-				for(int i = 0; i < data.length; i++){
-					// encrypt and add to envelope
-					response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
-				}
-				break;
-				
-			}
-			
-			
-		}
-		
-		
-		
 
 		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
 
-		/*
 		for(Object o : objs){
 			
 			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
@@ -318,8 +204,6 @@ public abstract class ServerThread extends Thread
 		}
 		response.addObject(IV.getIV());
 																
-		return response;
-		*/
 		return response;
 		}
 		catch(Exception e)
