@@ -52,6 +52,8 @@ public abstract class ServerThread extends Thread
 	protected final RSAPublicKey publicKey;
 	protected final RSAPrivateKey privateKey;
 	
+	private static final int envelopeContentSize = 5;
+	
 	private RSAPublicKey groupServerPublicKey;
 	
 	private static final String CA_LOC = "localhost";
@@ -88,6 +90,182 @@ public abstract class ServerThread extends Thread
 		return new IvParameterSpec(bytesIV);
 
 	}
+	
+	// unencrypt message enveloope store in Object[] lastMessageContents array
+	Object[] lastMessageContents = new Object[envelopeContentSize] ;
+	
+	private void unencryptMessage(Envelope env){
+		
+		// Get the IV we will use for decryption
+		byte[] ivByteArray = convertToByteArray((IvParameterSpec)env.getObjContents().get(1));
+		lastMessageContents[1] = ivByteArray;
+		
+		// Get HMAC
+		lastMessageContents[0] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(0)), ivByteArray));
+		
+		// Get INT
+		lastMessageContents[2] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(2)), ivByteArray));	
+		
+		// Get Token if it exists
+		if(env.getObjContents().get(3) != null){
+			lastMessageContents[3] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(3)), ivByteArray));
+		}
+		
+		// Get Data if it exists
+		if(env.getObjContents().get(4) != null){
+			
+			lastMessageContents[4] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(4)), ivByteArray));
+			
+		}
+		
+		
+	}
+	
+	
+	
+	/**
+	 * 
+	 * @param incomingMessageNumber
+	 * @return
+	 */
+	private boolean checkValidityOfMessage(Envelope env){
+						
+		boolean isHMACValid = true;
+		boolean isMsgNumValid = true;
+		//boolean
+		
+		// Unencrypt Message Envelope
+		unencryptMessage(env);
+			
+		/**** Check HMAC ****/
+		byte[] HMAC = convertToByteArray(lastMessageContents[0]);
+		
+		
+		//Key integrityKey = genterateSymmetricKey();
+		int lengthOfMastArray = 0;
+		
+		byte[] msgBytes = convertToByteArray(env.getMessage());
+		lengthOfMastArray = lengthOfMastArray + msgBytes.length;		
+						
+		byte[] ivBytes = (byte[])lastMessageContents[1];
+		lengthOfMastArray = lengthOfMastArray + ivBytes.length;
+		
+		byte[] intBytes = convertToByteArray(lastMessageContents[2]);
+		lengthOfMastArray = lengthOfMastArray + intBytes.length;
+		
+		byte[] tokenBytes = null;
+		
+		if(lastMessageContents[3] != null){
+			tokenBytes = convertToByteArray(lastMessageContents[3]);
+			lengthOfMastArray = lengthOfMastArray + tokenBytes.length;
+		} 
+		
+		int sizeOfVarLenData = 0;
+		
+		ArrayList<byte[]> alVarData = new ArrayList<byte[]>();
+		
+		if(lastMessageContents[4] != null){
+			
+			Object[] data = (Object[])lastMessageContents[4];
+			
+			for(int i = 0; i < data.length; i++){
+				byte[] varLenData = convertToByteArray(data[i]);
+				alVarData.add(varLenData);
+				sizeOfVarLenData+= varLenData.length;
+			}
+			lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
+		}
+		
+		
+		byte[] masterArray = new byte[lengthOfMastArray];
+										
+		int indexToStart = 0;
+		
+		for(int i = 0; i < msgBytes.length; i++){
+			masterArray[indexToStart] = msgBytes[i];
+			indexToStart++;
+		}
+		
+		for(int i = 0; i < ivBytes.length; i++){
+			masterArray[indexToStart] = ivBytes[i];
+			indexToStart++;
+		}
+		
+		for(int i = 0; i < intBytes.length; i++){
+			masterArray[indexToStart] = intBytes[i];
+			indexToStart++;
+		}
+		
+		if(tokenBytes != null){
+			for(int i = 0; i < tokenBytes.length; i++){
+				masterArray[indexToStart] = tokenBytes[i];
+				indexToStart++;
+			}
+		}
+		
+		if(lastMessageContents[4] != null){
+			for(int i = 0; i < alVarData.size(); i++){
+				
+				byte[] loopArray = alVarData.get(i);
+				
+				for(int j = 0; j < loopArray.length; j++){
+					masterArray[indexToStart] = loopArray[j];
+					indexToStart++;
+				}
+				
+			}
+		}
+				
+		byte[] testHMAC = createHMAC(integrityKey, masterArray);
+		
+		// Check if HMACs are equal
+		for(int i = 0; i < HMAC.length; i++){
+			
+			if(testHMAC[i] != HMAC[i]){
+				isHMACValid = false;
+				break;
+			}
+			
+		}
+		
+		// If false return 
+		if(isHMACValid == false){
+			return isHMACValid;
+		}
+				
+		// Check Number of Message
+		
+		int incomingMessageNumber = (int)lastMessageContents[2];
+					
+		
+		if(incomingMessageNumber == numberOfMessage){
+			
+			// Number of the message to send out for response to user
+			incomingMessageNumber = incomingMessageNumber + 1;
+											
+			numberOfMessage = numberOfMessage + 1;
+			
+		} else {
+						
+			// Not valid, we will disconnect after receiving -1
+			isMsgNumValid = false;
+			return isMsgNumValid;
+			
+		}
+		
+		// Check Token
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	}
+	
+		
 	
 	protected static byte[] convertToByteArray(Object objToConvert){
 		
@@ -234,15 +412,23 @@ public abstract class ServerThread extends Thread
 			case HMAC:
 				
 				//Key integrityKey = genterateSymmetricKey();
-				
+				int lengthOfMastArray = 0;
 				
 				byte[] msgBytes = convertToByteArray(message);
+				lengthOfMastArray = lengthOfMastArray + msgBytes.length;		
 								
 				byte[] ivBytes = convertToByteArray(IV);
+				lengthOfMastArray = lengthOfMastArray + ivBytes.length;
 				
 				byte[] intBytes = convertToByteArray(numberOfMessage);
+				lengthOfMastArray = lengthOfMastArray + intBytes.length;
 				
-				byte[] tokenBytes = convertToByteArray(token);
+				byte[] tokenBytes = null;
+				
+				if(token != null){
+					tokenBytes = convertToByteArray(token);
+					lengthOfMastArray = lengthOfMastArray + tokenBytes.length;
+				} 
 				
 				int sizeOfVarLenData = 0;
 				
@@ -254,20 +440,12 @@ public abstract class ServerThread extends Thread
 						alVarData.add(varLenData);
 						sizeOfVarLenData+= varLenData.length;
 					}
+					lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
 				}
 				
 				
-				byte[] masterArray;
-				
-				if(data != null){
-					
-					masterArray = new byte[sizeOfVarLenData + msgBytes.length + ivBytes.length + intBytes.length];
-					
-				} else {
-					
-					masterArray = new byte[msgBytes.length + ivBytes.length + intBytes.length];				
-				}
-				
+				byte[] masterArray = new byte[lengthOfMastArray];
+												
 				int indexToStart = 0;
 				
 				for(int i = 0; i < msgBytes.length; i++){
@@ -285,9 +463,11 @@ public abstract class ServerThread extends Thread
 					indexToStart++;
 				}
 				
-				for(int i = 0; i < tokenBytes.length; i++){
-					masterArray[indexToStart] = tokenBytes[i];
-					indexToStart++;
+				if(tokenBytes != null){
+					for(int i = 0; i < tokenBytes.length; i++){
+						masterArray[indexToStart] = tokenBytes[i];
+						indexToStart++;
+					}
 				}
 				
 				if(data != null){
@@ -304,23 +484,29 @@ public abstract class ServerThread extends Thread
 				}
 								
 				// Add HMAC to envelope
-				response.addObject(createHMAC(integrityKey, masterArray));
-				
+				response.addObject(objCipher.doFinal(createHMAC(integrityKey, masterArray)));				
 				break;
+				
 			case IV:
-				response.addObject(objCipher.doFinal(convertToByteArray(IV)));
-				
+				response.addObject(convertToByteArray(IV));				
 			break;
-			case INT:
-				response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));
+			
+			case INT:				
+				response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));				
 			break;
+			
 			case TOKEN:
-				response.addObject(objCipher.doFinal(convertToByteArray(token)));
+				if(token != null){
+					response.addObject(objCipher.doFinal(convertToByteArray(token)));
+				}
 				break;
+				
 			case DATA:
-				for(int i = 0; i < data.length; i++){
-					// encrypt and add to envelope
-					response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
+				if(data != null){
+					for(int i = 0; i < data.length; i++){
+						// encrypt and add to envelope
+						response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
+					}
 				}
 				break;
 				
@@ -345,6 +531,10 @@ public abstract class ServerThread extends Thread
 																
 		return response;
 		*/
+		
+		//increment number of message
+		numberOfMessage = numberOfMessage + 1;
+				
 		return response;
 		}
 		catch(Exception e)
