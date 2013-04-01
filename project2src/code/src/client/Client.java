@@ -106,7 +106,7 @@ public abstract class Client implements ClientInterface
 		}
 		catch (Exception ex)
 		{
-			System.out.println(ex.toString());
+//			System.out.println(ex.toString());
 			ex.printStackTrace();
 		}
 		return null;
@@ -184,7 +184,7 @@ public abstract class Client implements ClientInterface
 		}
 		catch(Exception ex)
 		{
-			System.out.println("Error creating byte array envelope: " + ex.toString());
+//			System.out.println("Error creating byte array envelope: " + ex.toString());
 			ex.printStackTrace();
 		}
 		return null;
@@ -194,14 +194,14 @@ public abstract class Client implements ClientInterface
 	{
 		try
 		{
-			System.out.println("Object created is: " + new String(bytesToConvert));
+//			System.out.println("Object created is: " + new String(bytesToConvert));
 			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
 			ObjectInputStream ois = new ObjectInputStream(bais);
 			return ois.readObject();
 		}
 		catch(Exception ex)
 		{
-			System.out.println("Error byte array to object: " + ex.toString());
+//			System.out.println("Error byte array to object: " + ex.toString());
 			ex.printStackTrace();
 		}
 		return null;
@@ -441,7 +441,7 @@ public abstract class Client implements ClientInterface
 			}
 			catch (Exception e)
 			{
-				System.err.println("Error: " + e.getMessage());
+//				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace(System.err);
 			}
 			this.sock = null;

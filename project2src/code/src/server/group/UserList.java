@@ -56,7 +56,7 @@ public class UserList implements java.io.Serializable
 			random.nextBytes(salt);
 			// Concat the salt to the end of the password
 			String saltedPassword = password + new String(salt);
-			System.out.println("password + salt: " + saltedPassword);
+//			System.out.println("password + salt: " + saltedPassword);
 			MessageDigest msgDigest = MessageDigest.getInstance("SHA1");
 			msgDigest.update(saltedPassword.getBytes());
 			// Now we get the salted, hashed password
@@ -134,7 +134,7 @@ public class UserList implements java.io.Serializable
 			
 			// Concat the salt to the end of the password
 			String saltedPassword = password + new String(salt);
-			System.out.println("password + salt: " + saltedPassword);
+//			System.out.println("password + salt: " + saltedPassword);
 			MessageDigest msgDigest = MessageDigest.getInstance("SHA1");
 			msgDigest.update(saltedPassword.getBytes());
 			// Now we get the salted, hashed password

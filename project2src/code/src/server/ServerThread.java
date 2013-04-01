@@ -16,10 +16,14 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -27,6 +31,7 @@ import javax.crypto.spec.SecretKeySpec;
 import client.CAClient;
 
 import message.Envelope;
+import message.Field;
 import message.UserToken;
 
 /**
@@ -39,6 +44,10 @@ public abstract class ServerThread extends Thread
 	protected static final String PROVIDER = "BC";
 	protected static final String ASYM_ALGORITHM = "RSA";
 	private static final int IV_BYTES = 16;
+	
+	private String HMAC_ALGORITHM = "HmacSHA1";
+	
+	private int numberOfMessage;
 	
 	protected final RSAPublicKey publicKey;
 	protected final RSAPrivateKey privateKey;
@@ -53,6 +62,10 @@ public abstract class ServerThread extends Thread
 	private final SecureRandom random;
 	
 	private Key symmetricKey;
+	
+	
+	private Key integrityKey;
+	
 
 	/**
 	 * 
@@ -91,7 +104,7 @@ public abstract class ServerThread extends Thread
 		
 		} catch(Exception ex){
 		
-			System.out.println("Error creating byte array envelope: " + ex.toString());
+//			System.out.println("Error creating byte array envelope: " + ex.toString());
 			ex.printStackTrace();
 		}
 		
@@ -111,7 +124,7 @@ public abstract class ServerThread extends Thread
 	        
 		} catch(Exception ex){
 			
-			System.out.println("Error byte array to object: " + ex.toString());
+//			System.out.println("Error byte array to object: " + ex.toString());
 			ex.printStackTrace();
 			
 		}
@@ -181,7 +194,31 @@ public abstract class ServerThread extends Thread
 //		return null;
 //	}
 	
-	protected Envelope encryptMessageWithSymmetricKey(Object[] objs, String message){
+	
+		
+	
+	private byte[] createHMAC(Key symmetricIntegrityKey, byte[] msgData){
+		
+		
+		try{
+			Mac HMAC = Mac.getInstance(HMAC_ALGORITHM, PROVIDER);
+			HMAC.init(symmetricIntegrityKey);
+			
+			return HMAC.doFinal(msgData);
+			
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
+		
+		return null;
+		
+		
+		
+		
+	}
+	
+		
+	protected Envelope encryptMessageWithSymmetricKey(String message, UserToken token, Object[] data){
 		
 		try{
 			
@@ -193,9 +230,114 @@ public abstract class ServerThread extends Thread
 		
 		// Initialize the cipher encryption object, add the key, and add the IV
 		objCipher.init(Cipher.ENCRYPT_MODE, this.symmetricKey, IV); 
+		
+		for(Field f : Field.values()){
+			
+			switch(f){
+			case HMAC:
+				
+				//Key integrityKey = genterateSymmetricKey();
+				
+				
+				byte[] msgBytes = convertToByteArray(message);
+								
+				byte[] ivBytes = convertToByteArray(IV);
+				
+				byte[] intBytes = convertToByteArray(numberOfMessage);
+				
+				byte[] tokenBytes = convertToByteArray(token);
+				
+				int sizeOfVarLenData = 0;
+				
+				ArrayList<byte[]> alVarData = new ArrayList<byte[]>();
+				
+				if(data != null){
+					for(int i = 0; i < data.length; i++){
+						byte[] varLenData = convertToByteArray(data[i]);
+						alVarData.add(varLenData);
+						sizeOfVarLenData+= varLenData.length;
+					}
+				}
+				
+				
+				byte[] masterArray;
+				
+				if(data != null){
+					
+					masterArray = new byte[sizeOfVarLenData + msgBytes.length + ivBytes.length + intBytes.length];
+					
+				} else {
+					
+					masterArray = new byte[msgBytes.length + ivBytes.length + intBytes.length];				
+				}
+				
+				int indexToStart = 0;
+				
+				for(int i = 0; i < msgBytes.length; i++){
+					masterArray[indexToStart] = msgBytes[i];
+					indexToStart++;
+				}
+				
+				for(int i = 0; i < ivBytes.length; i++){
+					masterArray[indexToStart] = ivBytes[i];
+					indexToStart++;
+				}
+				
+				for(int i = 0; i < intBytes.length; i++){
+					masterArray[indexToStart] = intBytes[i];
+					indexToStart++;
+				}
+				
+				for(int i = 0; i < tokenBytes.length; i++){
+					masterArray[indexToStart] = tokenBytes[i];
+					indexToStart++;
+				}
+				
+				if(data != null){
+					for(int i = 0; i < alVarData.size(); i++){
+						
+						byte[] loopArray = alVarData.get(i);
+						
+						for(int j = 0; j < loopArray.length; j++){
+							masterArray[indexToStart] = loopArray[j];
+							indexToStart++;
+						}
+						
+					}
+				}
+								
+				// Add HMAC to envelope
+				response.addObject(createHMAC(integrityKey, masterArray));
+				
+				break;
+			case IV:
+				response.addObject(objCipher.doFinal(convertToByteArray(IV)));
+				
+			break;
+			case INT:
+				response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));
+			break;
+			case TOKEN:
+				response.addObject(objCipher.doFinal(convertToByteArray(token)));
+				break;
+			case DATA:
+				for(int i = 0; i < data.length; i++){
+					// encrypt and add to envelope
+					response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
+				}
+				break;
+				
+			}
+			
+			
+		}
+		
+		
+		
 
 		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
 
+		/*
 		for(Object o : objs){
 			
 			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
@@ -204,6 +346,8 @@ public abstract class ServerThread extends Thread
 		}
 		response.addObject(IV.getIV());
 																
+		return response;
+		*/
 		return response;
 		}
 		catch(Exception e)
