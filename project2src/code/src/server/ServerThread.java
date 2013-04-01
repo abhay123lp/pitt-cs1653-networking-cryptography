@@ -89,7 +89,7 @@ public abstract class ServerThread extends Thread
 	}
 	
 	
-	Object[] lastMessageContents = new Object[envelopeContentSize] ;
+	private Object[] lastMessageContents = new Object[envelopeContentSize] ;
 	
 	private void unencryptMessage(Envelope env){
 		
@@ -127,7 +127,7 @@ public abstract class ServerThread extends Thread
 	 * @param Envelope env
 	 * @return
 	 */
-	private boolean checkValidityOfMessage(Envelope env){
+	protected boolean checkValidityOfMessage(Envelope env){
 						
 		boolean isHMACValid = true;
 		boolean isMsgNumValid = true;
@@ -269,7 +269,7 @@ public abstract class ServerThread extends Thread
 				
 	}
 	
-	protected Object getFromEnvironment(Field f){
+	protected Object getFromEnvelope(Field f){
 		
 		return lastMessageContents[f.ordinal()];	
 				
