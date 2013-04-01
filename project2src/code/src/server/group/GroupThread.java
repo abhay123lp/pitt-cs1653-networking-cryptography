@@ -94,7 +94,8 @@ public class GroupThread extends ServerThread
 							UserToken yourToken = createToken(username); // Create a token
 							
 							// Respond to the client. On error, the client will receive a null token
-							response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+							//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+							response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 							output.writeObject(response);
 						}
 						// Password did not match
@@ -125,7 +126,7 @@ public class GroupThread extends ServerThread
 							if (message.getObjContents().get(1) != null)
 							{
 								String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-								System.out.println(username);
+//								System.out.println(username);
 								UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
@@ -209,7 +210,8 @@ public class GroupThread extends ServerThread
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().add(groupname);
 										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-										response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+										response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 									}
 								}
 								else
@@ -250,7 +252,8 @@ public class GroupThread extends ServerThread
 										yourToken.getGroups().remove(groupname); // remove the group from the users token
 										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										
-										response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+										response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 									}
 								}
 								else
@@ -291,7 +294,8 @@ public class GroupThread extends ServerThread
 									{
 										response = new Envelope("OK"); // Success
 										
-										response = encryptMessageWithSymmetricKey(new Object[]{members, new Integer(members.size()) }, "OK");
+										//response = encryptMessageWithSymmetricKey(new Object[]{members, new Integer(members.size()) }, "OK");
+										response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{members, new Integer(members.size()) });
 									}
 								}
 								else
@@ -338,7 +342,8 @@ public class GroupThread extends ServerThread
 												yourToken.getGroups().add(groupname);
 											}
 											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-											response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+											response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 										}
 									}
 									else
@@ -383,7 +388,8 @@ public class GroupThread extends ServerThread
 											// Remove the groupname from the user in the token
 											yourToken.getGroups().remove(groupname);
 											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-											response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+											response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 										}
 									}
 									else
@@ -411,7 +417,7 @@ public class GroupThread extends ServerThread
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method run()

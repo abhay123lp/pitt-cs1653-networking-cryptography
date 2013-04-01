@@ -30,7 +30,7 @@ To setup the correct certificate authority location you must change the files:
 -  FileServer.java
 -  GroupServer.java
 -  ServerThread.java
--  CaClient.java
+-  CAClient.java
 -  Client.java
 
 In each one of these files there is a private static final String variable named CA_LOC all of which have the hard coded value "localhost".  Depending on where the Certificate Authority is running from, change the value to the appropriate IP address.  You must recompile if you did not run this step before compiling.

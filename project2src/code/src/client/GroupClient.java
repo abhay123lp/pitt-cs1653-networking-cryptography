@@ -36,7 +36,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace();
 			return null;
 		}
@@ -63,7 +63,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return false;
 		}
@@ -89,7 +89,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end block try
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return false;
 		}
@@ -115,7 +115,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end block try
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
@@ -141,7 +141,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
@@ -168,7 +168,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end try block
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
@@ -194,7 +194,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end block try
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
@@ -220,7 +220,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end block try
 		catch (Exception e)
 		{
-			System.err.println("Error: " + e.getMessage());
+//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
