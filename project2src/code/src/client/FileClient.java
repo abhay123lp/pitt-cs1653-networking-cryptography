@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 import message.Envelope;
+import message.Field;
 import message.UserToken;
 
 /**
@@ -32,7 +33,9 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 //		Envelope env = this.encryptMessageWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF");
 		try
 		{
-			output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF"));
+			output.writeObject(this.encryptMessageWithSymmetricKey("DELETEF", token, new Object[]{remotePath}));
+			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF"));
+			
 			Envelope response = (Envelope)input.readObject();
 			
 			if (response.getMessage().compareTo("OK") == 0)
@@ -74,7 +77,8 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 //				Envelope env = new Envelope("DOWNLOADF"); // Success
 //				env.addObject(sourceFile);
 //				env.addObject(token);
-				output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{sourceFile, token}, "DOWNLOADF"));
+				//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{sourceFile, token}, "DOWNLOADF"));
+				output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", token, new Object[]{sourceFile}));
 				
 				Envelope env = (Envelope)input.readObject();
 				final Envelope downloadMore = new Envelope("DOWNLOADF");
@@ -82,9 +86,14 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				// Why can't you just use .equals()?
 				while (env.getMessage().compareTo("CHUNK") == 0)
 				{
-					byte[] iv = (byte[])env.getObjContents().get(2);
-					byte[] inBytes = (byte[])convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(0), iv));
-					Integer lastIndex = (Integer)convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(1), iv));
+					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+					
+					byte[] iv = (byte[])getFromEnvelope(Field.IV);
+							//(byte[])env.getObjContents().get(2);
+					byte[] inBytes = (byte[])objData[0];
+							//(byte[])convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(0), iv));
+					Integer lastIndex = (byte[])objData[1];
+							//(Integer)convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(1), iv));
 					fos.write(inBytes, 0, lastIndex);
 					System.out.printf(".");
 //					env = new Envelope("DOWNLOADF"); // Success
@@ -136,14 +145,17 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			// Tell the server to return the member list
 //			message = new Envelope("LFILES");
 //			message.addObject(token); // Add requester's token
-			output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{token}, "LFILES"));
+			output.writeObject(this.encryptMessageWithSymmetricKey("LFILES", token, null));
+			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{token}, "LFILES"));
 			
 			Envelope e = (Envelope)input.readObject();
 			
 			// If server indicates success, return the member list
 			if (e.getMessage().equals("OK"))
 			{
-				return (List<String>)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1))); // This cast creates compiler warnings. Sorry.
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				return (List<String>)objData[0];
+						//(List<String>)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1))); // This cast creates compiler warnings. Sorry.
 			}
 			return null;
 		}
@@ -170,7 +182,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 //			message.addObject(destFile);
 //			message.addObject(group);
 //			message.addObject(token); // Add requester's token
-			output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
+			
+			output.writeObject(this.encryptMessageWithSymmetricKey("UPLOADF", token, new Object[]{destFile, group}));
+			
+			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
 			
 			FileInputStream fis = new FileInputStream(sourceFile); // FIXME never closed
 			
@@ -215,7 +230,8 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 //				message.addObject(buf);
 //				message.addObject(new Integer(n));
 				
-				output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
+				output.writeObject(this.encryptMessageWithSymmetricKey("CHUNK", token, new Object[]{buf, new Integer(n)}));
+				//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
 				
 				env = (Envelope)input.readObject();
 			} while (fis.available() > 0);
