@@ -5,6 +5,7 @@ package client;
 import java.util.List;
 
 import message.Envelope;
+import message.Field;
 import message.UserToken;
 
 /**
@@ -22,7 +23,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 
 			// Tell the server to return a token.
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET"));
+			output.writeObject(encryptMessageWithSymmetricKey("GET", null, new Object[]{username, password}));
+					//encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET"));
 
 			// Get the response from the server
 			Envelope response = (Envelope)input.readObject();
@@ -30,7 +32,9 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// Successful response
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
+				
+				return (UserToken)getFromEnvelope(Field.TOKEN);
+						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}// end if block
 			return null;
 		}// end try block
@@ -50,7 +54,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER"));
+			output.writeObject(encryptMessageSymmetricKey("CUSER", token, new Object[]{username, password}));
+					//encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER"));
 
 			Envelope response = (Envelope)input.readObject();
 
@@ -76,8 +81,9 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, token}, "DUSER");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, token}, "DUSER"));
-
+			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, token}, "DUSER"));
+			output.writeObject(encryptMessageWithSymmetricKey("DUSER", token, new Object[]{username}));
+			
 			Envelope response = (Envelope)input.readObject();
 
 			// If server indicates success, return true
@@ -102,14 +108,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "CGROUP");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "CGROUP"));
+			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "CGROUP"));
+			output.writeObject(encryptMessageWithSymmetricKey("CGROUP", token, new Object[]{groupname}));
 
 			Envelope response = (Envelope)input.readObject();
 
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
+				return (UserToken)getFromEnvelope(Field.TOKEN);
+						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end block try
@@ -128,14 +136,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "DGROUP");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "DGROUP"));
+			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "DGROUP"));
+			output.writeObject(encryptMessageWithSymmetricKey("DGROUP", token, new Object[]{groupname}));
 
 			Envelope response = (Envelope)input.readObject();
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
+				return (UserToken)getFromEnvelope(Field.TOKEN);
+						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end try block
@@ -155,14 +165,17 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS"));
+			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS"));
+			output.writeObject(encryptMessageWithSymmetricKey("LMEMBERS", token, new Object[]{group));
 
 			Envelope response = (Envelope)input.readObject();
 
 			// If server indicates success, return the member list
 			if (response.getMessage().equals("OK"))
 			{
-				return (List<String>)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(2)));
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				return (List<String>)objData[0];
+						//(List<String>)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(2)));
 			}
 			return null;
 		}// end try block
@@ -181,14 +194,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "AUSERTOGROUP");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "AUSERTOGROUP"));
+			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "AUSERTOGROUP"));
+			output.writeObject(encryptMessageWithSymmetricKey("AUSERTOGROUP", token, new Object[]{username, groupname}));
 
 			Envelope response = (Envelope)input.readObject();
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
+				return (UserToken)getFromEnvelope(Field.TOKEN);
+						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end block try
@@ -207,14 +222,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "RUSERFROMGROUP");
-			output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "RUSERFROMGROUP"));
+			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "RUSERFROMGROUP"));
+			output.writeObject(encryptMessageWithSymmetricKey("RUSERFROMGROUP", token, new Object[]{username, groupname}));
 
 			Envelope response = (Envelope)input.readObject();
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
-				return (UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
+				return (UserToken)getFromEnvelope(Field.TOKEN);
+						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end block try
