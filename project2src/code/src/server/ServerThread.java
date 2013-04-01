@@ -45,7 +45,6 @@ public abstract class ServerThread extends Thread
 	protected static final String ASYM_ALGORITHM = "RSA";
 	private static final int IV_BYTES = 16;
 	private static final int ENV_CONTENTS_SIZE = 5;
-	
 	private static final String CA_LOC = "localhost";
 	private static final int CA_PORT = 4999;
 	private static final String HMAC_ALGORITHM = "HmacSHA1";
@@ -136,7 +135,7 @@ public abstract class ServerThread extends Thread
 		// Unencrypt Message Envelope
 		unencryptMessage(env);
 			
-		/**** Check HMAC ****/
+		/* *** Check HMAC *** */
 		byte[] HMAC = (byte[])lastMessageContents[0];
 				
 		//Key integrityKey = genterateSymmetricKey();
@@ -582,19 +581,56 @@ public abstract class ServerThread extends Thread
 	{
 		if(requestSecureConnection.getObjContents().size() == 1)
 		{
-			byte[] serversChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be unencrypted
-			if(serversChallenge == null || serversChallenge.length != 20)
+			try
 			{
-				return null;
-			}
-			for(int i = 0; i < serversChallenge.length; i++)
-			{
-				if(this.challengeBytes[i] != serversChallenge[i])
+				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
+				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
+				objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
+				byte[] serversChallenge = objCipher.doFinal(encryptedChallenge);
+				
+				if(serversChallenge == null || serversChallenge.length != 20)
 				{
 					return null;
 				}
+				for(int i = 0; i < serversChallenge.length; i++)
+				{
+					if(this.challengeBytes[i] != serversChallenge[i])
+					{
+						return null;
+					}
+				}
+				return new Envelope("OK");
 			}
-			return new Envelope("OK");
+			catch(NoSuchAlgorithmException e)
+			{
+				e.printStackTrace();
+			}
+//			catch(InvalidAlgorithmParameterException e)
+//			{
+//				e.printStackTrace();
+//				response = null;
+//			}
+			catch(NoSuchPaddingException e)
+			{
+				e.printStackTrace();
+			}
+			catch(NoSuchProviderException e)
+			{
+				e.printStackTrace();
+			}
+			catch(InvalidKeyException e)
+			{
+				e.printStackTrace();
+			}
+			catch(BadPaddingException e)
+			{
+				e.printStackTrace();
+			}
+			catch(IllegalBlockSizeException e)
+			{
+				e.printStackTrace();
+			}
+			return null;
 		}
 		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
 		byte[] encryptedConfidentialKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
