@@ -96,14 +96,14 @@ public abstract class ServerThread extends Thread
 		// Decrypt message enveloope store in Object[] lastMessageContents array
 		
 		// Get the IV we will use for decryption
-		byte[] ivByteArray = convertToByteArray((IvParameterSpec)env.getObjContents().get(1));
+		byte[] ivByteArray = (byte[])env.getObjContents().get(1);
 		lastMessageContents[1] = ivByteArray;
 		
 		// Get HMAC
-		lastMessageContents[0] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(0)), ivByteArray));
+		lastMessageContents[0] = decryptObjectBytes((byte[])env.getObjContents().get(0), ivByteArray);
 		
 		// Get INT
-		lastMessageContents[2] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(2)), ivByteArray));	
+		lastMessageContents[2] = convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(2), ivByteArray));	
 		
 		// Get Token if it exists
 		if(env.getObjContents().get(3) != null){
@@ -113,7 +113,7 @@ public abstract class ServerThread extends Thread
 		// Get Data if it exists
 		if(env.getObjContents().get(4) != null){
 			
-			lastMessageContents[4] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(4)), ivByteArray));
+			lastMessageContents[4] = convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(4), ivByteArray));
 			
 		}
 		
@@ -137,7 +137,7 @@ public abstract class ServerThread extends Thread
 		unencryptMessage(env);
 			
 		/**** Check HMAC ****/
-		byte[] HMAC = convertToByteArray(lastMessageContents[0]);
+		byte[] HMAC = (byte[])lastMessageContents[0];
 				
 		//Key integrityKey = genterateSymmetricKey();
 		int lengthOfMastArray = 0;
@@ -233,13 +233,13 @@ public abstract class ServerThread extends Thread
 				
 		// Check Number of Message
 		
-		int incomingMessageNumber = (int)lastMessageContents[2];
+		Integer incomingMessageNumber = (Integer)lastMessageContents[2];
 					
 		
-		if(incomingMessageNumber == numberOfMessage){
+		if(incomingMessageNumber.equals(Integer.valueOf(numberOfMessage))){
 			
 			// Number of the message to send out for response to user
-			incomingMessageNumber = incomingMessageNumber + 1;
+			//incomingMessageNumber = incomingMessageNumber + 1;
 											
 			numberOfMessage = numberOfMessage + 1;
 			
@@ -498,7 +498,7 @@ public abstract class ServerThread extends Thread
 				break;
 				
 			case IV:
-				response.addObject(convertToByteArray(IV));				
+				response.addObject(IV.getIV());				
 			break;
 			
 			case INT:				
@@ -513,10 +513,13 @@ public abstract class ServerThread extends Thread
 				
 			case DATA:
 				if(data != null){
-					for(int i = 0; i < data.length; i++){
+					
+					response.addObject(objCipher.doFinal(convertToByteArray(data)));
+					
+					//for(int i = 0; i < data.length; i++){
 						// encrypt and add to envelope
-						response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
-					}
+					//	response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
+					//}
 				}
 				break;
 				
