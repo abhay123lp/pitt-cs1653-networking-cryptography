@@ -76,8 +76,9 @@ public class FileThread extends ServerThread
 				} else {
 							
 					if(!checkValidityOfMessage(e)){
-												 
-						response = new Envelope("DISCONNECT"); // Server does not understand client request
+							
+						response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+						//response = new Envelope("DISCONNECT"); // Server does not understand client request
 						output.writeObject(response);
 						
 						socket.close();
@@ -116,7 +117,9 @@ public class FileThread extends ServerThread
 					//UserToken uToken = (UserToken)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1)));
 					if(!this.verifyTokenSignature(uToken))
 					{
-						output.writeObject(new Envelope("ERROR"));
+						response = encryptMessageWithSymmetricKey("ERROR", null, null);
+						output.writeObject(response);
+						//output.writeObject(new Envelope("ERROR"));
 						continue;
 					}
 					
@@ -167,17 +170,20 @@ public class FileThread extends ServerThread
 						if(objData[0] == null)
 						//if (e.getObjContents().get(0) == null)
 						{
-							response = new Envelope("FAIL-BADPATH");
+							response = encryptMessageWithSymmetricKey("FAIL-BADPATH", null, null);
+							//response = new Envelope("FAIL-BADPATH");
 						}
 						if(objData[1] == null)
 						//if (e.getObjContents().get(1) == null)
 						{
-							response = new Envelope("FAIL-BADGROUP");
+							response = encryptMessageWithSymmetricKey("FAIL-BADGROUP", null, null);
+							//response = new Envelope("FAIL-BADGROUP");
 						}
 						if(getFromEnvelope(Field.TOKEN) == null)
 						//if (e.getObjContents().get(2) == null)
 						{
-							response = new Envelope("FAIL-BADTOKEN");
+							response = encryptMessageWithSymmetricKey("FAIL-BADTOKEN", null, null);
+							//response = new Envelope("FAIL-BADTOKEN");
 						}
 						else
 						{
@@ -196,7 +202,9 @@ public class FileThread extends ServerThread
 //							group = group.substring(7);//FIXME for some reason, seven characters preceeding are trash...
 							if(!this.verifyTokenSignature(yourToken))
 							{
-								output.writeObject(new Envelope("ERROR"));
+								//response = encryptMessageWithSymmetricKey("FAIL-BADTOKEN", null, null);
+								output.writeObject(encryptMessageWithSymmetricKey("FAIL-BADTOKEN", null, null));
+								//output.writeObject(new Envelope("ERROR"));
 								continue;
 							}
 //							String remotePath = (String)e.getObjContents().get(0);
@@ -206,12 +214,14 @@ public class FileThread extends ServerThread
 							if (FileServer.fileList.checkFile(remotePath))
 							{
 								System.out.printf("Error: file already exists at %s\n", remotePath);
-								response = new Envelope("FAIL-FILEEXISTS"); // Success
+								response = encryptMessageWithSymmetricKey("FAIL-FILEEXISTS", null, null);
+								//response = new Envelope("FAIL-FILEEXISTS"); // Success
 							}
 							else if (!yourToken.getGroups().contains(group))
 							{
 								System.out.printf("Error: user missing valid token for group %s\n", group);
-								response = new Envelope("FAIL-UNAUTHORIZED"); // Success
+								response = encryptMessageWithSymmetricKey("FAIL-UNAUTHORIZED", null, null);
+								//response = new Envelope("FAIL-UNAUTHORIZED"); // Success
 							}
 							else
 							{
@@ -220,7 +230,8 @@ public class FileThread extends ServerThread
 								FileOutputStream fos = new FileOutputStream(file);
 								System.out.printf("Successfully created file %s\n", remotePath.replace('/', '_'));
 								
-								response = new Envelope("READY"); // Success
+								response = encryptMessageWithSymmetricKey("READY", null, null);
+								//response = new Envelope("READY"); // Success
 								
 								//return b.toByteArray(); 
 //								byte[] byteArray = convertToByteArray(response);
@@ -243,13 +254,15 @@ public class FileThread extends ServerThread
 									
 									if(chunk.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
 										
+										output.writeObject(this.setUpSecureConnection(chunk));
 										continue;					
 										
 									} else {
 												
 										if(!checkValidityOfMessage(chunk)){
-																	 
-											response = new Envelope("DISCONNECT"); // Server does not understand client request
+														
+											response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+											//response = new Envelope("DISCONNECT"); // Server does not understand client request
 											output.writeObject(response);
 											
 											socket.close();
@@ -270,7 +283,9 @@ public class FileThread extends ServerThread
 									Integer lastIndex = (Integer)objData[1];
 											//(Integer)convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(1), ivChunk));
 									fos.write(inBytes, 0, lastIndex);
-									response = new Envelope("READY"); // Success
+									
+									response = encryptMessageWithSymmetricKey("READY", null, null);
+									//response = new Envelope("READY"); // Success
 									
 									//return b.toByteArray(); 
 //									byteArray = convertToByteArray(response);
@@ -294,12 +309,14 @@ public class FileThread extends ServerThread
 								{
 									System.out.printf("Transfer successful file %s\n", remotePath);
 									FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath);
-									response = new Envelope("OK"); // Success
+									response = encryptMessageWithSymmetricKey("OK", null, null);
+									//response = new Envelope("OK"); // Success
 								}
 								else
 								{
 									System.out.printf("Error reading file %s from client\n", remotePath);
-									response = new Envelope("ERROR-TRANSFER"); // Success
+									response = encryptMessageWithSymmetricKey("ERROR-TRANSFER", null, null);
+									//response = new Envelope("ERROR-TRANSFER"); // Success
 								}
 								fos.close();
 							}// end else block
@@ -327,7 +344,8 @@ public class FileThread extends ServerThread
 					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					if(!this.verifyTokenSignature(t))
 					{
-						output.writeObject(new Envelope("ERROR"));
+						response = encryptMessageWithSymmetricKey("ERROR", null, null);
+						//output.writeObject(new Envelope("ERROR"));
 						continue;
 					}
 					ShareFile sf = FileServer.fileList.getFile("/" + remotePath);
@@ -340,7 +358,8 @@ public class FileThread extends ServerThread
 //						
 //						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 						
-						output.writeObject(new Envelope("ERROR_FILEMISSING"));
+						output.writeObject(encryptMessageWithSymmetricKey("ERROR_FILEMISSING", null, null));
+						//output.writeObject(new Envelope("ERROR_FILEMISSING"));
 					}
 					else if (!t.getGroups().contains(sf.getGroup()))
 					{
@@ -351,7 +370,8 @@ public class FileThread extends ServerThread
 //						
 //						output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 						
-						output.writeObject(new Envelope("ERROR_PERMISSION"));
+						output.writeObject(encryptMessageWithSymmetricKey("ERROR_PERMISSION", null, null));
+						//output.writeObject(new Envelope("ERROR_PERMISSION"));
 					}
 					else
 					{
@@ -367,7 +387,8 @@ public class FileThread extends ServerThread
 //								
 //								output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 								
-								output.writeObject(new Envelope("ERROR_NOTONDISK"));
+								output.writeObject(encryptMessageWithSymmetricKey("ERROR_NOTONDISK", null, null));
+								//output.writeObject(new Envelope("ERROR_NOTONDISK"));
 							}
 							else
 							{
@@ -425,7 +446,8 @@ public class FileThread extends ServerThread
 //									
 //									output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );								
 //									
-									output.writeObject(new Envelope("EOF"));
+									output.writeObject(encryptMessageWithSymmetricKey("EOF", null, null));
+									//output.writeObject(new Envelope("EOF"));
 									
 									in = (Envelope)input.readObject();
 //									
@@ -473,7 +495,8 @@ public class FileThread extends ServerThread
 					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					if(!this.verifyTokenSignature(t))
 					{
-						output.writeObject(new Envelope("ERROR"));
+						output.writeObject(encryptMessageWithSymmetricKey("ERROR", null, null));
+						//output.writeObject(new Envelope("ERROR"));
 						continue;
 					}
 					ShareFile sf = FileServer.fileList.getFile("/" + remotePath);
@@ -481,12 +504,14 @@ public class FileThread extends ServerThread
 					if (sf == null)
 					{
 						System.out.printf("Error: File %s doesn't exist\n", remotePath);
-						out = new Envelope("ERROR_DOESNTEXIST");
+						out = encryptMessageWithSymmetricKey("ERROR_NOTONDISK", null, null);
+						//out = new Envelope("ERROR_DOESNTEXIST");
 					}
 					else if (!t.getGroups().contains(sf.getGroup()))
 					{
 						System.out.printf("Error user %s doesn't have permission\n", t.getSubject());
-						out = new Envelope("ERROR_PERMISSION");
+						out = encryptMessageWithSymmetricKey("ERROR_PERMISSION", null, null);
+						//out = new Envelope("ERROR_PERMISSION");
 					}
 					else
 					{
@@ -497,18 +522,21 @@ public class FileThread extends ServerThread
 							if (!f.exists())
 							{
 								System.out.printf("Error file %s missing from disk\n", "_" + remotePath.replace('/', '_'));
-								out = new Envelope("ERROR_FILEMISSING");
+								out = encryptMessageWithSymmetricKey("ERROR_FILEMISSING", null, null);
+								//out = new Envelope("ERROR_FILEMISSING");
 							}
 							else if (f.delete())
 							{
 								System.out.printf("File %s deleted from disk\n", "_" + remotePath.replace('/', '_'));
 								FileServer.fileList.removeFile("/" + remotePath);
-								out = new Envelope("OK");
+								out = encryptMessageWithSymmetricKey("OK", null, null);
+								//out = new Envelope("OK");
 							}
 							else
 							{
 								System.out.printf("Error deleting file %s from disk\n", "_" + remotePath.replace('/', '_'));
-								out = new Envelope("ERROR_DELETE");
+								out = encryptMessageWithSymmetricKey("ERROR_DELETE", null, null);
+								//	out = new Envelope("ERROR_DELETE");
 							}
 						}// end try block
 						catch (Exception e1)
@@ -516,7 +544,8 @@ public class FileThread extends ServerThread
 //							System.err.println("Error: " + e1.getMessage());
 							e1.printStackTrace(System.err);
 //							e = new Envelope(e1.getMessage());
-							out = new Envelope("ERROR_SYSTEM");
+							out = encryptMessageWithSymmetricKey("ERROR_SYSTEM", null, null);
+							//out = new Envelope("ERROR_SYSTEM");
 						}
 					}// end else block
 

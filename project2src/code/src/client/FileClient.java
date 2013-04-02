@@ -89,7 +89,8 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				{
 					return false;
 				}
-				final Envelope downloadMore = new Envelope("DOWNLOADF");
+				final Envelope downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null); 
+				//new Envelope("DOWNLOADF");
 				
 				// Why can't you just use .equals()?
 				while (env.getMessage().compareTo("CHUNK") == 0)
@@ -265,7 +266,8 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			// If server indicates success, return the member list
 			if (env.getMessage().compareTo("READY") == 0)
 			{
-				Envelope message = new Envelope("EOF");
+				Envelope message = this.encryptMessageWithSymmetricKey("EOF", null, null); 
+						//new Envelope("EOF");
 				output.writeObject(message);
 				
 				env = (Envelope)input.readObject();

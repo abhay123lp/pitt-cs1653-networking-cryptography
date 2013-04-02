@@ -82,7 +82,8 @@ public class GroupThread extends ServerThread
 							
 					if(!checkValidityOfMessage(message)){
 												 
-						response = new Envelope("DISCONNECT"); // Server does not understand client request
+						response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+								//new Envelope("DISCONNECT"); // Server does not understand client request
 						output.writeObject(response);
 						
 						socket.close();
@@ -104,7 +105,8 @@ public class GroupThread extends ServerThread
 					if (username == null)
 					{
 						System.out.println("USERNAME IS NULL, FAIL");
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								// new Envelope("FAIL");
 						response.addObject(null);
 																		
 						output.writeObject(response);
@@ -129,7 +131,8 @@ public class GroupThread extends ServerThread
 						{
 							System.out.println("PASSWORD CHECK FAIL");
 							// Respond to the client. On error, the client will receive a null token
-							response = new Envelope("FAIL");
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+									// new Envelope("FAIL");
 							output.writeObject(response);
 						}
 					}
@@ -145,11 +148,13 @@ public class GroupThread extends ServerThread
 										
 					if (message.getObjContents().size() < 5 && objData.length < 2)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								// new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						// response = new Envelope("FAIL");
 						
 						if (objData[0] != null)
 						//if (message.getObjContents().get(0) != null)
@@ -175,7 +180,8 @@ public class GroupThread extends ServerThread
 									
 									if (createUser(username, yourToken, password))
 									{
-										response = new Envelope("OK"); // Success
+										response = encryptMessageWithSymmetricKey("OK", null, null);
+										// response = new Envelope("OK"); // Success
 									}
 									
 								}
@@ -196,11 +202,13 @@ public class GroupThread extends ServerThread
 					if (message.getObjContents().size() < 5)
 					//if (message.getObjContents().size() < 2)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						// response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null)
 						//if (message.getObjContents().get(0) != null)
@@ -220,7 +228,8 @@ public class GroupThread extends ServerThread
 								{
 									if (deleteUser(username, yourToken))
 									{
-										response = new Envelope("OK"); // Success
+										response = encryptMessageWithSymmetricKey("OK", null, null);
+										//response = new Envelope("OK"); // Success
 									}
 								}
 								else
@@ -241,11 +250,13 @@ public class GroupThread extends ServerThread
 					if (message.getObjContents().size() < 5)
 					//if (message.getObjContents().size() < 2)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null)
 						//if (message.getObjContents().get(0) != null)
@@ -290,11 +301,13 @@ public class GroupThread extends ServerThread
 					if (message.getObjContents().size() < 5)
 					//if (message.getObjContents().size() < 2)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						// response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 						
 						if (objData[0] != null)
 						{
@@ -340,11 +353,13 @@ public class GroupThread extends ServerThread
 					if (message.getObjContents().size() < 5)
 					//if (message.getObjContents().size() < 2)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null)
 						//if (message.getObjContents().get(0) != null)
@@ -391,11 +406,13 @@ public class GroupThread extends ServerThread
 					if (message.getObjContents().size() < 5)
 					//if (message.getObjContents().size() < 3)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null)
 						//if (message.getObjContents().get(0) != null)
@@ -450,11 +467,13 @@ public class GroupThread extends ServerThread
 					if (message.getObjContents().size() < 5)
 					//if (message.getObjContents().size() < 3)
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = new Envelope("FAIL");
+						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null)
 						//if (message.getObjContents().get(0) != null)
@@ -506,7 +525,8 @@ public class GroupThread extends ServerThread
 				}
 				else
 				{
-					response = new Envelope("FAIL"); // Server does not understand client request
+					response = encryptMessageWithSymmetricKey("FAIL", null, null);
+					//response = new Envelope("FAIL"); // Server does not understand client request
 					output.writeObject(response);
 				}
 //				output.flush();
