@@ -584,8 +584,8 @@ public class UserCommands {
 		// Here we print out the success and failures of commands. 
 		// Everything gets printed at once after the commands all finish.
 		// TODO: Fix me. If we don't disconnect and reconnect, there are issues updating the user list.
-		groupClient.disconnect();
-		groupClient.connect(groupServerIP, groupServerPort, groupServerName);
+//		groupClient.disconnect();
+//		groupClient.connect(groupServerIP, groupServerPort, groupServerName);
 		System.out.printf(s);
 		return userToken;
 	}

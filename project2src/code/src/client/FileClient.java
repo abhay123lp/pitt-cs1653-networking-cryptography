@@ -39,7 +39,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			Envelope response = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(response))
 			{
-				return false;
+				return false; //TODO bad handling
 			}
 			
 			if (response.getMessage().compareTo("OK") == 0)
@@ -87,9 +87,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				Envelope env = (Envelope)input.readObject();
 				if(!checkValidityOfMessage(env))
 				{
-					return false;
+					fos.close();
+					return false;//TODO bad handling
 				}
-				final Envelope downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null); 
+				Envelope downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null);
 				//new Envelope("DOWNLOADF");
 				
 				// Why can't you just use .equals()?
@@ -97,7 +98,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				{
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
-					byte[] iv = (byte[])getFromEnvelope(Field.IV);
+//					byte[] iv = (byte[])getFromEnvelope(Field.IV);
 							//(byte[])env.getObjContents().get(2);
 					byte[] inBytes = (byte[])objData[0];
 							//(byte[])convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(0), iv));
@@ -106,11 +107,13 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					fos.write(inBytes, 0, lastIndex);
 					System.out.printf(".");
 //					env = new Envelope("DOWNLOADF"); // Success
+					downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null); 
 					output.writeObject(downloadMore);
 					env = (Envelope)input.readObject();
 					if(!checkValidityOfMessage(env))
 					{
-						return false;
+						fos.close();
+						return false; //TODO bad handling
 					}
 				}
 				fos.close();
@@ -122,7 +125,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 //					fos.close();
 					System.out.printf("\nTransfer successful file %s\n", sourceFile);
 //					env = new Envelope("OK"); // Success
-					output.writeObject(new Envelope("OK"));
+					output.writeObject(this.encryptMessageWithSymmetricKey("OK", null, null));
 				}
 				else
 				{
@@ -209,6 +212,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			Envelope env = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(env))
 			{
+				fis.close();
 				return false;
 			}
 			
@@ -257,6 +261,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				env = (Envelope)input.readObject();
 				if(!checkValidityOfMessage(env))
 				{
+					fis.close();
 					return false;
 				}
 			} while (fis.available() > 0);

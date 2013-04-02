@@ -56,7 +56,7 @@ public abstract class ServerThread extends Thread
 	protected final RSAPrivateKey privateKey;
 	
 	private RSAPublicKey groupServerPublicKey; //FOR USE BY NON GROUP SERVERS ONLY
-	private int numberOfMessage;
+	private volatile int numberOfMessage;
 	private Key confidentialKey;
 	private Key integrityKey;
 	private byte[] challengeBytes;
@@ -236,11 +236,14 @@ public abstract class ServerThread extends Thread
 		Integer incomingMessageNumber = (Integer)lastMessageContents[2];
 					
 		
-		if(incomingMessageNumber.equals(Integer.valueOf(numberOfMessage))){
+		if(incomingMessageNumber == numberOfMessage){
 			
 			// Number of the message to send out for response to user
-			//incomingMessageNumber = incomingMessageNumber + 1;		
-			numberOfMessage = numberOfMessage + 1;
+			//incomingMessageNumber = incomingMessageNumber + 1;
+			synchronized(Integer.class)
+			{
+				numberOfMessage = numberOfMessage + 1;
+			}
 			
 		} else {
 						
@@ -408,141 +411,134 @@ public abstract class ServerThread extends Thread
 		
 		try{
 			
-		Envelope response = new Envelope(message);
-		
-		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-					
-		IvParameterSpec IV = ivAES();
-		
-		// Initialize the cipher encryption object, add the key, and add the IV
-		objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
-		
-		for(Field f : Field.values()){
+			Envelope response = new Envelope(message);
 			
-			switch(f){
-			case HMAC:
+			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+			
+			IvParameterSpec IV = ivAES();
+			
+			// Initialize the cipher encryption object, add the key, and add the IV
+			objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
+			
+			for(Field f : Field.values()){
 				
-				//Key integrityKey = genterateSymmetricKey();
-				int lengthOfMastArray = 0;
-				
-				byte[] msgBytes = convertToByteArray(message);
-				lengthOfMastArray = lengthOfMastArray + msgBytes.length;		
-								
-				byte[] ivBytes = IV.getIV();
-				lengthOfMastArray = lengthOfMastArray + ivBytes.length;
-				
-				byte[] intBytes = convertToByteArray(numberOfMessage);
-				lengthOfMastArray = lengthOfMastArray + intBytes.length;
-				
-				byte[] tokenBytes = null;
-				
-				if(token != null){
-					tokenBytes = convertToByteArray(token);
-					lengthOfMastArray = lengthOfMastArray + tokenBytes.length;
-				} 
-				
-				int sizeOfVarLenData = 0;
-				
-				ArrayList<byte[]> alVarData = new ArrayList<byte[]>();
-				
-				if(data != null){
-					for(int i = 0; i < data.length; i++){
-						byte[] varLenData = convertToByteArray(data[i]);
-						alVarData.add(varLenData);
-						sizeOfVarLenData+= varLenData.length;
-					}
-					lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
-				}
-				
-				
-				byte[] masterArray = new byte[lengthOfMastArray];
-												
-				int indexToStart = 0;
-				
-				for(int i = 0; i < msgBytes.length; i++){
-					masterArray[indexToStart] = msgBytes[i];
-					indexToStart++;
-				}
-				
-				for(int i = 0; i < ivBytes.length; i++){
-					masterArray[indexToStart] = ivBytes[i];
-					indexToStart++;
-				}
-				
-				for(int i = 0; i < intBytes.length; i++){
-					masterArray[indexToStart] = intBytes[i];
-					indexToStart++;
-				}
-				
-				if(tokenBytes != null){
-					for(int i = 0; i < tokenBytes.length; i++){
-						masterArray[indexToStart] = tokenBytes[i];
-						indexToStart++;
-					}
-				}
-				
-				if(data != null){
-					for(int i = 0; i < alVarData.size(); i++){
+				switch(f){
+					case HMAC:
 						
-						byte[] loopArray = alVarData.get(i);
+						//Key integrityKey = genterateSymmetricKey();
+						int lengthOfMastArray = 0;
 						
-						for(int j = 0; j < loopArray.length; j++){
-							masterArray[indexToStart] = loopArray[j];
+						byte[] msgBytes = convertToByteArray(message);
+						lengthOfMastArray = lengthOfMastArray + msgBytes.length;		
+						
+						byte[] ivBytes = IV.getIV();
+						lengthOfMastArray = lengthOfMastArray + ivBytes.length;
+						
+						byte[] intBytes = convertToByteArray(numberOfMessage);
+						lengthOfMastArray = lengthOfMastArray + intBytes.length;
+						
+						byte[] tokenBytes = null;
+						
+						if(token != null){
+							tokenBytes = convertToByteArray(token);
+							lengthOfMastArray = lengthOfMastArray + tokenBytes.length;
+						} 
+						
+						int sizeOfVarLenData = 0;
+						
+						ArrayList<byte[]> alVarData = new ArrayList<byte[]>();
+						
+						if(data != null){
+							for(int i = 0; i < data.length; i++){
+								byte[] varLenData = convertToByteArray(data[i]);
+								alVarData.add(varLenData);
+								sizeOfVarLenData+= varLenData.length;
+							}
+							lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
+						}
+						
+						
+						byte[] masterArray = new byte[lengthOfMastArray];
+						
+						int indexToStart = 0;
+						
+						for(int i = 0; i < msgBytes.length; i++){
+							masterArray[indexToStart] = msgBytes[i];
 							indexToStart++;
 						}
 						
-					}
-				}
+						for(int i = 0; i < ivBytes.length; i++){
+							masterArray[indexToStart] = ivBytes[i];
+							indexToStart++;
+						}
+						
+						for(int i = 0; i < intBytes.length; i++){
+							masterArray[indexToStart] = intBytes[i];
+							indexToStart++;
+						}
+						
+						if(tokenBytes != null){
+							for(int i = 0; i < tokenBytes.length; i++){
+								masterArray[indexToStart] = tokenBytes[i];
+								indexToStart++;
+							}
+						}
+						
+						if(data != null){
+							for(int i = 0; i < alVarData.size(); i++){
 								
-				// Add HMAC to envelope
-				response.addObject(objCipher.doFinal(createHMAC(integrityKey, masterArray)));				
-				break;
-				
-			case IV:
-				response.addObject(IV.getIV());				
-			break;
-			
-			case INT:				
-				response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));				
-			break;
-			
-			case TOKEN:
-				if(token != null){
-					response.addObject(objCipher.doFinal(convertToByteArray(token)));
+								byte[] loopArray = alVarData.get(i);
+								
+								for(int j = 0; j < loopArray.length; j++){
+									masterArray[indexToStart] = loopArray[j];
+									indexToStart++;
+								}
+								
+							}
+						}
+						
+						// Add HMAC to envelope
+						response.addObject(objCipher.doFinal(createHMAC(integrityKey, masterArray)));				
+						break;
+						
+					case IV:
+						response.addObject(IV.getIV());				
+						break;
+						
+					case INT:				
+						response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));				
+						break;
+						
+					case TOKEN:
+						if(token != null){
+							response.addObject(objCipher.doFinal(convertToByteArray(token)));
+						}
+						else
+						{
+							response.addObject(null);
+						}
+						break;
+						
+					case DATA:
+						if(data != null){
+							
+							response.addObject(objCipher.doFinal(convertToByteArray(data)));
+							
+							//for(int i = 0; i < data.length; i++){
+							// encrypt and add to envelope
+							//	response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
+							//}
+						}
+						else
+						{
+							response.addObject(null);
+						}
+						break;
 				}
-				else
-				{
-					response.addObject(null);
-				}
-				break;
-				
-			case DATA:
-				if(data != null){
-					
-					response.addObject(objCipher.doFinal(convertToByteArray(data)));
-					
-					//for(int i = 0; i < data.length; i++){
-						// encrypt and add to envelope
-					//	response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
-					//}
-				}
-				else
-				{
-					response.addObject(null);
-				}
-				break;
-				
 			}
+			//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
 			
-			
-		}
-		
-		
-		
-
-		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
-
-		/*
+			/*
 		for(Object o : objs){
 			
 			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
@@ -552,12 +548,15 @@ public abstract class ServerThread extends Thread
 		response.addObject(IV.getIV());
 																
 		return response;
-		*/
-		
-		//increment number of message
-		numberOfMessage = numberOfMessage + 1;
-				
-		return response;
+			 */
+			
+			//increment number of message
+			synchronized(Integer.class)
+			{
+				numberOfMessage = numberOfMessage + 1;
+			}
+			
+			return response;
 		}
 		catch(Exception e)
 		{
@@ -753,6 +752,14 @@ public abstract class ServerThread extends Thread
 	//FOR USE ONLY WITH FILETHREAD
 	protected boolean verifyTokenSignature(UserToken t)
 	{
-		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, this.groupServerPublicKey);
+		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey));
+	}
+	
+	protected void resetMessageCounter()
+	{
+		synchronized(Integer.class)
+		{
+			this.numberOfMessage = 0;
+		}
 	}
 }
