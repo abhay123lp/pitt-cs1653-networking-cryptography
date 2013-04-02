@@ -74,10 +74,10 @@ public class GroupThread extends ServerThread
 				System.out.println("Request received: " + message.getMessage());
 				Envelope response;
 				
-				if(message.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
-					
-					continue;					
-					
+				if(message.getMessage().equals("REQUEST_SECURE_CONNECTION"))
+				{	
+					output.writeObject(this.setUpSecureConnection(message));
+					continue;	
 				} else {
 							
 					if(!checkValidityOfMessage(message)){
@@ -103,6 +103,7 @@ public class GroupThread extends ServerThread
 					
 					if (username == null)
 					{
+						System.out.println("USERNAME IS NULL, FAIL");
 						response = new Envelope("FAIL");
 						response.addObject(null);
 																		
@@ -126,16 +127,17 @@ public class GroupThread extends ServerThread
 						// Password did not match
 						else
 						{
+							System.out.println("PASSWORD CHECK FAIL");
 							// Respond to the client. On error, the client will receive a null token
 							response = new Envelope("FAIL");
 							output.writeObject(response);
 						}
 					}
 				}// end if block
-				else if (message.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
-				{
-					output.writeObject(this.setUpSecureConnection(message));
-				}
+//				else if (message.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
+//				{
+//					
+//				}
 				else if (message.getMessage().equals("CUSER")) // Client wants to create a user
 				{
 					

@@ -69,10 +69,10 @@ public class FileThread extends ServerThread
 				System.out.println("Request received: " + e.getMessage());
 				Envelope response = null;
 				
-				if(e.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
-					
-					continue;					
-					
+				if(e.getMessage().equals("REQUEST_SECURE_CONNECTION"))
+				{	
+					output.writeObject(this.setUpSecureConnection(e));
+					continue;	
 				} else {
 							
 					if(!checkValidityOfMessage(e)){
@@ -148,10 +148,10 @@ public class FileThread extends ServerThread
 					
 					//output.writeObject(response);
 				}// end if block
-				else if (e.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
-				{
-					output.writeObject(this.setUpSecureConnection(e));
-				}
+//				else if (e.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
+//				{
+//					output.writeObject(this.setUpSecureConnection(e));
+//				}
 				else if (e.getMessage().equals("UPLOADF"))
 				{
 					

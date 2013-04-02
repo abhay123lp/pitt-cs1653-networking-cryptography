@@ -37,6 +37,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF"));
 			
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return false;
+			}
 			
 			if (response.getMessage().compareTo("OK") == 0)
 			{
@@ -81,6 +85,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", token, new Object[]{sourceFile}));
 				
 				Envelope env = (Envelope)input.readObject();
+				if(!checkValidityOfMessage(env))
+				{
+					return false;
+				}
 				final Envelope downloadMore = new Envelope("DOWNLOADF");
 				
 				// Why can't you just use .equals()?
@@ -92,13 +100,17 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 							//(byte[])env.getObjContents().get(2);
 					byte[] inBytes = (byte[])objData[0];
 							//(byte[])convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(0), iv));
-					Integer lastIndex = (byte[])objData[1];
+					Integer lastIndex = (Integer)objData[1];
 							//(Integer)convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(1), iv));
 					fos.write(inBytes, 0, lastIndex);
 					System.out.printf(".");
 //					env = new Envelope("DOWNLOADF"); // Success
 					output.writeObject(downloadMore);
 					env = (Envelope)input.readObject();
+					if(!checkValidityOfMessage(env))
+					{
+						return false;
+					}
 				}
 				fos.close();
 				
@@ -149,6 +161,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{token}, "LFILES"));
 			
 			Envelope e = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(e))
+			{
+				return null;
+			}
 			
 			// If server indicates success, return the member list
 			if (e.getMessage().equals("OK"))
@@ -190,6 +206,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			FileInputStream fis = new FileInputStream(sourceFile); // FIXME never closed
 			
 			Envelope env = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(env))
+			{
+				return false;
+			}
 			
 			// If server indicates success, return the member list
 			if (env.getMessage().equals("READY"))
@@ -234,6 +254,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
 				
 				env = (Envelope)input.readObject();
+				if(!checkValidityOfMessage(env))
+				{
+					return false;
+				}
 			} while (fis.available() > 0);
 			
 			fis.close();
@@ -245,6 +269,10 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				output.writeObject(message);
 				
 				env = (Envelope)input.readObject();
+				if(!checkValidityOfMessage(env))
+				{
+					return false;
+				}
 				if (env.getMessage().compareTo("OK") == 0)
 				{
 					System.out.printf("\nFile data upload successful\n");

@@ -106,7 +106,7 @@ public abstract class ServerThread extends Thread
 		
 		// Get Token if it exists
 		if(env.getObjContents().get(3) != null){
-			lastMessageContents[3] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(3)), ivByteArray));
+			lastMessageContents[3] = convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(3), ivByteArray));
 		}
 		
 		// Get Data if it exists
@@ -227,6 +227,7 @@ public abstract class ServerThread extends Thread
 		
 		// If false return 
 		if(isHMACValid == false){
+			System.out.println("FAIL HMAC CHECK");
 			return isHMACValid;
 		}
 				
@@ -238,13 +239,13 @@ public abstract class ServerThread extends Thread
 		if(incomingMessageNumber.equals(Integer.valueOf(numberOfMessage))){
 			
 			// Number of the message to send out for response to user
-			//incomingMessageNumber = incomingMessageNumber + 1;
-											
+			//incomingMessageNumber = incomingMessageNumber + 1;		
 			numberOfMessage = numberOfMessage + 1;
 			
 		} else {
 						
 			// Not valid, we will disconnect after receiving -1
+			System.out.println("FAIL MESSAGE NUMBER CHECK");
 			isMsgNumValid = false;
 			return isMsgNumValid;
 			
@@ -257,6 +258,7 @@ public abstract class ServerThread extends Thread
 			// Group Server public key
 			if(!verifyTokenSignature(checkToken)){
 				// Token is not valid....return false
+				System.out.println("FAIL TOKEN CHECK");
 				isTokenValid = false;
 				return isTokenValid;
 			}
@@ -426,7 +428,7 @@ public abstract class ServerThread extends Thread
 				byte[] msgBytes = convertToByteArray(message);
 				lengthOfMastArray = lengthOfMastArray + msgBytes.length;		
 								
-				byte[] ivBytes = convertToByteArray(IV);
+				byte[] ivBytes = IV.getIV();
 				lengthOfMastArray = lengthOfMastArray + ivBytes.length;
 				
 				byte[] intBytes = convertToByteArray(numberOfMessage);
@@ -508,6 +510,10 @@ public abstract class ServerThread extends Thread
 				if(token != null){
 					response.addObject(objCipher.doFinal(convertToByteArray(token)));
 				}
+				else
+				{
+					response.addObject(null);
+				}
 				break;
 				
 			case DATA:
@@ -519,6 +525,10 @@ public abstract class ServerThread extends Thread
 						// encrypt and add to envelope
 					//	response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
 					//}
+				}
+				else
+				{
+					response.addObject(null);
 				}
 				break;
 				
@@ -590,12 +600,14 @@ public abstract class ServerThread extends Thread
 				
 				if(serversChallenge == null || serversChallenge.length != 20)
 				{
+					System.out.println("Challenge fails pretest");
 					return null;
 				}
 				for(int i = 0; i < serversChallenge.length; i++)
 				{
 					if(this.challengeBytes[i] != serversChallenge[i])
 					{
+						System.out.println("Challenge fails comparison test.");
 						return null;
 					}
 				}
