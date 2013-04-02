@@ -100,7 +100,7 @@ public abstract class Client implements ClientInterface
 		
 		// Get Token if it exists
 		if(env.getObjContents().get(3) != null){
-			lastMessageContents[3] = convertToObject(decryptObjectBytes(convertToByteArray(env.getObjContents().get(3)), ivByteArray));
+			lastMessageContents[3] = convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(3), ivByteArray));
 		}
 		
 		// Get Data if it exists
@@ -111,13 +111,18 @@ public abstract class Client implements ClientInterface
 	}
 	
 	
-	
+	//TODO force every message to go through encryptMessageWithSymmetricKey
 	/**
 	 * 
 	 * @param Envelope env
 	 * @return
 	 */
 	protected boolean checkValidityOfMessage(Envelope env){
+		
+		if(env.getObjContents().isEmpty())
+		{
+			return true;
+		}
 						
 		boolean isHMACValid = true;
 		boolean isMsgNumValid = true;
@@ -218,6 +223,7 @@ public abstract class Client implements ClientInterface
 		
 		// If false return 
 		if(isHMACValid == false){
+			System.out.println("FAIL HMAC CHECK");
 			return isHMACValid;
 		}
 				
@@ -236,6 +242,7 @@ public abstract class Client implements ClientInterface
 		} else {
 						
 			// Not valid, we will disconnect after receiving -1
+			System.out.println("FAIL MESSAGE NUMBER CHECK");
 			isMsgNumValid = false;
 			return isMsgNumValid;
 			
@@ -328,26 +335,187 @@ public abstract class Client implements ClientInterface
 		return new IvParameterSpec(bytesIV);
 	}
 
-	protected Envelope encryptMessageWithSymmetricKey(Object[] objs, String message)
-	{
-		try
-		{
-			Envelope response = new Envelope(message);
-			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-			IvParameterSpec IV = ivAES();
-
-			objCipher.init(Cipher.ENCRYPT_MODE, confidentialKey, IV); 
-
-			for(Object o : objs)
-			{
-//				byte[] plain = convertToByteArray(o);
-//				System.out.println("Converting from object to: " + new String(plain));
-				byte[] objBytes = objCipher.doFinal(convertToByteArray(o));
-				response.addObject(objBytes);
+//	protected Envelope encryptMessageWithSymmetricKey(Object[] objs, String message)
+//	{
+//		try
+//		{
+//			Envelope response = new Envelope(message);
+//			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+//			IvParameterSpec IV = ivAES();
+//
+//			objCipher.init(Cipher.ENCRYPT_MODE, confidentialKey, IV); 
+//
+//			for(Object o : objs)
+//			{
+////				byte[] plain = convertToByteArray(o);
+////				System.out.println("Converting from object to: " + new String(plain));
+//				byte[] objBytes = objCipher.doFinal(convertToByteArray(o));
+//				response.addObject(objBytes);
+//			}
+//			response.addObject(IV.getIV());
+//
+//			return response;
+//		}
+//		catch(Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+//		return null;
+//	}
+	protected Envelope encryptMessageWithSymmetricKey(String message, UserToken token, Object[] data){
+		
+		try{
+			
+		Envelope response = new Envelope(message);
+		
+		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+					
+		IvParameterSpec IV = ivAES();
+		
+		// Initialize the cipher encryption object, add the key, and add the IV
+		objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
+		
+		for(Field f : Field.values()){
+			
+			switch(f){
+			case HMAC:
+				
+				//Key integrityKey = genterateSymmetricKey();
+				int lengthOfMastArray = 0;
+				
+				byte[] msgBytes = convertToByteArray(message);
+				lengthOfMastArray = lengthOfMastArray + msgBytes.length;		
+								
+				byte[] ivBytes = IV.getIV();
+				lengthOfMastArray = lengthOfMastArray + ivBytes.length;
+				
+				byte[] intBytes = convertToByteArray(numberOfMessage);
+				lengthOfMastArray = lengthOfMastArray + intBytes.length;
+				
+				byte[] tokenBytes = null;
+				
+				if(token != null){
+					tokenBytes = convertToByteArray(token);
+					lengthOfMastArray = lengthOfMastArray + tokenBytes.length;
+				} 
+				
+				int sizeOfVarLenData = 0;
+				
+				ArrayList<byte[]> alVarData = new ArrayList<byte[]>();
+				
+				if(data != null){
+					for(int i = 0; i < data.length; i++){
+						byte[] varLenData = convertToByteArray(data[i]);
+						alVarData.add(varLenData);
+						sizeOfVarLenData+= varLenData.length;
+					}
+					lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
+				}
+				
+				
+				byte[] masterArray = new byte[lengthOfMastArray];
+												
+				int indexToStart = 0;
+				
+				for(int i = 0; i < msgBytes.length; i++){
+					masterArray[indexToStart] = msgBytes[i];
+					indexToStart++;
+				}
+				
+				for(int i = 0; i < ivBytes.length; i++){
+					masterArray[indexToStart] = ivBytes[i];
+					indexToStart++;
+				}
+				
+				for(int i = 0; i < intBytes.length; i++){
+					masterArray[indexToStart] = intBytes[i];
+					indexToStart++;
+				}
+				
+				if(tokenBytes != null){
+					for(int i = 0; i < tokenBytes.length; i++){
+						masterArray[indexToStart] = tokenBytes[i];
+						indexToStart++;
+					}
+				}
+				
+				if(data != null){
+					for(int i = 0; i < alVarData.size(); i++){
+						
+						byte[] loopArray = alVarData.get(i);
+						
+						for(int j = 0; j < loopArray.length; j++){
+							masterArray[indexToStart] = loopArray[j];
+							indexToStart++;
+						}
+						
+					}
+				}
+								
+				// Add HMAC to envelope
+				response.addObject(objCipher.doFinal(createHMAC(integrityKey, masterArray)));				
+				break;
+				
+			case IV:
+				response.addObject(IV.getIV());				
+			break;
+			
+			case INT:				
+				response.addObject(objCipher.doFinal(convertToByteArray(numberOfMessage)));				
+			break;
+			
+			case TOKEN:
+				if(token != null){
+					response.addObject(objCipher.doFinal(convertToByteArray(token)));
+				}
+				else
+				{
+					response.addObject(null);
+				}
+				break;
+				
+			case DATA:
+				if(data != null){
+					
+					response.addObject(objCipher.doFinal(convertToByteArray(data)));
+					
+					//for(int i = 0; i < data.length; i++){
+						// encrypt and add to envelope
+					//	response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
+					//}
+				}
+				else
+				{
+					response.addObject(null);
+				}
+				break;
+				
 			}
-			response.addObject(IV.getIV());
+			
+			
+		}
+		
+		
+		
 
-			return response;
+		//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
+
+		/*
+		for(Object o : objs){
+			
+			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
+			response.addObject(newEncryptedChallenge);
+			
+		}
+		response.addObject(IV.getIV());
+																
+		return response;
+		*/
+		
+		//increment number of message
+		numberOfMessage = numberOfMessage + 1;
+				
+		return response;
 		}
 		catch(Exception e)
 		{
@@ -523,6 +691,11 @@ public abstract class Client implements ClientInterface
 			this.output.writeObject(request);
 		
 			Envelope reqResponse = (Envelope)this.input.readObject();
+			if(!checkValidityOfMessage(reqResponse))
+			{
+				disconnect();
+				System.out.println("Invalid response.");
+			}
 			if (reqResponse.getMessage().equals("OK"))
 			{
 				//TODO check the encryption challenge and respond with the server's one.
@@ -533,8 +706,8 @@ public abstract class Client implements ClientInterface
 					System.out.println("Reply is invalid.");
 				}
 				
-				byte[] ivBytes = (byte[])reqResponse.getObjContents().get(1);
-				Object[] objectsList = (Object[])convertToObject(decryptObjectBytes((byte[])reqResponse.getObjContents().get(4), ivBytes));
+//				byte[] ivBytes = (byte[])reqResponse.getObjContents().get(1);
+				Object[] objectsList = (Object[])getFromEnvelope(Field.DATA);
 //				IvParameterSpec ivFromServer = new IvParameterSpec((byte[])reqResponse.getObjContents().get(1));
 
 				if (objectsList == null || objectsList.length < 2 || objectsList[0] == null || objectsList[1] == null)
@@ -561,10 +734,10 @@ public abstract class Client implements ClientInterface
 						// Secure connection
 						System.out.println("Success! Secure connection established!  Sending confirmation...");
 						Envelope finalMsg = new Envelope("REQUEST_SECURE_CONNECTION");
-						finalMsg.addObject(encryptPublic(serverPublicKey, challengeBytes));
+						finalMsg.addObject(encryptPublic(serverPublicKey, (byte[])objectsList[1]));
 						this.output.writeObject(finalMsg);
 						reqResponse = (Envelope)this.input.readObject();
-						if(!reqResponse.getMessage().equals("OK"))
+						if(reqResponse == null || !reqResponse.getMessage().equals("OK"))
 						{
 							disconnect();
 							System.out.println("Oops, something went wrong...");
@@ -670,6 +843,7 @@ public abstract class Client implements ClientInterface
 				e.printStackTrace(System.err);
 			}
 			this.sock = null;
+			this.numberOfMessage = 0;
 		}
 	}//end method disconnect
 }// end class Client

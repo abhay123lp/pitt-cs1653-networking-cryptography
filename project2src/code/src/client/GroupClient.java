@@ -28,6 +28,10 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 
 			// Get the response from the server
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
 
 			// Successful response
 			if (response.getMessage().equals("OK"))
@@ -54,10 +58,14 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 //			Envelope message = null, response = null;
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER");
-			output.writeObject(encryptMessageSymmetricKey("CUSER", token, new Object[]{username, password}));
+			output.writeObject(encryptMessageWithSymmetricKey("CUSER", token, new Object[]{username, password}));
 					//encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER"));
 
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return false;
+			}
 
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -85,6 +93,10 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			output.writeObject(encryptMessageWithSymmetricKey("DUSER", token, new Object[]{username}));
 			
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return false;
+			}
 
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -112,6 +124,10 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			output.writeObject(encryptMessageWithSymmetricKey("CGROUP", token, new Object[]{groupname}));
 
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
 
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -140,6 +156,10 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			output.writeObject(encryptMessageWithSymmetricKey("DGROUP", token, new Object[]{groupname}));
 
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -166,9 +186,13 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 
 //			message = encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS");
 			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS"));
-			output.writeObject(encryptMessageWithSymmetricKey("LMEMBERS", token, new Object[]{group));
+			output.writeObject(encryptMessageWithSymmetricKey("LMEMBERS", token, new Object[]{group}));
 
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
 
 			// If server indicates success, return the member list
 			if (response.getMessage().equals("OK"))
@@ -198,6 +222,10 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			output.writeObject(encryptMessageWithSymmetricKey("AUSERTOGROUP", token, new Object[]{username, groupname}));
 
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
@@ -226,6 +254,10 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			output.writeObject(encryptMessageWithSymmetricKey("RUSERFROMGROUP", token, new Object[]{username, groupname}));
 
 			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
 			
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
