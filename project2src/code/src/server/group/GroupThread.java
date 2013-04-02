@@ -87,6 +87,8 @@ public class GroupThread extends ServerThread
 						output.writeObject(response);
 						
 						socket.close();
+						this.resetMessageCounter();
+						proceed = false;
 						return;
 						
 					}
@@ -153,17 +155,17 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
 						// response = new Envelope("FAIL");
-						
-						if (objData[0] != null)
+						response = null;
+						if (objData[0] != null && objData[1] != null)
 						//if (message.getObjContents().get(0) != null)
 						{
-							if(objData[1] != null)
+//							if(objData[1] != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								
 								String username = (String)objData[0];
+								String password = (String)objData[1];
 								
 								//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
 //								System.out.println(username);
@@ -173,24 +175,29 @@ public class GroupThread extends ServerThread
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
-								if(checkToken)
+								if(checkToken && createUser(username, yourToken, password))
 								{					
-									String password = (String)objData[1];
+									
 											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
 									
-									if (createUser(username, yourToken, password))
-									{
+//									if (createUser(username, yourToken, password))
+//									{
 										response = encryptMessageWithSymmetricKey("OK", null, null);
 										// response = new Envelope("OK"); // Success
-									}
+//									}
 									
 								}
 								else
 								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
 									System.out.println("Token not authenticated.");
 								}
-							}
+//							}
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
@@ -207,15 +214,15 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						response = null;
 						//response = new Envelope("FAIL");
 						
-						if(objData[0] != null)
+						if(objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
 						//if (message.getObjContents().get(0) != null)
 						{							
-							if(getFromEnvelope(Field.TOKEN) != null);
+//							if(getFromEnvelope(Field.TOKEN) != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								String username = (String)objData[0];
 										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
@@ -224,20 +231,25 @@ public class GroupThread extends ServerThread
 
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 								
-								if(checkToken)
+								if(checkToken && deleteUser(username, yourToken))
 								{
-									if (deleteUser(username, yourToken))
-									{
+//									if (deleteUser(username, yourToken))
+//									{
 										response = encryptMessageWithSymmetricKey("OK", null, null);
 										//response = new Envelope("OK"); // Success
-									}
+//									}
 								}
 								else
 								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
 									System.out.println("Token not authenticated.");
 								}
-							}
+//							}
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
@@ -255,16 +267,16 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						response = null;
 						//response = new Envelope("FAIL");
 						
-						if(objData[0] != null)
+						if(objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
 						//if (message.getObjContents().get(0) != null)
 						{
 							
-							if (getFromEnvelope(Field.TOKEN) != null)
+//							if (getFromEnvelope(Field.TOKEN) != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								String groupname = (String)objData[0];
 										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
@@ -272,23 +284,28 @@ public class GroupThread extends ServerThread
 								//Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								if(checkToken)
+								if(checkToken && createGroup(groupname, yourToken))
 								{
-									if (createGroup(groupname, yourToken))
-									{
+//									if (createGroup(groupname, yourToken))
+//									{
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().add(groupname);
 										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 										response = encryptMessageWithSymmetricKey("OK", yourToken, null);
-									}
+//									}
 								}
 								else
 								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
 									System.out.println("Token not authenticated.");
 								}
-							}
+//							}
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
@@ -306,15 +323,15 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						response = null;
 						//response = new Envelope("FAIL");
 						
-						if (objData[0] != null)
+						if (objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
 						{
 							
-							if (getFromEnvelope(Field.TOKEN) != null)
+//							if (getFromEnvelope(Field.TOKEN) != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								
 								String groupname = (String)objData[0];
 										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
@@ -323,24 +340,29 @@ public class GroupThread extends ServerThread
 								//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
 								
 								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								if(checkToken)
+								if(checkToken && deleteGroup(groupname, yourToken))
 								{																	
-									if (deleteGroup(groupname, yourToken))
-									{
+//									if (deleteGroup(groupname, yourToken))
+//									{
 										response = new Envelope("OK"); // Success
 										yourToken.getGroups().remove(groupname); // remove the group from the users token
 										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										
 										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 										response = encryptMessageWithSymmetricKey("OK", yourToken, null);
-									}
+//									}
 								}
 								else
 								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
 									System.out.println("Token not authenticated.");
 								}
-							}
+//							}
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
@@ -358,16 +380,16 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						response = null;
 						//response = new Envelope("FAIL");
 						
-						if(objData[0] != null)
+						if(objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
 						//if (message.getObjContents().get(0) != null)
 						{
 							
-							if(getFromEnvelope(Field.TOKEN) != null)
+//							if(getFromEnvelope(Field.TOKEN) != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								String groupname = (String)objData[0];
 										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 								
@@ -390,10 +412,15 @@ public class GroupThread extends ServerThread
 								}
 								else
 								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
 									System.out.println("Token not authenticated.");
 								}
-							}
+//							}
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
@@ -411,19 +438,19 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						response = null;
 						//response = new Envelope("FAIL");
 						
-						if(objData[0] != null)
+						if(objData[0] != null && objData[1] != null && getFromEnvelope(Field.TOKEN) != null)
 						//if (message.getObjContents().get(0) != null)
 						{
-							if(objData[1] != null)
+//							if(objData[1] != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								
-								if(getFromEnvelope(Field.TOKEN) != null)
+//								if(getFromEnvelope(Field.TOKEN) != null)
 								//if (message.getObjContents().get(2) != null)
-								{
+//								{
 									String username = (String)objData[0];
 											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
 									String groupname = (String)objData[1];
@@ -448,14 +475,23 @@ public class GroupThread extends ServerThread
 											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 											response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 										}
+										else
+										{
+											response = encryptMessageWithSymmetricKey("FAIL", null, null);
+										}
 									}
 									else
 									{
+										response = encryptMessageWithSymmetricKey("FAIL", null, null);
 										System.out.println("Token not authenticated.");
 									}
-								}// end if block
-							}// end if block
+//								}// end if block
+//							}// end if block
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
@@ -472,20 +508,20 @@ public class GroupThread extends ServerThread
 					}
 					else
 					{
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						response = null;
 						//response = new Envelope("FAIL");
 						
-						if(objData[0] != null)
+						if(objData[0] != null && objData[1] != null && getFromEnvelope(Field.TOKEN) != null)
 						//if (message.getObjContents().get(0) != null)
 						{
 							
-							if(objData[1] != null)
+//							if(objData[1] != null)
 							//if (message.getObjContents().get(1) != null)
-							{
+//							{
 								
-								if (getFromEnvelope(Field.TOKEN) != null)
+//								if (getFromEnvelope(Field.TOKEN) != null)
 								//if (message.getObjContents().get(2) != null)
-								{
+//								{
 									String username = (String)objData[0];
 											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
 									String groupname = (String)objData[1];
@@ -507,20 +543,30 @@ public class GroupThread extends ServerThread
 											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 											response = encryptMessageWithSymmetricKey("OK", yourToken, null);
 										}
+										else
+										{
+											response = encryptMessageWithSymmetricKey("FAIL", null, null);
+										}
 									}
 									else
 									{
+										response = encryptMessageWithSymmetricKey("FAIL", null, null);
 										System.out.println("Token not authenticated.");
 									}
-								}// end if block
-							}// end if block
+//								}// end if block
+//							}// end if block
 						}// end if block
+						else
+						{
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+						}
 					}// end else block
 					output.writeObject(response);
 				}// end else if block
 				else if (message.getMessage().equals("DISCONNECT")) // Client wants to disconnect
 				{
 					socket.close(); // Close the socket
+					this.resetMessageCounter();
 					proceed = false; // End this communication loop
 				}
 				else

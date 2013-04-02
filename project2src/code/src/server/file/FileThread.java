@@ -156,30 +156,28 @@ public class FileThread extends ServerThread
 //					output.writeObject(this.setUpSecureConnection(e));
 //				}
 				else if (e.getMessage().equals("UPLOADF"))
-				{
-					
-					Object[] objData = (Object[])getFromEnvelope(Field.DATA);					
-										
+				{					
 					if (e.getObjContents().size() < 5)
 					//if (e.getObjContents().size() < 3)
 					{
-						response = new Envelope("FAIL-BADCONTENTS");
+						response = encryptMessageWithSymmetricKey("FAIL-BADCONTENTS", null, null);
 					}
 					else
 					{
+						Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 						if(objData[0] == null)
 						//if (e.getObjContents().get(0) == null)
 						{
 							response = encryptMessageWithSymmetricKey("FAIL-BADPATH", null, null);
 							//response = new Envelope("FAIL-BADPATH");
 						}
-						if(objData[1] == null)
+						else if(objData[1] == null)
 						//if (e.getObjContents().get(1) == null)
 						{
 							response = encryptMessageWithSymmetricKey("FAIL-BADGROUP", null, null);
 							//response = new Envelope("FAIL-BADGROUP");
 						}
-						if(getFromEnvelope(Field.TOKEN) == null)
+						else if(getFromEnvelope(Field.TOKEN) == null)
 						//if (e.getObjContents().get(2) == null)
 						{
 							response = encryptMessageWithSymmetricKey("FAIL-BADTOKEN", null, null);
@@ -187,7 +185,7 @@ public class FileThread extends ServerThread
 						}
 						else
 						{
-							byte[] iv = (byte[])e.getObjContents().get(3);
+//							byte[] iv = (byte[])e.getObjContents().get(3);
 							String remotePath = (String)objData[0];
 									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 							String group = (String)objData[1];
@@ -266,6 +264,7 @@ public class FileThread extends ServerThread
 											output.writeObject(response);
 											
 											socket.close();
+											fos.close();
 											return;
 											
 										}
@@ -276,7 +275,7 @@ public class FileThread extends ServerThread
 									Object[] objChunkData = (Object[])getFromEnvelope(Field.DATA);	
 									
 									
-									byte[] ivChunk = (byte[])getFromEnvelope(Field.IV);
+//									byte[] ivChunk = (byte[])getFromEnvelope(Field.IV);
 											//(byte[])chunk.getObjContents().get(2);
 									byte[] inBytes = (byte[])objChunkData[0];
 											//(byte[])convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(0), ivChunk));
@@ -330,12 +329,17 @@ public class FileThread extends ServerThread
 				}// end else if block
 				else if (e.getMessage().compareTo("DOWNLOADF") == 0)
 				{
-					
+					if(e.getObjContents().size() < 5)
+					{
+						output.writeObject(encryptMessageWithSymmetricKey("ERROR", null, null));
+						continue;
+					}
+						
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
 //					String remotePath = (String)e.getObjContents().get(0);
 //					Token t = (Token)e.getObjContents().get(1);
-					byte[] iv = (byte[])getFromEnvelope(Field.IV);
+//					byte[] iv = (byte[])getFromEnvelope(Field.IV);
 							//(byte[])e.getObjContents().get(2);
 					
 					String remotePath = (String)objData[0];
@@ -345,6 +349,7 @@ public class FileThread extends ServerThread
 					if(!this.verifyTokenSignature(t))
 					{
 						response = encryptMessageWithSymmetricKey("ERROR", null, null);
+						output.writeObject(response);
 						//output.writeObject(new Envelope("ERROR"));
 						continue;
 					}
@@ -377,7 +382,7 @@ public class FileThread extends ServerThread
 					{
 						try
 						{
-							File f = new File("shared_files/_" + remotePath.replace('/', '_'));
+							File f = new File("shared_files/" + remotePath.replace('/', '_'));
 							if (!f.exists())
 							{
 								System.out.printf("Error file %s missing from disk\n", "_" + remotePath.replace('/', '_'));
@@ -400,7 +405,7 @@ public class FileThread extends ServerThread
 									if (in.getMessage().compareTo("DOWNLOADF") != 0)
 									{
 										System.out.printf("Server error: %s\n", in.getMessage());
-										break;
+										break; //TODO bad handling.
 									}
 									
 									int n = fis.read(buf); // can throw an IOException
@@ -422,7 +427,7 @@ public class FileThread extends ServerThread
 //									output.writeObject(AESEncrypt(SYM_KEY_ALG, PROVIDER, SYMMETRIC_KEY, IV,byteArray) );
 									
 									//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
-									output.writeObject(encryptMessageWithSymmetricKey("OK", t, new Object[]{buf, new Integer(n)}));
+									output.writeObject(encryptMessageWithSymmetricKey("CHUNK", null, new Object[]{buf, new Integer(n)}));
 									
 									//e = (Envelope)input.readObject();
 									
@@ -450,6 +455,11 @@ public class FileThread extends ServerThread
 									//output.writeObject(new Envelope("EOF"));
 									
 									in = (Envelope)input.readObject();
+									if(!this.checkValidityOfMessage(in))
+									{
+										System.out.println("Error...something went wrong.");
+										return; //TODO bad handling.
+									}
 //									
 //									decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
 //									
@@ -484,10 +494,15 @@ public class FileThread extends ServerThread
 				{
 //					String remotePath = (String)e.getObjContents().get(0);
 //					Token t = (Token)e.getObjContents().get(1);
+					if(e.getObjContents().size() < 5)
+					{
+						output.writeObject(encryptMessageWithSymmetricKey("ERROR", null, null));
+						continue;
+					}
 					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
-					byte[] iv = (byte[])getFromEnvelope(Field.IV);
+//					byte[] iv = (byte[])getFromEnvelope(Field.IV);
 							//(byte[])e.getObjContents().get(2);
 					String remotePath = (String)objData[0];
 							//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
