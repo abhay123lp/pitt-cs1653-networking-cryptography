@@ -44,9 +44,9 @@ public class GroupThread extends ServerThread
 	 * @param _socket The socket to use.
 	 * @param _gs The group server object to use.
 	 */
-	public GroupThread(Socket _socket, GroupServer _gs, RSAPrivateKey _privKey, RSAPublicKey _pubKey)
+	public GroupThread(Socket _socket, GroupServer _gs, RSAPrivateKey _privKey, RSAPublicKey _pubKey, String serverName, String ipAddress, int portNumber)
 	{
-		super(_socket, _pubKey, _privKey);
+		super(_socket, _pubKey, _privKey, serverName, ipAddress, portNumber);
 //		socket = _socket;
 		my_gs = _gs;
 //		privateKey = _privKey;
@@ -598,7 +598,9 @@ public class GroupThread extends ServerThread
 		if (my_gs.userList.checkUser(username))
 		{
 			// Issue a new token with server's name, user's name, and user's groups
-			UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
+			/** Proposed solution **/
+			// Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, "", "", 0);
+			UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), this.getServerName(), this.getIPAddress(), this.getPortNumber());
 			yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 			return yourToken;
 		}
@@ -715,7 +717,9 @@ public class GroupThread extends ServerThread
 					for (int index = 0; index < deleteOwnedGroup.size(); index++ )
 					{
 						// Use the delete group method. Token must be created for this action
-						Token newToken = new Token(my_gs.name, username, deleteOwnedGroup);
+						/** Proposed solution **/
+						// Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, "", "", 0);
+						Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, this.getServerName(), this.getIPAddress(), this.getPortNumber());
 						newToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 						deleteGroup(deleteOwnedGroup.get(index), newToken);
 					}

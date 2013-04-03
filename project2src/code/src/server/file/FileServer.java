@@ -135,7 +135,7 @@ public class FileServer extends Server
 			while (running)
 			{
 				sock = serverSock.accept();
-				thread = new FileThread(sock, this.privateKey, this.publicKey);
+				thread = new FileThread(sock, this.privateKey, this.publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
 				thread.start();
 			}
 			

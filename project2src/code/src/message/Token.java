@@ -35,6 +35,11 @@ public class Token implements UserToken, Serializable
 	 */
 	private final List<String> groups;
 	
+	private final String fileServerName;
+	
+	private final String IPAddress;
+	
+	private final int portNumber;	
 	
 	
 	private byte[] hashedSignedTokenData;
@@ -48,12 +53,16 @@ public class Token implements UserToken, Serializable
 	 * @param subject The name of the user the token was awarded to.
 	 * @param groups The groups associated with the user.
 	 */
-	public Token(String issuer, String subject, List<String> groups)
+	public Token(String issuer, String subject, List<String> groups, String fsName, String ip, int portNum)
 	{
 		
 		this.issuer = issuer;
 		this.subject = subject;
 		this.groups = makeCopyOfGroups(groups);
+		this.fileServerName = fsName;
+		this.IPAddress = ip;
+		this.portNumber = portNum;
+		
 //		this.privateKey = _privKey;
 		
 //		hashedSignedTokenData = generateRSASignature("SHA1withRSA", "BC", _privKey);
@@ -147,10 +156,22 @@ public class Token implements UserToken, Serializable
 		return groups;
 	}
 	
+	public String getFileServerName(){
+		return fileServerName;
+	}
+	
+	public String getIPAddress(){
+		return IPAddress;
+	}
+	
+	public int getPortNumber(){
+		return portNumber;
+	}
+	
 	public String getDelimitedString(){
 		
 		// Begin creating token
-		String finalToken = this.issuer + DELIMITER + this.subject;
+		String finalToken = this.issuer + DELIMITER + this.subject + DELIMITER + fileServerName + DELIMITER + IPAddress + DELIMITER + portNumber;
 		
 		// Sort groups
 		Collections.sort(this.groups);
@@ -162,13 +183,7 @@ public class Token implements UserToken, Serializable
 			
 		}
 		
-		
-		// Hash here and sign here
-		
-		
-		
-		
-		
+				
 		return finalToken;
 		
 	}
