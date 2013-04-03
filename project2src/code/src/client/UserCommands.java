@@ -415,8 +415,8 @@ public class UserCommands {
 						// User wanted to use default settings
 						if(userCommands[i].equals("default"))
 						{
-							fileServerToken = groupClient.getToken(userToken, "FilePile", "localhost", 4321);
-							fileClient = new FileClient();						
+							fileServerToken = groupClient.getToken(userToken, "FilePile", "127.0.0.1", 4321);
+							fileClient = new FileClient();
 							fileClient.connect("localhost", 4321, "FilePile", "ALPHA", fileServerToken);
 						}
 						// Assume user entered "fconnect fileserverIP" without port number
