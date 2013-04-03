@@ -1,8 +1,12 @@
 package server.group;
 
 import java.io.Serializable;
+import java.security.Key;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Hashtable;
+
+import javax.crypto.KeyGenerator;
 
 /**
  * A list of all the groups in a particular {@link GroupServer}.
@@ -94,7 +98,18 @@ public class GroupList implements Serializable
 	 */
 	public synchronized boolean removeUser(String group, String username)
 	{
+//		list.get(group).addKey();
 		return list.get(group).removeUser(username);
+	}
+	
+	public int getEpochOfGroup(String group)
+	{
+		return list.get(group).getEpoch();
+	}
+	
+	public ArrayList<Key> getKeysForGroup(String group)
+	{
+		return list.get(group).getKeys();
 	}
 	
 	// public synchronized void addOwner(String group, String username)
@@ -116,16 +131,20 @@ public class GroupList implements Serializable
 		 * 
 		 */
 		private static final long serialVersionUID = 1670533812588746958L;
+		private static final String SYM_ALGORITHM = "AES";
+		private static final String PROVIDER = "BC";
 		
 		/**
 		 * users is a class variable that holds a list of users in a group.
 		 */
-		private ArrayList<String> users;
+		private final ArrayList<String> users;
 		
 		/**
 		 * onwer is a class variable that holds the name of the owner of the group.
 		 */
 		private final String owner;
+		
+		private final ArrayList<Key> keys;
 		
 		/**
 		 * This constructor initializes the users ArrayList class variable as well as sets the name of the owner of the group.
@@ -135,6 +154,8 @@ public class GroupList implements Serializable
 		public Group(String owner)
 		{
 			this.users = new ArrayList<String>();
+			this.keys = new ArrayList<Key>();
+			this.keys.add(this.genterateSymmetricKey());
 			this.owner = owner;
 		}
 		
@@ -158,6 +179,16 @@ public class GroupList implements Serializable
 			return owner;
 		}
 		
+		public ArrayList<Key> getKeys()
+		{
+			return keys;
+		}
+		
+		public int getEpoch()
+		{
+			return keys.size()-1;
+		}
+		
 		/**
 		 * This method adds a user to the group.
 		 * 
@@ -177,9 +208,40 @@ public class GroupList implements Serializable
 		{
 //			if (users.contains(username))
 //			{
+			this.addKey();
 			return users.remove(username);
 				// users.remove(users.indexOf(username));
 //			}
+		}
+		
+		private boolean addKey()
+		{
+			return this.keys.add(this.genterateSymmetricKey());
+		}
+		
+		/**
+		 * This method will generate a symmetric key for use.
+		 */
+		private final Key genterateSymmetricKey()
+		{
+			try
+			{
+				// Random Number used to generate key
+				SecureRandom randomNumber = new SecureRandom();	
+
+				// Generate a 128-bit AES Key with Bouncy Castle provider
+				KeyGenerator keyGenerator = KeyGenerator.getInstance(SYM_ALGORITHM, PROVIDER);
+				keyGenerator.init(128, randomNumber);
+				Key key = keyGenerator.generateKey();
+
+				return key;
+			}
+			catch (Exception ex)
+			{
+//				System.out.println(ex.toString());
+				ex.printStackTrace();
+			}
+			return null;
 		}
 		
 		// public void addOwner(String username)
