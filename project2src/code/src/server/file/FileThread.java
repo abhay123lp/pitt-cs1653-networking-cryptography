@@ -239,6 +239,11 @@ public class FileThread extends ServerThread
 								output.writeObject(response);
 								
 								Envelope chunk = (Envelope)input.readObject();
+								if(!checkValidityOfMessage(chunk))
+								{
+									fos.close();
+									return;
+								}
 								
 //								decryptedMsg = AESDecrypt(SYM_KEY_ALG, PROVIDER,SYMMETRIC_KEY, IV, (byte[])input.readObject());
 //								
@@ -249,32 +254,7 @@ public class FileThread extends ServerThread
 								//TODO think about requiring that the user send his token every time to verify
 								while (chunk.getMessage().compareTo("CHUNK") == 0)
 								{
-									
-									if(chunk.getMessage().equals("REQUEST_SECURE_CONNECTION")){	
-										
-										output.writeObject(this.setUpSecureConnection(chunk));
-										continue;					
-										
-									} else {
-												
-										if(!checkValidityOfMessage(chunk)){
-														
-											response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
-											//response = new Envelope("DISCONNECT"); // Server does not understand client request
-											output.writeObject(response);
-											
-											socket.close();
-											fos.close();
-											return;
-											
-										}
-										
-									}
-									
-									
-									Object[] objChunkData = (Object[])getFromEnvelope(Field.DATA);	
-									
-									
+									Object[] objChunkData = (Object[])getFromEnvelope(Field.DATA);
 //									byte[] ivChunk = (byte[])getFromEnvelope(Field.IV);
 											//(byte[])chunk.getObjContents().get(2);
 									byte[] inBytes = (byte[])objChunkData[0];
@@ -302,6 +282,11 @@ public class FileThread extends ServerThread
 //									e = (Envelope)convertedObj;
 									
 									chunk = (Envelope)input.readObject();
+									if(!checkValidityOfMessage(chunk))
+									{
+										fos.close();
+										return;
+									}
 								}
 								
 								if (chunk.getMessage().compareTo("EOF") == 0)
@@ -437,6 +422,10 @@ public class FileThread extends ServerThread
 //									
 //									in = (Envelope)convertedObj;
 									in = (Envelope)input.readObject();
+									if(!this.checkValidityOfMessage(in))
+									{
+										return;
+									}
 									
 								} while (fis.available() > 0);
 								fis.close();
