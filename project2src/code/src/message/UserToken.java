@@ -35,6 +35,12 @@ public interface UserToken
 	 */
 	public List<String> getGroups();
 	
+	public String getFileServerName();
+	
+	public String getIPAddress();
+	
+	public int getPortNumber();
+	
 	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey);
 	
 	public void generateRSASignature(String algorithm, String provider, RSAPrivateKey privKey);
