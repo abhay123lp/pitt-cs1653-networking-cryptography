@@ -533,7 +533,7 @@ public class FileThread extends ServerThread
 					UserToken t = (UserToken)getFromEnvelope(Field.TOKEN);
 					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 					
-					ShareFile sf = FileServer.fileList.getFile("/" + remotePath);
+					ShareFile sf = FileServer.fileList.getFile(remotePath);
 					Envelope out = null;
 					if (sf == null)
 					{
@@ -551,7 +551,7 @@ public class FileThread extends ServerThread
 					{
 						try
 						{
-							File f = new File("shared_files/" + "_" + remotePath.replace('/', '_'));
+							File f = new File("shared_files/" + remotePath.replace('/', '_'));
 							
 							if (!f.exists())
 							{

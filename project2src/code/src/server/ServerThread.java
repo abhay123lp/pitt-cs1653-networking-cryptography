@@ -613,7 +613,7 @@ public abstract class ServerThread extends Thread
 	//NULL MEANS ERROR AND SHOULD TERMINATE
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
 	{
-		if(requestSecureConnection.getObjContents().size() == 2)
+		if(requestSecureConnection.getObjContents().size() == 5)
 		{
 			if(!this.checkValidityOfMessage(requestSecureConnection))
 			{
@@ -798,8 +798,8 @@ public abstract class ServerThread extends Thread
 //		if(t == null){
 //			return false;
 //		}
-		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey)) 
-				&& t.getFileServerName().equals(this.serverName) && t.getIPAddress().equals(this.ipAddress) && t.getPortNumber() == this.portNumber;
+		boolean x = t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey));
+		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey)) && t.getFileServerName().equals(this.serverName) && t.getIPAddress().equals(this.ipAddress) && t.getPortNumber() == this.portNumber;
 	}
 	
 	protected void resetMessageCounter()
