@@ -40,6 +40,16 @@ import message.UserToken;
  */
 public abstract class ServerThread extends Thread
 {
+	
+	
+	// Include three fields name of server, ip of server, port of server
+	// constructor ask to pass in those parameters, modify constructor, store values in fields
+	// Check token validity......
+	
+	private String serverName;
+	private String ipAddress;
+	private int portNumber;
+		
 	protected static final String SYM_KEY_ALG = "AES/CTR/NoPadding";
 	protected static final String PROVIDER = "BC";
 	protected static final String ASYM_ALGORITHM = "RSA";
@@ -65,7 +75,7 @@ public abstract class ServerThread extends Thread
 	/**
 	 * 
 	 */
-	public ServerThread(Socket socket, RSAPublicKey publicKey, RSAPrivateKey privateKey)
+	public ServerThread(Socket socket, RSAPublicKey publicKey, RSAPrivateKey privateKey, String sName, String ipAdd, int portNum)
 	{
 		this.socket = socket;
 		this.publicKey = publicKey;
@@ -76,6 +86,21 @@ public abstract class ServerThread extends Thread
 		this.numberOfMessage = 0;
 		this.challengeBytes = new byte[20];
 		this.lastMessageContents = null;
+		this.serverName = sName;
+		this.ipAddress = ipAdd;
+		this.portNumber = portNum;
+	}
+	
+	public String getServerName(){
+		return this.serverName;
+	}
+	
+	public String getIPAddress(){
+		return this.ipAddress;
+	}
+	
+	public int getPortNumber(){
+		return this.portNumber;
 	}
 	
 	public abstract void run();
