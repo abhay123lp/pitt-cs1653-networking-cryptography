@@ -613,14 +613,25 @@ public abstract class ServerThread extends Thread
 	//NULL MEANS ERROR AND SHOULD TERMINATE
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
 	{
-		if(requestSecureConnection.getObjContents().size() == 1)
+		if(requestSecureConnection.getObjContents().size() == 2)
 		{
 			try
 			{
 				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
+				byte[] encryptedToken = (byte[])requestSecureConnection.getObjContents().get(1);
+				
 				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
 				objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
 				byte[] serversChallenge = objCipher.doFinal(encryptedChallenge);
+				if(encryptedToken != null)
+				{
+					UserToken tokenCheck = (UserToken)convertToObject(objCipher.doFinal(encryptedToken));
+					if(!this.verifyTokenSignature(tokenCheck))
+					{
+						System.out.println("Token does not check out.");
+						return null;
+					}
+				}
 				
 				if(serversChallenge == null || serversChallenge.length != 20)
 				{
