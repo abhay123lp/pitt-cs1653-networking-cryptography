@@ -90,7 +90,6 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					fos.close();
 					return false;//TODO bad handling
 				}
-				Envelope downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null);
 				//new Envelope("DOWNLOADF");
 				
 				// Why can't you just use .equals()?
@@ -107,8 +106,8 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					fos.write(inBytes, 0, lastIndex);
 					System.out.printf(".");
 //					env = new Envelope("DOWNLOADF"); // Success
-					downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null); 
-					output.writeObject(downloadMore);
+//					downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null); 
+					output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null));
 					env = (Envelope)input.readObject();
 					if(!checkValidityOfMessage(env))
 					{
@@ -189,9 +188,9 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 	
 	public boolean upload(String sourceFile, String destFile, String group, UserToken token)
 	{
-		if (destFile.charAt(0) != '/')
+		if (sourceFile.charAt(0) == '/')
 		{
-			destFile = "/" + destFile;
+			sourceFile = sourceFile.substring(1);
 		}
 		
 		try

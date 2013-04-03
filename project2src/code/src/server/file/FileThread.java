@@ -338,7 +338,7 @@ public class FileThread extends ServerThread
 						//output.writeObject(new Envelope("ERROR"));
 						continue;
 					}
-					ShareFile sf = FileServer.fileList.getFile("/" + remotePath);
+					ShareFile sf = FileServer.fileList.getFile(remotePath);
 					if (sf == null)
 					{
 						System.out.printf("Error: File %s doesn't exist\n", remotePath);
@@ -370,7 +370,7 @@ public class FileThread extends ServerThread
 							File f = new File("shared_files/" + remotePath.replace('/', '_'));
 							if (!f.exists())
 							{
-								System.out.printf("Error file %s missing from disk\n", "_" + remotePath.replace('/', '_'));
+								System.out.printf("Error file %s missing from disk\n", remotePath.replace('/', '_'));
 //								e = new Envelope("ERROR_NOTONDISK");
 //								
 //								byte[] byteArray = convertToByteArray(e);
