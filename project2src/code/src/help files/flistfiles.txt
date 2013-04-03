@@ -1,0 +1,3 @@
+This method generates a list of all files that can be accessed in his or her groups. A user should 
+not be able to see any files that are shared with groups to which he or she does not belong.
+Example: "flistfiles"
