@@ -118,12 +118,12 @@ public class GroupThread extends ServerThread
 														
 						} else {
 							
-							String uName = (String)objData[0];
-							String fsName = (String)objData[1];
-							String ipAdd = (String)objData[2];
-							int pNum = (int)objData[3];
+//							String uName = (String)objData[0];
+							String fsName = (String)objData[0];
+							String ipAdd = (String)objData[1];
+							int pNum = (int)objData[2];
 							
-							UserToken fsToken = createToken(uName, fsName, ipAdd, pNum);
+							UserToken fsToken = createToken(ut.getSubject(), fsName, ipAdd, pNum);
 							
 							response = encryptMessageWithSymmetricKey("OK", fsToken, null);
 							output.writeObject(response);

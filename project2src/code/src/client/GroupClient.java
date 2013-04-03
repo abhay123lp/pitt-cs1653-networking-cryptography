@@ -51,7 +51,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 	}// end method getToken(String)
 
 	
-	public UserToken getToken(UserToken groupToken, String username, String fileServerName, String ipAddress, int portNumber)
+	public UserToken getToken(UserToken groupToken, String fileServerName, String ipAddress, int portNumber)
 	{
 		try
 		{
@@ -59,7 +59,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 
 			// Tell the server to return a token.
 //			message = encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET");
-			output.writeObject(encryptMessageWithSymmetricKey("GET", groupToken, new Object[]{username, fileServerName, ipAddress, portNumber}));
+			output.writeObject(encryptMessageWithSymmetricKey("GET", groupToken, new Object[]{fileServerName, ipAddress, portNumber}));
 					//encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET"));
 			
 			// Get the response from the server

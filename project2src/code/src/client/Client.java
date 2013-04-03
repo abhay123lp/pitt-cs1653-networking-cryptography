@@ -726,7 +726,11 @@ public abstract class Client implements ClientInterface
 						System.out.println("Success! Secure connection established!  Sending confirmation...");
 						Envelope finalMsg = new Envelope("REQUEST_SECURE_CONNECTION");
 						finalMsg.addObject(encryptPublic(serverPublicKey, (byte[])objectsList[1]));
+						if(serverToken != null){
 						finalMsg.addObject(encryptPublic(serverPublicKey, convertToByteArray(serverToken)));//FIXME may be too big to encrypt
+						} else {
+							finalMsg.addObject(null);
+						}
 						this.output.writeObject(finalMsg);
 						reqResponse = (Envelope)this.input.readObject();
 						if(reqResponse == null || !reqResponse.getMessage().equals("OK"))
