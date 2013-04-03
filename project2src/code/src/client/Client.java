@@ -303,9 +303,6 @@ public abstract class Client implements ClientInterface
 	
 	/**
 	 * This method will generate a symmetric key for use.
-	 * @param algorithm The encryption algorithm to use
-	 * @param provider The security provider
-	 * @return Key The key generated for symmetric cryptography
 	 */
 	private final Key genterateSymmetricKey()
 	{
@@ -639,12 +636,12 @@ public abstract class Client implements ClientInterface
 	
 	public boolean connect(final String server, final int port, final String serverName)
 	{
-		return this.connect(server, port, serverName, null);
+		return this.connect(server, port, serverName, null, null);
 	}
 	
 	// javadoc already handled by ClientInterface
 	// groupServerName is for the FileServer to retrieve the group server's public key.  It is ignored otherwise.
-	public boolean connect(final String server, final int port, final String serverName, final String groupServerName)
+	public boolean connect(final String server, final int port, final String serverName, final String groupServerName, final UserToken serverToken)
 	{
 		if (this.sock != null)
 		{
@@ -729,6 +726,7 @@ public abstract class Client implements ClientInterface
 						System.out.println("Success! Secure connection established!  Sending confirmation...");
 						Envelope finalMsg = new Envelope("REQUEST_SECURE_CONNECTION");
 						finalMsg.addObject(encryptPublic(serverPublicKey, (byte[])objectsList[1]));
+						finalMsg.addObject(encryptPublic(serverPublicKey, convertToByteArray(serverToken)));//FIXME may be too big to encrypt
 						this.output.writeObject(finalMsg);
 						reqResponse = (Envelope)this.input.readObject();
 						if(reqResponse == null || !reqResponse.getMessage().equals("OK"))

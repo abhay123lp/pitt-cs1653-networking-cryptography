@@ -447,7 +447,7 @@ public class UserCommands {
 					// User specified IP address and port number
 					if(userCommands.length == 3)
 					{	
-						fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA");
+						fileClient.connect(fileServerIP, fileServerPort, "FilePile", "ALPHA");
 					}
 					
 					i++;
@@ -455,7 +455,7 @@ public class UserCommands {
 					
 					if(userCommands.length == 4)
 					{
-						fileClient.connect(fileServerIP, 4321, fileServerName, "ALPHA");
+						fileClient.connect(fileServerIP, fileServerPort, fileServerName, "ALPHA");
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))
