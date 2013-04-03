@@ -33,8 +33,9 @@ public class UserCommands {
 	private static GroupClient groupClient;
 	private static String groupServerIP;
 	private static int groupServerPort;
-	private static String groupServerName;
-
+	private static String groupServerName;	
+	private static UserToken fileServerToken;
+	
 	public static void main(String [] args)
 	{
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -414,15 +415,17 @@ public class UserCommands {
 						// User wanted to use default settings
 						if(userCommands[i].equals("default"))
 						{
+							fileServerToken = groupClient.getToken(userToken, username, "FilePile", "localhost", 4321);
 							fileClient = new FileClient();						
-							fileClient.connect("localhost", 4321, "FilePile", "ALPHA");
+							fileClient.connect("localhost", 4321, "FilePile", "ALPHA", fileServerToken);
 						}
 						// Assume user entered "fconnect fileserverIP" without port number
 						// The default port number 4321 will be used.
 						else
 						{
+							fileServerToken = groupClient.getToken(userToken, username, "FilePile", fileServerIP, 4321);
 							fileClient = new FileClient();
-							fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA");
+							fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA", fileServerToken);
 						}
 						return userToken;
 					}
@@ -444,10 +447,12 @@ public class UserCommands {
 						System.out.printf(" Try \"fconnect IPaddress port_number\"\n");
 						return userToken;
 					}
+					
 					// User specified IP address and port number
 					if(userCommands.length == 3)
 					{	
-						fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA");
+						fileServerToken = groupClient.getToken(userToken, username, "FilePile", fileServerIP, 4321);
+						fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA", fileServerToken);
 					}
 					
 					i++;
@@ -455,7 +460,8 @@ public class UserCommands {
 					
 					if(userCommands.length == 4)
 					{
-						fileClient.connect(fileServerIP, 4321, fileServerName, "ALPHA");
+						fileServerToken = groupClient.getToken(userToken, username, fileServerName, fileServerIP, 4321);
+						fileClient.connect(fileServerToken, fileServerIP, 4321, fileServerName, "ALPHA", fileServerToken);
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))

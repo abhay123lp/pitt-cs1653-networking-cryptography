@@ -284,7 +284,7 @@ public abstract class ServerThread extends Thread
 			
 			UserToken checkToken = (UserToken)lastMessageContents[3];
 			// Group Server public key
-			if(!verifyTokenSignature(checkToken)){
+			if(!isValidToken(checkToken)){
 				// Token is not valid....return false
 				System.out.println("FAIL TOKEN CHECK");
 				isTokenValid = false;
@@ -775,9 +775,11 @@ public abstract class ServerThread extends Thread
 	}
 	
 	//FOR USE ONLY WITH FILETHREAD
-	protected boolean verifyTokenSignature(UserToken t)
+	
+	protected boolean isValidToken(UserToken t)
 	{
-		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey));
+		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey)) 
+				&& t.getFileServerName().equals(this.serverName) && t.getIPAddress().equals(this.ipAddress) && t.getPortNumber() == this.portNumber;
 	}
 	
 	protected void resetMessageCounter()

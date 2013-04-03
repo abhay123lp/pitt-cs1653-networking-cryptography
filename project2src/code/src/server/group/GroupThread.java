@@ -80,62 +80,98 @@ public class GroupThread extends ServerThread
 					continue;	
 				} else {
 							
-					if(!checkValidityOfMessage(message)){
-												 
-						response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
-								//new Envelope("DISCONNECT"); // Server does not understand client request
-						output.writeObject(response);
 						
-						socket.close();
-						this.resetMessageCounter();
-						proceed = false;
-						return;
-						
-					}
+						if(!checkValidityOfMessage(message)){
+													 
+							response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+									//new Envelope("DISCONNECT"); // Server does not understand client request
+							output.writeObject(response);
+							
+							socket.close();
+							this.resetMessageCounter();
+							proceed = false;
+							return;
+							
+						}
 					
-				}
-												
-				
+					
+				}						
+											
 				if (message.getMessage().equals("GET"))// Client wants a token
 				{
-					//String username = (String)message.getObjContents().get(0); // Get the username
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-					String username = (String)objData[0];
 					
-					//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-					
-					if (username == null)
-					{
-						System.out.println("USERNAME IS NULL, FAIL");
-						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-								// new Envelope("FAIL");
-						response.addObject(null);
-																		
-						output.writeObject(response);
-					}
-					else
-					{
+					if(getFromEnvelope(Field.TOKEN)!= null){
 						
-						String password = (String)objData[1];
-								//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+						UserToken ut = (UserToken)getFromEnvelope(Field.TOKEN);
 						
-						if(checkPassword(username, password))
-						{
-							UserToken yourToken = createToken(username); // Create a token
+						if(!this.isValidToken(ut)){
 							
-							// Respond to the client. On error, the client will receive a null token
-							//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-							response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+							response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+							//new Envelope("DISCONNECT"); // Server does not understand client request
+							output.writeObject(response);
+							
+							socket.close();
+							this.resetMessageCounter();
+							proceed = false;
+							return;
+														
+						} else {
+							
+							String uName = (String)objData[0];
+							String fsName = (String)objData[1];
+							String ipAdd = (String)objData[2];
+							int pNum = (int)objData[3];
+							
+							UserToken fsToken = createToken(uName, fsName, ipAdd, pNum);
+							
+							response = encryptMessageWithSymmetricKey("OK", fsToken, null);
+							output.writeObject(response);
+														
+						}
+						
+					} else {
+					
+					
+						//String username = (String)message.getObjContents().get(0); // Get the username
+						
+						String username = (String)objData[0];
+
+						//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
+
+						if (username == null)
+						{
+							System.out.println("USERNAME IS NULL, FAIL");
+							response = encryptMessageWithSymmetricKey("FAIL", null, null);
+							// new Envelope("FAIL");
+							response.addObject(null);
+
 							output.writeObject(response);
 						}
-						// Password did not match
 						else
 						{
-							System.out.println("PASSWORD CHECK FAIL");
-							// Respond to the client. On error, the client will receive a null token
-							response = encryptMessageWithSymmetricKey("FAIL", null, null);
-									// new Envelope("FAIL");
-							output.writeObject(response);
+
+							String password = (String)objData[1];
+							//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
+
+							if(checkPassword(username, password))
+							{
+								UserToken yourToken = createToken(username); // Create a token
+
+								// Respond to the client. On error, the client will receive a null token
+								//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
+								response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+								output.writeObject(response);
+							}
+							// Password did not match
+							else
+							{
+								System.out.println("PASSWORD CHECK FAIL");
+								// Respond to the client. On error, the client will receive a null token
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								// new Envelope("FAIL");
+								output.writeObject(response);
+							}
 						}
 					}
 				}// end if block
@@ -609,6 +645,32 @@ public class GroupThread extends ServerThread
 			return null;
 		}
 	}// end method createToken(String)
+	
+	/**
+	 * Creates a valid {@link UserToken}.
+	 * 
+	 * @param username The String representing the username.
+	 * @return Returns a valid UserToken
+	 */
+	// TODO: password support
+	private UserToken createToken(String username, String fileServerName, String ipAddress, int portNumber)
+	{
+		// Check that user exists
+		if (my_gs.userList.checkUser(username))
+		{
+			// Issue a new token with server's name, user's name, and user's groups
+			/** Proposed solution **/
+			// Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, "", "", 0);
+			UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), fileServerName, ipAddress, portNumber);
+			yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
+			return yourToken;
+		}
+		else
+		{
+			return null;
+		}
+	}// end method createToken(String)
+	
 	
 	// TODO: update with password
 	/**
