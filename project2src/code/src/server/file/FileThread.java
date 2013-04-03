@@ -35,9 +35,9 @@ public class FileThread extends ServerThread
 	 * 
 	 * @param _socket The socket to be utilized by this object.
 	 */
-	public FileThread(Socket _socket, RSAPrivateKey _privKey, RSAPublicKey _pubKey)
+	public FileThread(Socket _socket, RSAPrivateKey _privKey, RSAPublicKey _pubKey, String fileServerName, String ipAddress, int portNumber)
 	{
-		super(_socket, _pubKey, _privKey);
+		super(_socket, _pubKey, _privKey, fileServerName, ipAddress, portNumber);
 	}
 	
 	/**
@@ -87,6 +87,47 @@ public class FileThread extends ServerThread
 					}
 					
 				}
+				
+				// TODO
+				// Verify token 
+				
+				if(getFromEnvelope(Field.TOKEN) != null){
+					
+					UserToken ut = (UserToken)getFromEnvelope(Field.TOKEN);
+					
+					// TODO check validity of token			
+					// Make sure there are no commands that don't have a token otherwise the else will always disconnect
+					
+					String fileServerName = ut.getFileServerName();
+					String ipAddress = ut.getIPAddress();
+					int portNumber = ut.getPortNumber();
+					
+					if(!this.getServerName().equals(fileServerName) && !this.getIPAddress().equals(ipAddress) && portNumber != this.getPortNumber() ){
+						
+						response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+						//response = new Envelope("DISCONNECT"); // Server does not understand client request
+						output.writeObject(response);
+						
+						socket.close();
+						return;
+						
+					}
+										
+					
+				} else {
+					
+					// TODO DISCONNECT
+					
+					response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
+					//response = new Envelope("DISCONNECT"); // Server does not understand client request
+					output.writeObject(response);
+					
+					socket.close();
+					return;
+					
+				}
+				
+				
 								
 				//Envelope e = (Envelope)input.readObject();
 //				System.out.println("Request received: " + e.getMessage());

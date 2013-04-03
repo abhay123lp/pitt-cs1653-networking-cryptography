@@ -171,7 +171,7 @@ public class GroupServer extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-				thread = new GroupThread(sock, this, privateKey, publicKey);
+				thread = new GroupThread(sock, this, privateKey, publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
 				thread.start();
 			}
 			// serverSock.close();
