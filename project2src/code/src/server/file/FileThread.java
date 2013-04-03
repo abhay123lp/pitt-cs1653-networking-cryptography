@@ -112,7 +112,7 @@ public class FileThread extends ServerThread
 					
 					//Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
-					UserToken uToken = (UserToken)getFromEnvelope(Field.DATA);
+					UserToken uToken = (UserToken)getFromEnvelope(Field.TOKEN);
 					
 					//UserToken uToken = (UserToken)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1)));
 					if(!this.verifyTokenSignature(uToken))
@@ -190,7 +190,7 @@ public class FileThread extends ServerThread
 									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 							String group = (String)objData[1];
 									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
-							UserToken yourToken = (UserToken)getFromEnvelope(Field.DATA);
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
 									//(Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(2), iv));
 //							for(int i = 0; i < yourToken.getGroups().size(); i++)
 //							{
@@ -279,7 +279,7 @@ public class FileThread extends ServerThread
 											//(byte[])chunk.getObjContents().get(2);
 									byte[] inBytes = (byte[])objChunkData[0];
 											//(byte[])convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(0), ivChunk));
-									Integer lastIndex = (Integer)objData[1];
+									Integer lastIndex = (Integer)objChunkData[1];
 											//(Integer)convertToObject(decryptObjectBytes((byte[])chunk.getObjContents().get(1), ivChunk));
 									fos.write(inBytes, 0, lastIndex);
 									
