@@ -615,17 +615,23 @@ public abstract class ServerThread extends Thread
 	{
 		if(requestSecureConnection.getObjContents().size() == 2)
 		{
+			if(!this.checkValidityOfMessage(requestSecureConnection))
+			{
+				System.out.println("Some error occurred with the envelope");
+				return null;
+			}
 			try
 			{
-				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
-				byte[] encryptedToken = (byte[])requestSecureConnection.getObjContents().get(1);
+//				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
+//				byte[] encryptedToken = (byte[])requestSecureConnection.getObjContents().get(1);
 				
+				byte[] encryptedChallenge = (byte[])((Object[])this.getFromEnvelope(Field.DATA))[0];
 				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
 				objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
 				byte[] serversChallenge = objCipher.doFinal(encryptedChallenge);
-				if(encryptedToken != null)
+				if(this.getFromEnvelope(Field.TOKEN) != null)
 				{
-					UserToken tokenCheck = (UserToken)convertToObject(objCipher.doFinal(encryptedToken));
+					UserToken tokenCheck = (UserToken)this.getFromEnvelope(Field.TOKEN);
 					if(!this.isValidToken(tokenCheck))
 					{
 						System.out.println("Token does not check out.");
