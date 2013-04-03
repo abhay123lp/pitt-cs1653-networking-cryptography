@@ -626,7 +626,7 @@ public abstract class ServerThread extends Thread
 				if(encryptedToken != null)
 				{
 					UserToken tokenCheck = (UserToken)convertToObject(objCipher.doFinal(encryptedToken));
-					if(!this.verifyTokenSignature(tokenCheck))
+					if(!this.isValidToken(tokenCheck))
 					{
 						System.out.println("Token does not check out.");
 						return null;
@@ -789,6 +789,9 @@ public abstract class ServerThread extends Thread
 	
 	protected boolean isValidToken(UserToken t)
 	{
+//		if(t == null){
+//			return false;
+//		}
 		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey)) 
 				&& t.getFileServerName().equals(this.serverName) && t.getIPAddress().equals(this.ipAddress) && t.getPortNumber() == this.portNumber;
 	}

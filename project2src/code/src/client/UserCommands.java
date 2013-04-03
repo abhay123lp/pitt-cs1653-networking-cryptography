@@ -415,7 +415,7 @@ public class UserCommands {
 						// User wanted to use default settings
 						if(userCommands[i].equals("default"))
 						{
-							fileServerToken = groupClient.getToken(userToken, username, "FilePile", "localhost", 4321);
+							fileServerToken = groupClient.getToken(userToken, "FilePile", "localhost", 4321);
 							fileClient = new FileClient();						
 							fileClient.connect("localhost", 4321, "FilePile", "ALPHA", fileServerToken);
 						}
@@ -423,7 +423,7 @@ public class UserCommands {
 						// The default port number 4321 will be used.
 						else
 						{
-							fileServerToken = groupClient.getToken(userToken, username, "FilePile", fileServerIP, 4321);
+							fileServerToken = groupClient.getToken(userToken, "FilePile", fileServerIP, 4321);
 							fileClient = new FileClient();
 							fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA", fileServerToken);
 						}
@@ -451,7 +451,7 @@ public class UserCommands {
 					// User specified IP address and port number
 					if(userCommands.length == 3)
 					{	
-						fileServerToken = groupClient.getToken(userToken, username, "FilePile", fileServerIP, 4321);
+						fileServerToken = groupClient.getToken(userToken, "FilePile", fileServerIP, 4321);
 						fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA", fileServerToken);
 					}
 					
@@ -460,8 +460,8 @@ public class UserCommands {
 					
 					if(userCommands.length == 4)
 					{
-						fileServerToken = groupClient.getToken(userToken, username, fileServerName, fileServerIP, 4321);
-						fileClient.connect(fileServerToken, fileServerIP, 4321, fileServerName, "ALPHA", fileServerToken);
+						fileServerToken = groupClient.getToken(userToken, fileServerName, fileServerIP, 4321);
+						fileClient.connect(fileServerIP, 4321, fileServerName, "ALPHA", fileServerToken);
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))
@@ -469,13 +469,14 @@ public class UserCommands {
 					if(fileClient.isConnected())
 					{
 						fileClient.disconnect();
+						fileServerToken = null;
 						s = s + "Successfully disconnected from the file server.\n";
 					}
 				}
 				else if( userCommands[i].equals("flistfiles"))
 				{
 					List<String> fileList = new ArrayList<String>();
-					fileList = fileClient.listFiles(userToken);
+					fileList = fileClient.listFiles(fileServerToken);
 					if( fileList != null)
 					{
 						s = s + "There are " + fileList.size() + " files viewable by you:\n";
@@ -501,7 +502,7 @@ public class UserCommands {
 					i++;
 					groupName = userCommands[i];
 					// Success
-					if(fileClient.upload(sourceFile, destFile, groupName, userToken))
+					if(fileClient.upload(sourceFile, destFile, groupName, fileServerToken))
 					{
 						s = s + "Successfully uploaded local source file \""
 								+ sourceFile + "\" as \"" + destFile
@@ -526,7 +527,7 @@ public class UserCommands {
 					i++;
 					destFile = userCommands[i];
 					// Success
-					if(fileClient.download(sourceFile, destFile, userToken))
+					if(fileClient.download(sourceFile, destFile, fileServerToken))
 					{
 						s = s + "Successfully downloaded to local source file \""
 								+ sourceFile + "\" from file \"" + destFile
@@ -546,7 +547,7 @@ public class UserCommands {
 					i++;
 					String fileName = userCommands[i];
 					// Success
-					if(fileClient.delete(fileName, userToken))
+					if(fileClient.delete(fileName, fileServerToken))
 					{
 						s = s + "Successfully deleted file \"" + fileName + "\" from the file server.\n";
 					}
