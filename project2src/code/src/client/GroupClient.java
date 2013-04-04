@@ -9,6 +9,7 @@ import java.util.List;
 
 import message.Envelope;
 import message.Field;
+import message.GroupKeysMap;
 import message.UserToken;
 
 /**
@@ -25,7 +26,9 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 	 * The index of the an array for a given group in the hash table is the epoch number (used
 	 * to mitigate file leakage).
 	 */
-	private Hashtable<String, ArrayList<Key>> keyTable = null;	
+	//private Hashtable<String, ArrayList<Key>> keyTable = null;	
+	
+	ArrayList<GroupKeysMap> keyTable = null;
 	
 	@SuppressWarnings("unchecked")
 	public UserToken getToken(String username, String password)
@@ -46,7 +49,9 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				return null;
 			}
 			
-			keyTable =  (Hashtable<String, ArrayList<Key>>) ((Object[])getFromEnvelope(Field.DATA))[0];
+			//keyTable =  (Hashtable<String, ArrayList<Key>>) ((Object[])getFromEnvelope(Field.DATA))[0];
+			Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+			keyTable = (ArrayList<GroupKeysMap>)objData[0];
 			
 			// Successful response
 			if (response.getMessage().equals("OK"))
@@ -341,10 +346,23 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 		else
 		{
-			ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			//TODO UNCOMMENT
+		//	ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			
+			for(int i = 0; i < keyTable.size(); i++){
+				
+				if(keyTable.get(i).checkGroupName(groupname)){
+					
+					return keyTable.get(i).getLastKey();
+					
+				}
+				
+			}
+			
 			// return the last key in the last index of the array of keys
 			// because index == epoch number
-			return keys.get(keys.size() - 1);
+			//return keys.get(keys.size() - 1);
+			return null;
 		}
 	}
 	/**
@@ -364,10 +382,25 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 		else
 		{
-			ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			//TODO UNCOMMENT 
+			//ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
 			// return the last key in the last index of the array of keys
 			// because index == epoch number
-			return keys.get(keys.size() - 1);
+			//return keys.get(keys.size() - 1);
+			
+			for(int i = 0; i < keyTable.size(); i++){
+				
+				if(keyTable.get(i).checkGroupName(groupname)){
+					
+					return keyTable.get(i).getKey(epoch);
+					
+				}
+				
+			}
+			
+			
+			
+			return null;
 		}
 	}
 	
@@ -385,9 +418,23 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 		else
 		{
-			ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			//TODO UNCOMMENT
+			//ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
 			// return the epoch number, which is the last index
-			return keys.size() - 1;
+			//return keys.size() - 1;
+			
+			for(int i = 0; i < keyTable.size(); i++){
+				
+				if(keyTable.get(i).checkGroupName(groupname)){
+					
+					return keyTable.get(i).getEpoch();
+					
+				}
+				
+			}
+			
+			
+			return 0;
 		}
 	}
 	

@@ -313,6 +313,7 @@ public abstract class ServerThread extends Thread
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		    ObjectOutputStream oos = new ObjectOutputStream(baos);
 		    oos.writeObject(objToConvert);
+		    oos.flush();
 		    //return b.toByteArray(); 
 			return baos.toByteArray();
 		
