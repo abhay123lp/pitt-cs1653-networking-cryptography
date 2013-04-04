@@ -121,7 +121,7 @@ public class GroupThread extends ServerThread
 //							String uName = (String)objData[0];
 							String fsName = (String)objData[0];
 							String ipAdd = (String)objData[1];
-							int pNum = (int)objData[2];
+							int pNum = (Integer)objData[2];
 							
 							UserToken fsToken = createToken(ut.getSubject(), fsName, ipAdd, pNum);
 							
