@@ -284,7 +284,7 @@ public abstract class ServerThread extends Thread
 			
 			UserToken checkToken = (UserToken)lastMessageContents[3];
 			// Group Server public key
-			if(!verifyTokenSignature(checkToken)){
+			if(!isValidToken(checkToken)){
 				// Token is not valid....return false
 				System.out.println("FAIL TOKEN CHECK");
 				isTokenValid = false;
@@ -613,14 +613,31 @@ public abstract class ServerThread extends Thread
 	//NULL MEANS ERROR AND SHOULD TERMINATE
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
 	{
-		if(requestSecureConnection.getObjContents().size() == 1)
+		if(requestSecureConnection.getObjContents().size() == 5)
 		{
+			if(!this.checkValidityOfMessage(requestSecureConnection))
+			{
+				System.out.println("Some error occurred with the envelope");
+				return null;
+			}
 			try
 			{
-				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
+//				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
+//				byte[] encryptedToken = (byte[])requestSecureConnection.getObjContents().get(1);
+				
+				byte[] encryptedChallenge = (byte[])((Object[])this.getFromEnvelope(Field.DATA))[0];
 				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
 				objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
 				byte[] serversChallenge = objCipher.doFinal(encryptedChallenge);
+				if(this.getFromEnvelope(Field.TOKEN) != null)
+				{
+					UserToken tokenCheck = (UserToken)this.getFromEnvelope(Field.TOKEN);
+					if(!this.isValidToken(tokenCheck))
+					{
+						System.out.println("Token does not check out.");
+						return null;
+					}
+				}
 				
 				if(serversChallenge == null || serversChallenge.length != 20)
 				{
@@ -775,9 +792,14 @@ public abstract class ServerThread extends Thread
 	}
 	
 	//FOR USE ONLY WITH FILETHREAD
-	protected boolean verifyTokenSignature(UserToken t)
+	
+	protected boolean isValidToken(UserToken t)
 	{
-		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey));
+//		if(t == null){
+//			return false;
+//		}
+		boolean x = t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey));
+		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey)) && t.getFileServerName().equals(this.serverName) && t.getIPAddress().equals(this.ipAddress) && t.getPortNumber() == this.portNumber;
 	}
 	
 	protected void resetMessageCounter()

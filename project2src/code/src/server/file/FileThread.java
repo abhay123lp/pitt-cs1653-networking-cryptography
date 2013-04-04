@@ -91,6 +91,18 @@ public class FileThread extends ServerThread
 				// TODO
 				// Verify token 
 				
+				UserToken ut = (UserToken)getFromEnvelope(Field.TOKEN);
+				
+				if(!this.isValidToken(ut))
+				{
+					response = encryptMessageWithSymmetricKey("BAD-TOKEN", null, null);
+					output.writeObject(response);
+					//output.writeObject(new Envelope("ERROR"));
+					socket.close();
+					return;
+				}
+				
+				/*
 				if(getFromEnvelope(Field.TOKEN) != null){
 					
 					UserToken ut = (UserToken)getFromEnvelope(Field.TOKEN);
@@ -126,7 +138,7 @@ public class FileThread extends ServerThread
 					return;
 					
 				}
-				
+				*/
 				
 								
 				//Envelope e = (Envelope)input.readObject();
@@ -156,13 +168,7 @@ public class FileThread extends ServerThread
 					UserToken uToken = (UserToken)getFromEnvelope(Field.TOKEN);
 					
 					//UserToken uToken = (UserToken)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1)));
-					if(!this.verifyTokenSignature(uToken))
-					{
-						response = encryptMessageWithSymmetricKey("ERROR", null, null);
-						output.writeObject(response);
-						//output.writeObject(new Envelope("ERROR"));
-						continue;
-					}
+					
 					
 					// (3) Get the groups user is associated with
 					List<String> groups = uToken.getGroups();
@@ -241,13 +247,7 @@ public class FileThread extends ServerThread
 //							}
 //							remotePath = remotePath.substring(7);
 //							group = group.substring(7);//FIXME for some reason, seven characters preceeding are trash...
-							if(!this.verifyTokenSignature(yourToken))
-							{
-								//response = encryptMessageWithSymmetricKey("FAIL-BADTOKEN", null, null);
-								output.writeObject(encryptMessageWithSymmetricKey("FAIL-BADTOKEN", null, null));
-								//output.writeObject(new Envelope("ERROR"));
-								continue;
-							}
+							
 //							String remotePath = (String)e.getObjContents().get(0);
 //							String group = (String)e.getObjContents().get(1);
 //							UserToken yourToken = (UserToken)e.getObjContents().get(2); // Extract token
@@ -374,13 +374,7 @@ public class FileThread extends ServerThread
 							//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 					UserToken t = (UserToken)getFromEnvelope(Field.TOKEN);
 					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
-					if(!this.verifyTokenSignature(t))
-					{
-						response = encryptMessageWithSymmetricKey("ERROR", null, null);
-						output.writeObject(response);
-						//output.writeObject(new Envelope("ERROR"));
-						continue;
-					}
+					
 					ShareFile sf = FileServer.fileList.getFile(remotePath);
 					if (sf == null)
 					{
@@ -556,13 +550,8 @@ public class FileThread extends ServerThread
 							//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 					UserToken t = (UserToken)getFromEnvelope(Field.TOKEN);
 					//Token t = (Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
-					if(!this.verifyTokenSignature(t))
-					{
-						output.writeObject(encryptMessageWithSymmetricKey("ERROR", null, null));
-						//output.writeObject(new Envelope("ERROR"));
-						continue;
-					}
-					ShareFile sf = FileServer.fileList.getFile("/" + remotePath);
+					
+					ShareFile sf = FileServer.fileList.getFile(remotePath);
 					Envelope out = null;
 					if (sf == null)
 					{
@@ -580,7 +569,7 @@ public class FileThread extends ServerThread
 					{
 						try
 						{
-							File f = new File("shared_files/" + "_" + remotePath.replace('/', '_'));
+							File f = new File("shared_files/" + remotePath.replace('/', '_'));
 							
 							if (!f.exists())
 							{
@@ -591,7 +580,7 @@ public class FileThread extends ServerThread
 							else if (f.delete())
 							{
 								System.out.printf("File %s deleted from disk\n", "_" + remotePath.replace('/', '_'));
-								FileServer.fileList.removeFile("/" + remotePath);
+								FileServer.fileList.removeFile(remotePath);
 								out = encryptMessageWithSymmetricKey("OK", null, null);
 								//out = new Envelope("OK");
 							}
@@ -620,6 +609,7 @@ public class FileThread extends ServerThread
 				}// end else if block
 				else if (e.getMessage().equals("DISCONNECT"))
 				{
+					// TODO check to see if token is passed in with DISCONNECT
 					socket.close();
 					proceed = false;
 				}

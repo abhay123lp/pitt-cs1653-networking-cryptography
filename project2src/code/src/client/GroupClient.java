@@ -64,6 +64,43 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 	}// end method getToken(String)
 	
+	
+	public UserToken getToken(UserToken groupToken, String fileServerName, String ipAddress, int portNumber)
+	{
+		try
+		{
+//			Envelope message = null, response = null;
+
+			// Tell the server to return a token.
+//			message = encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET");
+			output.writeObject(encryptMessageWithSymmetricKey("GET", groupToken, new Object[]{fileServerName, ipAddress, portNumber}));
+					//encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET"));
+			
+			// Get the response from the server
+			Envelope response = (Envelope)input.readObject();
+			if(!checkValidityOfMessage(response))
+			{
+				return null;
+			}
+			
+			// Successful response
+			if (response.getMessage().equals("OK"))
+			{
+				
+				return (UserToken)getFromEnvelope(Field.TOKEN);
+						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
+			}// end if block
+			return null;
+		}// end try block
+		catch (Exception e)
+		{
+//			System.err.println("Error: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}// end method getToken(String)
+		
+	
 	public boolean createUser(String username, UserToken token, String password)
 	{
 		try
