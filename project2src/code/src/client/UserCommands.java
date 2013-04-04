@@ -512,8 +512,7 @@ public class UserCommands {
 					Key key = groupClient.getEncryptionKey(groupName);
 					int epoch = groupClient.getEpoch(groupName);
 					// Success
-					if(fileClient.upload(sourceFile, destFile, groupName, userToken, key, epoch))
-					if(fileClient.upload(sourceFile, destFile, groupName, fileServerToken))
+					if(fileClient.upload(sourceFile, destFile, groupName, fileServerToken, key, epoch))
 					{
 						s = s + "Successfully uploaded local source file \""
 								+ sourceFile + "\" as \"" + destFile
@@ -545,8 +544,7 @@ public class UserCommands {
 //					Key key = groupClient.getEncryptionKey(groupName);
 //					int epoch = groupClient.getEpoch(groupName);
 					// Success
-					if(fileClient.download(sourceFile, destFile, /*groupName,*/ userToken, groupClient/*, key, epoch*/))
-					if(fileClient.download(sourceFile, destFile, fileServerToken))
+					if(fileClient.download(sourceFile, destFile, /*groupName,*/ fileServerToken, groupClient/*, key, epoch*/))
 					{
 						s = s + "Successfully downloaded to local source file \""
 								+ sourceFile + "\" from file \"" + destFile
