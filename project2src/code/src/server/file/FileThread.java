@@ -562,7 +562,7 @@ public class FileThread extends ServerThread
 							else if (f.delete())
 							{
 								System.out.printf("File %s deleted from disk\n", "_" + remotePath.replace('/', '_'));
-								FileServer.fileList.removeFile("/" + remotePath);
+								FileServer.fileList.removeFile(remotePath);
 								out = encryptMessageWithSymmetricKey("OK", null, null);
 								//out = new Envelope("OK");
 							}
