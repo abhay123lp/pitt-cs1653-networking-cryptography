@@ -18,6 +18,7 @@ import server.ServerThread;
 
 import message.Envelope;
 import message.Field;
+import message.GroupKeysMap;
 import message.Token;
 import message.UserToken;
 
@@ -160,14 +161,24 @@ public class GroupThread extends ServerThread
 							// TODO: iterate through every group and ask GroupList for the keys for each group
 								
 							// Add all the keys to the hash table
-								Hashtable<String, ArrayList<Key>> keyTable = new Hashtable<String, ArrayList<Key>>();
+								//Hashtable<String, ArrayList<Key>> keyTable = new Hashtable<String, ArrayList<Key>>();
+								ArrayList<GroupKeysMap> gklist = new ArrayList<GroupKeysMap>();
 								for(String group : yourToken.getGroups())
 								{
-									keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
+									GroupKeysMap g = new GroupKeysMap(group, my_gs.groupList.getKeysForGroup(group));
+									gklist.add(g);
+									//keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
 								}
+								
+								
+								
+								
+								
+								
 								// Respond to the client. On error, the client will receive a null token
 								//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{keyTable});
+							//	response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{keyTable});
+								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{gklist});
 								output.writeObject(response);
 							}
 							// Password did not match

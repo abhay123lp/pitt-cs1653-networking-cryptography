@@ -544,6 +544,7 @@ public abstract class Client implements ClientInterface
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(baos);
 			oos.writeObject(objToConvert);
+			oos.flush();
 			//return b.toByteArray(); 
 //			System.out.println("CONVERTING TO: " + new String(baos.toByteArray()));
 			return baos.toByteArray();
