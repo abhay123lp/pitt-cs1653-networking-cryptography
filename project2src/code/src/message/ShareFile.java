@@ -26,6 +26,12 @@ public class ShareFile implements java.io.Serializable, Comparable<ShareFile>
 	 * The owner of the file.
 	 */
 	private String owner;
+	/**
+	 * New in Phase 4: include epoch number to help mitigate file leakage.
+	 * The epoch number is incremented by one along with the new key that is
+	 * generated each time a user is removed from a group
+	 */
+	private int epoch;
 	
 	/**
 	 * Constructor.
@@ -35,11 +41,12 @@ public class ShareFile implements java.io.Serializable, Comparable<ShareFile>
 	 * @param _group The String representing the group that is allowed to have access to the file.
 	 * @param _path The String representing the path that the file will be found in on the Server.
 	 */
-	public ShareFile(String _owner, String _group, String _path)
+	public ShareFile(String _owner, String _group, String _path, int _epoch)
 	{
 		group = _group;
 		owner = _owner;
 		path = _path;
+		epoch = _epoch;
 	}
 	
 	/**
@@ -70,6 +77,11 @@ public class ShareFile implements java.io.Serializable, Comparable<ShareFile>
 	public String getGroup()
 	{
 		return group;
+	}
+	
+	public int getEpoch()
+	{
+		return this.epoch;
 	}
 	
 	public int compareTo(ShareFile rhs)

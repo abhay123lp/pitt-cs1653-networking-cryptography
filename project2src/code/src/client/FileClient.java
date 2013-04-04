@@ -1,10 +1,21 @@
 package client;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.Key;
+import java.security.SecureRandom;
 import java.util.List;
+
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.spec.IvParameterSpec;
 
 import message.Envelope;
 import message.Field;
@@ -16,6 +27,9 @@ import message.UserToken;
  */
 public class FileClient extends Client implements FileInterface, ClientInterface
 {
+	private static final String SYM_KEY_ALG = "AES/CTR/NoPadding";
+	private static final int IV_BYTES = 16;
+	
 	public boolean delete(String filename, UserToken token)
 	{
 		String remotePath;
@@ -63,14 +77,18 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		return true;
 	}// end method delete
 	
-	public boolean download(String sourceFile, String destFile, UserToken token)
+	// TODO: For Downloading:
+	/*
+	 * 1) Decrypt downloaded (ecnrypted file) and unencrypt it
+	 */
+	public boolean download(String sourceFile, String destFile, /*String groupName,*/ UserToken token, GroupClient groupClient/*, Key key, int epoch*/)
 	{
 		if (sourceFile.charAt(0) == '/')
 		{
 			sourceFile = sourceFile.substring(1);
 		}
 		
-		File file = new File(destFile);
+		File file = new File(tempFile);
 		try
 		{
 			if (!file.exists())
@@ -85,6 +103,24 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", token, new Object[]{sourceFile}));
 				
 				Envelope env = (Envelope)input.readObject();
+				if(!checkValidityOfMessage(env))
+				{
+					fos.close();
+					return false;//TODO bad handling
+				}
+				//TODO first message is meta data.  Need to handle it.
+				if(!env.getMessage().equals("METADATA"))
+				{
+					System.out.println("Server did not give metadata... something bad happened...");
+					fos.close();
+					return false; //TODO bad handling
+				}
+				Object[] metaData = (Object[])this.getFromEnvelope(Field.DATA);
+				String groupName = (String)metaData[0];
+				Integer epoch = (Integer)metaData[1];
+				
+				output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", token, new Object[]{sourceFile}));
+				env = (Envelope)input.readObject();
 				if(!checkValidityOfMessage(env))
 				{
 					fos.close();
@@ -125,6 +161,12 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					System.out.printf("\nTransfer successful file %s\n", sourceFile);
 //					env = new Envelope("OK"); // Success
 					output.writeObject(this.encryptMessageWithSymmetricKey("OK", null, null));
+					
+					// TODO:
+					/*
+					 * New for decrypting the file
+					 */
+					decrypt(tempFile, destFile, groupClient.getKey(groupName, epoch));
 				}
 				else
 				{
@@ -135,13 +177,13 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			}// end if block
 			else
 			{
-				System.out.printf("Error couldn't create file %s\n", destFile); // BECAUSE FILE EXISTS (sucky message)
+				System.out.printf("Error couldn't create file %s\n", tempFile); // BECAUSE FILE EXISTS (sucky message)
 				return false;
 			}
 		}// end try block
 		catch (IOException e1)
 		{
-			System.out.printf("Error couldn't create file %s\n", destFile);
+			System.out.printf("Error couldn't create file %s\n", tempFile);
 			return false;
 		}
 		catch (ClassNotFoundException e1)
@@ -186,7 +228,18 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		}
 	}// end method listFiles(UserToken)
 	
-	public boolean upload(String sourceFile, String destFile, String group, UserToken token)
+	// TODO: For Uploading:
+	/*
+	 * 1) Make temp file
+	 * 2) Copy sourcefile to temp file. 
+	 * 3) Encrypt temp file with 10 rounds of AES.
+	 * 4) Delete the temp file after sending it off to file server.
+	 */
+	
+	private String tempFile = "temp_3m9ectnectwxnrwxn";
+	private String fileExtension = "";
+	
+	public boolean upload(String sourceFile, String destFile, String group, UserToken token, Key aesKey, int epoch)
 	{
 		if (sourceFile.charAt(0) == '/')
 		{
@@ -202,12 +255,31 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 //			message.addObject(group);
 //			message.addObject(token); // Add requester's token
 			
-			output.writeObject(this.encryptMessageWithSymmetricKey("UPLOADF", token, new Object[]{destFile, group}));
+			/*
+			 * We aren't actually uploading sourceFile anymore -- there is going to be an encrypted temp file
+			 * The source file gets encrypted into the temp file. We upload the temp file as the source file.
+			 */
+			
+			// TODO: Do file extensions matter?
+			fileExtension = "";
+			if(sourceFile.contains("."))
+			{
+				int index = sourceFile.indexOf('.');
+				fileExtension = sourceFile.substring(index, sourceFile.length());				
+			}
+			// tempfile is a global variable			
+			encrypt(sourceFile, tempFile + fileExtension, aesKey);
+			// Now we have the encrypted sourcefile stored in the tempFile
+			// Upload the ecnrypted tempFile (source file)
+			output.writeObject(this.encryptMessageWithSymmetricKey("UPLOADF", token, new Object[]{destFile, group, epoch}));
+			// delete the temp file
+			deleteFile(tempFile);
 			
 			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
 			
-			FileInputStream fis = new FileInputStream(sourceFile); // FIXME never closed
-			
+//			FileInputStream fis = new FileInputStream(sourceFile); // FIXME never closed
+			FileInputStream fis = new FileInputStream(tempFile + fileExtension); // FIXME never closed
+						
 			Envelope env = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(env))
 			{
@@ -303,4 +375,129 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		}
 		return true;
 	}// end method upload(String, String, UserToken)
+	
+	/**
+	 * Use this method to encrypt with the provided AES key.
+	 * @param inputFile
+	 * @param outputFile
+	 */
+	private void encrypt(String inputFile, String outputFile, Key AESkey)
+	{
+		try
+		{
+			BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(inputFile));
+			BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFile));
+			encrypt(inputStream, outputStream, AESkey);
+			inputStream.close();
+			outputStream.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Use this method to decrypt with the provided AES key.
+	 * @param inputFile
+	 * @param outputFile
+	 */
+	private boolean decrypt(String inputFile, String outputFile, Key AESkey)
+	{
+		if(AESkey == null)
+		{
+			System.out.println("Decryption Key cannot be null.");
+			return false;
+		}
+		try
+		{
+			BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(inputFile));
+			BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFile));
+			decrypt(inputStream, outputStream, AESkey);
+			inputStream.close();
+			outputStream.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean encrypt(InputStream inputStream, OutputStream outputStream, Key aesKey) 
+	{
+		if(aesKey == null)
+		{
+			System.out.println("Encryption Key cannot be null.");
+			return false;
+		}
+		try
+		{
+			SecureRandom random = new SecureRandom();
+			byte[] iv = new byte[IV_BYTES];
+			random.nextBytes(iv);
+			outputStream.write(iv);
+			outputStream.flush();	
+			Cipher cipher = Cipher.getInstance(SYM_KEY_ALG);
+			IvParameterSpec ivSpec = new IvParameterSpec(iv);    	
+			cipher.init(Cipher.ENCRYPT_MODE, aesKey, ivSpec);
+			outputStream = new CipherOutputStream(outputStream, cipher);
+			byte[] buf = new byte[4096];
+			int numRead = 0;
+			while ((numRead = inputStream.read(buf)) >= 0) 
+			{
+				outputStream.write(buf, 0, numRead);
+			}
+			outputStream.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	private void decrypt(InputStream inputStream, OutputStream outputStream, Key aesKey)
+	{
+		try
+		{
+			byte[] initV = new byte[IV_BYTES];
+			inputStream.read(initV);
+	
+			Cipher cipher = Cipher.getInstance(SYM_KEY_ALG);
+			IvParameterSpec ivSpec = new IvParameterSpec(initV);
+			cipher.init(Cipher.ENCRYPT_MODE, aesKey, ivSpec); 
+	
+			inputStream = new CipherInputStream(inputStream, cipher);
+			byte[] buffer = new byte[4096];
+			int readNum = 0;
+			while ((readNum = inputStream.read(buffer)) >= 0) 
+			{
+				outputStream.write(buffer, 0, readNum);
+			}
+			outputStream.close();			
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private void deleteFile(String filepath)
+	{
+		File file = new File(filepath);
+		try
+		{
+			if(file.delete())
+				System.out.println("Successfully deleted " + filepath);
+			else
+				System.out.println("Unable to delete " + filepath);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
 }// end class File

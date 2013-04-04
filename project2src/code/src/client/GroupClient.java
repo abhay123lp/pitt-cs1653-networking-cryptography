@@ -2,6 +2,9 @@ package client;
 
 /* Implements the GroupClient Interface */
 
+import java.security.Key;
+import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import message.Envelope;
@@ -15,6 +18,15 @@ import message.UserToken;
  */
 public class GroupClient extends Client implements GroupInterface, ClientInterface
 {
+	
+	/**
+	 * New for phase 4: use this hash table to look up arrays of keys for a given groupname.
+	 * GroupClient needs to store this information for UserCommands.
+	 * The index of the an array for a given group in the hash table is the epoch number (used
+	 * to mitigate file leakage).
+	 */
+	private Hashtable<String, ArrayList<Key>> keyTable = null;	
+	
 	public UserToken getToken(String username, String password)
 	{
 		try
@@ -32,7 +44,9 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			{
 				return null;
 			}
-
+			
+			keyTable =  (Hashtable<String, ArrayList<Key>>) ((Object[])getFromEnvelope(Field.DATA))[0];
+			
 			// Successful response
 			if (response.getMessage().equals("OK"))
 			{
@@ -49,8 +63,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			return null;
 		}
 	}// end method getToken(String)
-
-	// TODO: finish adding password support
+	
 	public boolean createUser(String username, UserToken token, String password)
 	{
 		try
@@ -273,5 +286,71 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			e.printStackTrace(System.err);
 			return null;
 		}
-	}// end method deleteUserFromGroup(String, String, UserToken)
+	}// end method deleteUserFromGroup(String, String, UserToken)	
+	
+	/**
+	 * 
+	 * @param groupname This is the group the client (UserCommands) wants to UPLOAD to.
+	 * @return The current key (latest epoch) is returned so the user can use symmetric encryption to
+	 * 			encrypt the file before uploading the encrpyted file to the file server.
+	 */
+	public Key getEncryptionKey(String groupname)
+	{
+		if(keyTable == null)
+		{
+			System.out.println("The keyTable is null. There is no encryption key to return.");
+			return null;
+		}
+		else
+		{
+			ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			// return the last key in the last index of the array of keys
+			// because index == epoch number
+			return keys.get(keys.size() - 1);
+		}
+	}
+	/**
+	 * 
+	 * @param groupname This is the group the client wants to download from.
+	 * @param epoch This is the epoch number of the file being downloaded. The file 
+	 * 		epoch is part of the metadata.
+	 * @return We return the key to decrypt the current file based on the groupname 
+	 * 		and epoch of the file's metadata.
+	 */
+	public Key getKey(String groupname, int epoch)
+	{
+		if(keyTable == null)
+		{
+			System.out.println("The keyTable is null. There is no decryption key to return.");
+			return null;
+		}
+		else
+		{
+			ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			// return the last key in the last index of the array of keys
+			// because index == epoch number
+			return keys.get(keys.size() - 1);
+		}
+	}
+	
+	/**
+	 * 
+	 * @param groupname The groupname the user requests
+	 * @return Return the last epoch of the ArrayList for the user's requested groupname
+	 */
+	public int getEpoch(String groupname)
+	{
+		if(keyTable == null)
+		{
+			System.out.println("The keyTable is null. There is no epoch to return.");
+			return -1;
+		}
+		else
+		{
+			ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
+			// return the epoch number, which is the last index
+			return keys.size() - 1;
+		}
+	}
+	
 }// end class GroupClient

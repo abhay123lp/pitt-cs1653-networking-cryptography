@@ -1,5 +1,6 @@
 package client;
 
+import java.security.Key;
 import java.util.List;
 
 import message.UserToken;
@@ -28,7 +29,8 @@ public interface FileInterface
 	 * @param token The token of the user uploading the file
 	 * @return true on success, false on failure
 	 */
-	public boolean upload(final String sourceFile, final String destFile, final String group, final UserToken token);
+	public boolean upload(final String sourceFile, final String destFile, final String group, 
+			final UserToken token, final Key key, final int epoch);
 	
 	/**
 	 * Downloads a file from the server.
@@ -39,7 +41,8 @@ public interface FileInterface
 	 * @param token The token of the user uploading the file
 	 * @return true on success, false on failure
 	 */
-	public boolean download(final String sourceFile, final String destFile, final UserToken token);
+	public boolean download(final String sourceFile, final String destFile/*, final String groupName*/, 
+			final UserToken token, final GroupClient groupClient/*, final Key key, final int epoch*/);
 	
 	/**
 	 * Deletes a file from the server.

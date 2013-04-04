@@ -230,6 +230,8 @@ public class FileThread extends ServerThread
 							String remotePath = (String)objData[0];
 									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), iv));
 							String group = (String)objData[1];
+							// TODO: Must change message in FileClient to match epoch
+							int epoch = (Integer)objData[2];
 									//(String)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(1), iv));
 							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
 									//(Token)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(2), iv));
@@ -333,7 +335,7 @@ public class FileThread extends ServerThread
 								if (chunk.getMessage().compareTo("EOF") == 0)
 								{
 									System.out.printf("Transfer successful file %s\n", remotePath);
-									FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath);
+									FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath, epoch);
 									response = encryptMessageWithSymmetricKey("OK", null, null);
 									//response = new Envelope("OK"); // Success
 								}
@@ -425,6 +427,21 @@ public class FileThread extends ServerThread
 							{
 								FileInputStream fis = new FileInputStream(f);
 								Envelope in = e;
+								//TODO send metadata first
+								if (in.getMessage().compareTo("DOWNLOADF") != 0)
+								{
+									System.out.printf("Server error: %s\n", in.getMessage());
+									continue; //TODO bad handling.
+								}
+								output.writeObject(encryptMessageWithSymmetricKey("METADATA", null, new Object[]{sf.getGroup(), sf.getEpoch()}));
+								in = (Envelope)input.readObject();
+								if(!this.checkValidityOfMessage(in))
+								{
+									System.out.println("Meta data transfer of the file failed.");
+									output.writeObject(encryptMessageWithSymmetricKey("FAIL", null, null));
+									continue;
+								}
+								
 								do
 								{
 									byte[] buf = new byte[4096];
@@ -465,6 +482,7 @@ public class FileThread extends ServerThread
 									in = (Envelope)input.readObject();
 									if(!this.checkValidityOfMessage(in))
 									{
+										System.out.println("Something went wrong with the file transfer...");
 										return;
 									}
 									

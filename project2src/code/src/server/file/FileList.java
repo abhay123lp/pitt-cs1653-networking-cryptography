@@ -41,9 +41,9 @@ public class FileList implements java.io.Serializable
 	 * @param group The string value describing the group the file belongs to.
 	 * @param path The string value describing where the file currently lives on the users local machine.
 	 */
-	public synchronized void addFile(String owner, String group, String path)
+	public synchronized void addFile(String owner, String group, String path, int epoch)
 	{
-		ShareFile newFile = new ShareFile(owner, group, path);
+		ShareFile newFile = new ShareFile(owner, group, path, epoch);
 		list.add(newFile);
 	}
 	

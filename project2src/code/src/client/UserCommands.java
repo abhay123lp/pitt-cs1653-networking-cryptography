@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException; // In the case that the group or file server times out
 // or doesn't respond, we import IOException.
 import java.io.InputStreamReader; // Used for Buffered Reader 
+import java.security.Key;
 import java.security.Security;
 import java.util.List;
 import java.io.FileReader;
@@ -486,6 +487,13 @@ public class UserCommands {
 										+ groupName + "\". Only owners can print group members.\n");
 					}
 				}
+				// TODO: For Uploading:
+				/*
+				 * 1) Make temp file
+				 * 2) Copy sourcefile to temp file. 
+				 * 3) Encrypt temp file with 10 rounds of AES.
+				 * 4) Delete the temp file after sending it off to file server.
+				 */
 				else if( userCommands[i].equals("fupload"))
 				{
 					i++;
@@ -494,8 +502,10 @@ public class UserCommands {
 					destFile = userCommands[i];
 					i++;
 					groupName = userCommands[i];
+					Key key = groupClient.getEncryptionKey(groupName);
+					int epoch = groupClient.getEpoch(groupName);
 					// Success
-					if(fileClient.upload(sourceFile, destFile, groupName, userToken))
+					if(fileClient.upload(sourceFile, destFile, groupName, userToken, key, epoch))
 					{
 						s = s + "Successfully uploaded local source file \""
 								+ sourceFile + "\" as \"" + destFile
@@ -512,15 +522,22 @@ public class UserCommands {
 						s = s + "You need to be a part of a group or admin to upload files.\n";
 					}
 				}
-				// TODO: list assumptions of users and admin privileges 
+				// TODO: For Downloading:
+				/*
+				 * 1) Download encrypted file
+				 * 2) From given meta data, ask group client for the key
+				 * 3) decrypt file with the key
+				 */
 				else if( userCommands[i].equals("fdownload"))
 				{
 					i++;
 					sourceFile = userCommands[i];
 					i++;
 					destFile = userCommands[i];
+//					Key key = groupClient.getEncryptionKey(groupName);
+//					int epoch = groupClient.getEpoch(groupName);
 					// Success
-					if(fileClient.download(sourceFile, destFile, userToken))
+					if(fileClient.download(sourceFile, destFile, /*groupName,*/ userToken, groupClient/*, key, epoch*/))
 					{
 						s = s + "Successfully downloaded to local source file \""
 								+ sourceFile + "\" from file \"" + destFile

@@ -7,9 +7,11 @@ package server.group;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.Key;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import server.ServerThread;
@@ -101,7 +103,7 @@ public class GroupThread extends ServerThread
 					//String username = (String)message.getObjContents().get(0); // Get the username
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					String username = (String)objData[0];
-					
+					Hashtable<String, ArrayList<Key>> keyTable = null;
 					//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
 					
 					if (username == null)
@@ -122,10 +124,13 @@ public class GroupThread extends ServerThread
 						if(checkPassword(username, password))
 						{
 							UserToken yourToken = createToken(username); // Create a token
-							
+							// TODO: iterate through every group and ask GroupList for the keys for each group
+							// Add all the keys to the hash table
+							yourToken.getGroups();
 							// Respond to the client. On error, the client will receive a null token
 							//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-							response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+							// TODO: GroupClient should be looking for hashtable after GET
+							response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{keyTable});
 							output.writeObject(response);
 						}
 						// Password did not match
