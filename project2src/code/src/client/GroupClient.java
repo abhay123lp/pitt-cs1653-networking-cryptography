@@ -27,6 +27,7 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 	 */
 	private Hashtable<String, ArrayList<Key>> keyTable = null;	
 	
+	@SuppressWarnings("unchecked")
 	public UserToken getToken(String username, String password)
 	{
 		try
