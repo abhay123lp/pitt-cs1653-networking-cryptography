@@ -167,6 +167,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					 * New for decrypting the file
 					 */
 					decrypt(tempFile, destFile, groupClient.getKey(groupName, epoch));
+					deleteFile(tempFile);
 				}
 				else
 				{
@@ -273,7 +274,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			// Upload the ecnrypted tempFile (source file)
 			output.writeObject(this.encryptMessageWithSymmetricKey("UPLOADF", token, new Object[]{destFile, group, epoch}));
 			// delete the temp file
-			deleteFile(tempFile + fileExtension);
+			
 			
 			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
 			
@@ -342,6 +343,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			// If server indicates success, return the member list
 			if (env.getMessage().compareTo("READY") == 0)
 			{
+				deleteFile(tempFile + fileExtension);
 				Envelope message = this.encryptMessageWithSymmetricKey("EOF", null, null); 
 						//new Envelope("EOF");
 				output.writeObject(message);
