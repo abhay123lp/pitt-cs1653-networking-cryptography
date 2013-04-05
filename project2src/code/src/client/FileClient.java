@@ -273,7 +273,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			// Upload the ecnrypted tempFile (source file)
 			output.writeObject(this.encryptMessageWithSymmetricKey("UPLOADF", token, new Object[]{destFile, group, epoch}));
 			// delete the temp file
-			deleteFile(tempFile);
+			deleteFile(tempFile + fileExtension);
 			
 			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
 			
