@@ -606,8 +606,11 @@ public class GroupThread extends ServerThread
 										{
 											response = new Envelope("OK"); // Success
 											// Remove the groupname from the user in the token
-											yourToken.getGroups().remove(groupname);
-											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
+											if(username.equals(yourToken.getSubject()))
+											{
+												yourToken.getGroups().remove(groupname);
+												yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
+											}
 											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 											response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 										}
