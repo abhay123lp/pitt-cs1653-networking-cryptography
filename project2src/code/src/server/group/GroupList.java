@@ -98,7 +98,7 @@ public class GroupList implements Serializable
 	 */
 	public synchronized boolean removeUser(String group, String username)
 	{
-//		list.get(group).addKey();
+		list.get(group).addKey();
 		return list.get(group).removeUser(username);
 	}
 	
