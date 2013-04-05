@@ -50,13 +50,13 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			}
 			
 			//keyTable =  (Hashtable<String, ArrayList<Key>>) ((Object[])getFromEnvelope(Field.DATA))[0];
-			Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-			keyTable = (ArrayList<GroupKeysMap>)objData[0];
+			
 			
 			// Successful response
 			if (response.getMessage().equals("OK"))
 			{
-				
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				keyTable = (ArrayList<GroupKeysMap>)objData[0];	
 				return (UserToken)getFromEnvelope(Field.TOKEN);
 						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}// end if block
@@ -157,6 +157,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return true;
 			}
 			return false;
@@ -188,6 +190,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
 						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
@@ -220,6 +224,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
 						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
@@ -286,6 +292,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
 						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
@@ -318,6 +326,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// If server indicates success, return true
 			if (response.getMessage().equals("OK"))
 			{
+				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
+				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
 						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}

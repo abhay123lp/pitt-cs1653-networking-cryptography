@@ -57,6 +57,18 @@ public class GroupThread extends ServerThread
 		
 	}
 	
+	private ArrayList<GroupKeysMap> compileKeys(List<String> groups)
+	{
+		ArrayList<GroupKeysMap> gklist = new ArrayList<GroupKeysMap>();
+		for(String group : groups)
+		{
+			GroupKeysMap g = new GroupKeysMap(group, my_gs.groupList.getKeysForGroup(group));
+			gklist.add(g);
+			//keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
+		}
+		return gklist;
+	}
+	
 	/**
 	 * This method runs all of the group server commands such as adding a user to a group, removing a user from a group, adding a group, etc...
 	 */
@@ -162,13 +174,14 @@ public class GroupThread extends ServerThread
 								
 							// Add all the keys to the hash table
 								//Hashtable<String, ArrayList<Key>> keyTable = new Hashtable<String, ArrayList<Key>>();
-								ArrayList<GroupKeysMap> gklist = new ArrayList<GroupKeysMap>();
-								for(String group : yourToken.getGroups())
-								{
-									GroupKeysMap g = new GroupKeysMap(group, my_gs.groupList.getKeysForGroup(group));
-									gklist.add(g);
-									//keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
-								}
+								
+//								ArrayList<GroupKeysMap> gklist = new ArrayList<GroupKeysMap>();
+//								for(String group : yourToken.getGroups())
+//								{
+//									GroupKeysMap g = new GroupKeysMap(group, my_gs.groupList.getKeysForGroup(group));
+//									gklist.add(g);
+//									//keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
+//								}
 								
 								
 								
@@ -178,7 +191,7 @@ public class GroupThread extends ServerThread
 								// Respond to the client. On error, the client will receive a null token
 								//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
 							//	response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{keyTable});
-								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{gklist});
+								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 								output.writeObject(response);
 							}
 							// Password did not match
@@ -289,7 +302,8 @@ public class GroupThread extends ServerThread
 								{
 //									if (deleteUser(username, yourToken))
 //									{
-										response = encryptMessageWithSymmetricKey("OK", null, null);
+										
+										response = encryptMessageWithSymmetricKey("OK", null, new Object[]{compileKeys(yourToken.getGroups())});
 										//response = new Envelope("OK"); // Success
 //									}
 								}
@@ -346,7 +360,7 @@ public class GroupThread extends ServerThread
 										yourToken.getGroups().add(groupname);
 										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-										response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+										response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 //									}
 								}
 								else
@@ -403,7 +417,7 @@ public class GroupThread extends ServerThread
 										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 										
 										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-										response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+										response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 //									}
 								}
 								else
@@ -519,7 +533,7 @@ public class GroupThread extends ServerThread
 									{
 										if (addUserToGroup(username, groupname, yourToken))
 										{
-											response = new Envelope("OK"); // Success
+//											response = new Envelope("OK"); // Success
 											// Add the group name for the user in the token
 											if (username.equals(yourToken.getSubject()))
 											{
@@ -527,7 +541,7 @@ public class GroupThread extends ServerThread
 											}
 											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-											response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+											response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 										}
 										else
 										{
@@ -595,7 +609,7 @@ public class GroupThread extends ServerThread
 											yourToken.getGroups().remove(groupname);
 											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-											response = encryptMessageWithSymmetricKey("OK", yourToken, null);
+											response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 										}
 										else
 										{
