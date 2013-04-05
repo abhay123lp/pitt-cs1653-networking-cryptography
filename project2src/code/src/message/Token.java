@@ -1,6 +1,7 @@
 package message;
 
 import java.io.Serializable;
+import java.security.Security;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -72,25 +73,26 @@ public class Token implements UserToken, Serializable
 	}
 	
 	
-	public byte[] gethashedSignedTokenData(){
-		
-		return hashedSignedTokenData;
-		
-	}
+//	public byte[] gethashedSignedTokenData(){
+//		
+//		return hashedSignedTokenData;
+//		
+//	}
 	
 	
 	public final void generateRSASignature(String algorithm, String provider, RSAPrivateKey privKey){
 
 		try{
 
+			
 			// Change the clear text to bytes
-//			byte[] clearBytes = getDelimitedString().getBytes();
+			byte[] clearBytes = getDelimitedString().getBytes();
 
 			// Create RSA signature
 			Signature sig = Signature.getInstance(algorithm, provider);
 			sig.initSign(privKey);
-//			sig.update(clearBytes);		
-			
+			sig.update(clearBytes);		
+	
 			privKey = null;
 
 			this.hashedSignedTokenData = sig.sign();
@@ -204,7 +206,8 @@ public class Token implements UserToken, Serializable
 			// Create new signature instance
 			Signature verificationSig = Signature.getInstance(algorithm, provider);
 			verificationSig.initVerify(pubKey);
-//			verificationSig.update(hashedSignedTokenData);		
+			byte[] clearbytes = getDelimitedString().getBytes();
+			verificationSig.update(clearbytes);		
 				
 			return verificationSig.verify(hashedSignedTokenData);  //verificationSig.verify(signature);
 				
