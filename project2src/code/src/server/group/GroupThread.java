@@ -6,6 +6,7 @@ package server.group;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.security.Key;
 import java.security.interfaces.RSAPrivateKey;
@@ -138,7 +139,7 @@ public class GroupThread extends ServerThread
 							String ipAdd = (String)objData[1];
 							int pNum = (Integer)objData[2];
 							
-							UserToken fsToken = createToken(ut.getSubject(), fsName, ipAdd, pNum);
+							UserToken fsToken = createToken(ut.getSubject(), fsName, InetAddress.getByName(ipAdd).getHostAddress(), pNum);
 							
 							response = encryptMessageWithSymmetricKey("OK", fsToken, null);
 							output.writeObject(response);

@@ -452,8 +452,8 @@ public class UserCommands {
 					// User specified IP address and port number
 					if(userCommands.length == 3)
 					{	
-						fileServerToken = groupClient.getToken(userToken, "FilePile", fileServerIP, 4321);
-						fileClient.connect(fileServerIP, 4321, "FilePile", "ALPHA", fileServerToken);
+						fileServerToken = groupClient.getToken(userToken, "FilePile", fileServerIP, fileServerPort);
+						fileClient.connect(fileServerIP, fileServerPort, "FilePile", "ALPHA", fileServerToken);
 					}
 					
 					i++;
@@ -461,8 +461,8 @@ public class UserCommands {
 					
 					if(userCommands.length == 4)
 					{
-						fileServerToken = groupClient.getToken(userToken, fileServerName, fileServerIP, 4321);
-						fileClient.connect(fileServerIP, 4321, fileServerName, "ALPHA", fileServerToken);
+						fileServerToken = groupClient.getToken(userToken, fileServerName, fileServerIP, fileServerPort);
+						fileClient.connect(fileServerIP, fileServerPort, fileServerName, "ALPHA", fileServerToken);
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))
