@@ -7,6 +7,10 @@ import java.util.ArrayList;
 
 public class GroupKeysMap implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3615921813054442125L;
 	String groupName;
 	ArrayList<Key> keys;
 	
@@ -30,5 +34,4 @@ public class GroupKeysMap implements Serializable {
 	public int getEpoch(){
 		return this.keys.size() -1;
 	}
-
 }

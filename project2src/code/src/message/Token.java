@@ -1,7 +1,6 @@
 package message;
 
 import java.io.Serializable;
-import java.security.Security;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -37,15 +36,10 @@ public class Token implements UserToken, Serializable
 	private final List<String> groups;
 	
 	private final String fileServerName;
-	
 	private final String IPAddress;
-	
 	private final int portNumber;	
 	
-	
 	private byte[] hashedSignedTokenData;
-	
-	 
 	
 	/**
 	 * This constructor initializes the issuer, subject, and groups class variables.
@@ -56,35 +50,16 @@ public class Token implements UserToken, Serializable
 	 */
 	public Token(String issuer, String subject, List<String> groups, String fsName, String ip, int portNum)
 	{
-		
 		this.issuer = issuer;
 		this.subject = subject;
 		this.groups = makeCopyOfGroups(groups);
 		this.fileServerName = fsName;
 		this.IPAddress = ip;
 		this.portNumber = portNum;
-		
-//		this.privateKey = _privKey;
-		
-//		hashedSignedTokenData = generateRSASignature("SHA1withRSA", "BC", _privKey);
-		
-//		_privKey = null;
-		
 	}
 	
-	
-//	public byte[] gethashedSignedTokenData(){
-//		
-//		return hashedSignedTokenData;
-//		
-//	}
-	
-	
 	public final void generateRSASignature(String algorithm, String provider, RSAPrivateKey privKey){
-
 		try{
-
-			
 			// Change the clear text to bytes
 			byte[] clearBytes = getDelimitedString().getBytes();
 
@@ -96,11 +71,8 @@ public class Token implements UserToken, Serializable
 			privKey = null;
 
 			this.hashedSignedTokenData = sig.sign();
-			
 		} catch (Exception ex){
-
 			privKey = null;
-//			System.out.println(ex.toString());
 			ex.printStackTrace();
 		}
 	}
@@ -171,7 +143,6 @@ public class Token implements UserToken, Serializable
 	}
 	
 	public String getDelimitedString(){
-		
 		// Begin creating token
 		String finalToken = this.issuer + DELIMITER + this.subject + DELIMITER + fileServerName + DELIMITER + IPAddress + DELIMITER + portNumber;
 		
@@ -180,14 +151,9 @@ public class Token implements UserToken, Serializable
 		
 		// Delimit the groups and concatenate
 		for(String s : this.groups){
-			
 			finalToken += DELIMITER + s;
-			
-		}
-		
-				
+		}	
 		return finalToken;
-		
 	}
 	
 	/**
@@ -200,9 +166,7 @@ public class Token implements UserToken, Serializable
 	 * @return boolean value indicating if the signature has been verified.
 	 */
 	public boolean RSAVerifySignature(String algorithm, String provider, RSAPublicKey pubKey){
-
 		try{
-			
 			// Create new signature instance
 			Signature verificationSig = Signature.getInstance(algorithm, provider);
 			verificationSig.initVerify(pubKey);
@@ -210,18 +174,9 @@ public class Token implements UserToken, Serializable
 			verificationSig.update(clearbytes);		
 				
 			return verificationSig.verify(hashedSignedTokenData);  //verificationSig.verify(signature);
-				
 		} catch(Exception ex){
-
-//			System.out.println(ex.toString());
 			ex.printStackTrace();
-
 		}
-
 		return false;
-
 	}
-	
-	
-	
 }

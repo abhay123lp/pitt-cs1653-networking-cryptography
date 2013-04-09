@@ -2,7 +2,6 @@ package server.file;
 
 /* FileServer loads files from FileList.bin.  Stores files in shared_files directory. */
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,11 +12,9 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import client.CAServerClient;
+import client.certificateAuthority.CAServerClient;
 
 import server.Server;
-
-
 
 /**
  * Handles connections to the {@link FileClient}.
@@ -139,11 +136,11 @@ public class FileServer extends Server
 				thread.start();
 			}
 			
+			serverSock.close();
 			System.out.printf("%s shut down\n", this.getClass().getName());
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method start
@@ -166,7 +163,6 @@ class ShutDownListenerFS implements Runnable
 		}
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}
@@ -193,7 +189,6 @@ class AutoSaveFS extends Thread
 				}
 				catch (Exception e)
 				{
-//					System.err.println("Error: " + e.getMessage());
 					e.printStackTrace(System.err);
 				}
 				

@@ -1,4 +1,4 @@
-package client;
+package client.file;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -17,6 +17,10 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.spec.IvParameterSpec;
 
+import client.Client;
+import client.ClientInterface;
+import client.group.GroupClient;
+
 import message.Envelope;
 import message.Field;
 import message.UserToken;
@@ -30,6 +34,9 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 	private static final String SYM_KEY_ALG = "AES/CTR/NoPadding";
 	private static final int IV_BYTES = 16;
 	
+	private String tempFile = "temp_3m9ectnectwxnrwxn";
+	private String fileExtension = "";
+	
 	public boolean delete(String filename, UserToken token)
 	{
 		String remotePath;
@@ -41,15 +48,9 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		{
 			remotePath = filename;
 		}
-//		Envelope env = new Envelope("DELETEF"); // Success
-//		env.addObject(remotePath);
-//		env.addObject(token);
-//		Envelope env = this.encryptMessageWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF");
 		try
 		{
-			output.writeObject(this.encryptMessageWithSymmetricKey("DELETEF", token, new Object[]{remotePath}));
-			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{remotePath,  token}, "DELETEF"));
-			
+			output.writeObject(this.encryptMessageWithSymmetricKey("DELETEF", token, new Object[]{remotePath}));			
 			Envelope response = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(response))
 			{
@@ -77,11 +78,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		return true;
 	}// end method delete
 	
-	// TODO: For Downloading:
-	/*
-	 * 1) Decrypt downloaded (ecnrypted file) and unencrypt it
-	 */
-	public boolean download(String sourceFile, String destFile, /*String groupName,*/ UserToken token, GroupClient groupClient/*, Key key, int epoch*/)
+	public boolean download(String sourceFile, String destFile, UserToken token, GroupClient groupClient)
 	{
 		if (sourceFile.charAt(0) == '/')
 		{
@@ -96,10 +93,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				file.createNewFile();
 				FileOutputStream fos = new FileOutputStream(file);
 				
-//				Envelope env = new Envelope("DOWNLOADF"); // Success
-//				env.addObject(sourceFile);
-//				env.addObject(token);
-				//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{sourceFile, token}, "DOWNLOADF"));
+				//Success
 				output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", token, new Object[]{sourceFile}));
 				
 				Envelope env = (Envelope)input.readObject();
@@ -108,7 +102,6 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					fos.close();
 					return false;//TODO bad handling
 				}
-				//TODO first message is meta data.  Need to handle it.
 				if(!env.getMessage().equals("METADATA"))
 				{
 					System.out.println("Server did not give metadata... something bad happened...");
@@ -126,23 +119,18 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					fos.close();
 					return false;//TODO bad handling
 				}
-				//new Envelope("DOWNLOADF");
 				
 				// Why can't you just use .equals()?
 				while (env.getMessage().compareTo("CHUNK") == 0)
 				{
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
-//					byte[] iv = (byte[])getFromEnvelope(Field.IV);
-							//(byte[])env.getObjContents().get(2);
 					byte[] inBytes = (byte[])objData[0];
-							//(byte[])convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(0), iv));
 					Integer lastIndex = (Integer)objData[1];
-							//(Integer)convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(1), iv));
 					fos.write(inBytes, 0, lastIndex);
 					System.out.printf(".");
-//					env = new Envelope("DOWNLOADF"); // Success
-//					downloadMore = this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null); 
+					
+					//Success, want to continue
 					output.writeObject(this.encryptMessageWithSymmetricKey("DOWNLOADF", null, null));
 					env = (Envelope)input.readObject();
 					if(!checkValidityOfMessage(env))
@@ -156,16 +144,12 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 				// again, why not .equals()?
 				if (env.getMessage().compareTo("EOF") == 0)
 				{
-					// FIXME fos is closed already...
-//					fos.close();
 					System.out.printf("\nTransfer successful file %s\n", sourceFile);
-//					env = new Envelope("OK"); // Success
+					
+					//Success
 					output.writeObject(this.encryptMessageWithSymmetricKey("OK", null, null));
 					
-					// TODO:
-					/*
-					 * New for decrypting the file
-					 */
+					//now decrypt the file
 					decrypt(tempFile, destFile, groupClient.getKey(groupName, epoch));
 					deleteFile(tempFile);
 				}
@@ -199,12 +183,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 	{
 		try
 		{
-//			Envelope message = null, e = null;
-			// Tell the server to return the member list
-//			message = new Envelope("LFILES");
-//			message.addObject(token); // Add requester's token
 			output.writeObject(this.encryptMessageWithSymmetricKey("LFILES", token, null));
-			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{token}, "LFILES"));
 			
 			Envelope e = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(e))
@@ -217,29 +196,22 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			{
 				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 				return (List<String>)objData[0];
-						//(List<String>)convertToObject(decryptObjectBytes((byte[])e.getObjContents().get(0), (byte[])e.getObjContents().get(1))); // This cast creates compiler warnings. Sorry.
 			}
 			return null;
 		}
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
 	}// end method listFiles(UserToken)
 	
-	// TODO: For Uploading:
 	/*
 	 * 1) Make temp file
 	 * 2) Copy sourcefile to temp file. 
 	 * 3) Encrypt temp file with 10 rounds of AES.
 	 * 4) Delete the temp file after sending it off to file server.
 	 */
-	
-	private String tempFile = "temp_3m9ectnectwxnrwxn";
-	private String fileExtension = "";
-	
 	public boolean upload(String sourceFile, String destFile, String group, UserToken token, Key aesKey, int epoch)
 	{
 		if (sourceFile.charAt(0) == '/')
@@ -249,19 +221,11 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		
 		try
 		{
-//			Envelope message = null, env = null;
-//			// Tell the server to return the member list
-//			message = new Envelope("UPLOADF");
-//			message.addObject(destFile);
-//			message.addObject(group);
-//			message.addObject(token); // Add requester's token
-			
 			/*
 			 * We aren't actually uploading sourceFile anymore -- there is going to be an encrypted temp file
 			 * The source file gets encrypted into the temp file. We upload the temp file as the source file.
 			 */
 			
-			// TODO: Do file extensions matter?
 			fileExtension = "";
 			if(sourceFile.contains("."))
 			{
@@ -275,11 +239,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			output.writeObject(this.encryptMessageWithSymmetricKey("UPLOADF", token, new Object[]{destFile, group, epoch}));
 			// delete the temp file
 			
-			
-			//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{destFile, group, token}, "UPLOADF"));
-			
-//			FileInputStream fis = new FileInputStream(sourceFile); // FIXME never closed
-			FileInputStream fis = new FileInputStream(tempFile + fileExtension); // FIXME never closed
+			FileInputStream fis = new FileInputStream(tempFile + fileExtension);
 						
 			Envelope env = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(env))
@@ -323,12 +283,7 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 					return false;
 				}
 				
-//				Envelope message = new Envelope("CHUNK");
-//				message.addObject(buf);
-//				message.addObject(new Integer(n));
-				
 				output.writeObject(this.encryptMessageWithSymmetricKey("CHUNK", token, new Object[]{buf, new Integer(n)}));
-				//output.writeObject(this.encryptMessageWithSymmetricKey(new Object[]{buf, new Integer(n)}, "CHUNK"));
 				
 				env = (Envelope)input.readObject();
 				if(!checkValidityOfMessage(env))
@@ -345,7 +300,6 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 			{
 				deleteFile(tempFile + fileExtension);
 				Envelope message = this.encryptMessageWithSymmetricKey("EOF", null, null); 
-						//new Envelope("EOF");
 				output.writeObject(message);
 				
 				env = (Envelope)input.readObject();
@@ -371,7 +325,6 @@ public class FileClient extends Client implements FileInterface, ClientInterface
 		}// end try block
 		catch (Exception e1)
 		{
-//			System.err.println("Error: " + e1.getMessage());
 			e1.printStackTrace(System.err);
 			return false;
 		}

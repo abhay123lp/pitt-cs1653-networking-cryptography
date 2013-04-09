@@ -12,6 +12,9 @@ import java.io.FileReader;
 
 import java.util.*;
 
+import client.file.FileClient;
+import client.group.GroupClient;
+
 import message.UserToken;
 
 /**
@@ -161,7 +164,6 @@ public class UserCommands {
 	 * @return The return UserToken will never be null. The user will enter an
 	 * approved username and password or will quit. 
 	 */
-	// TODO: password support
 	private static UserToken connectUserToGroupServer() 
 	{
 		try 
@@ -394,7 +396,6 @@ public class UserCommands {
 				// ===== File Server Commands =====
 				
 				// fconnect does not support multiple commands at once
-				//TODO change the usage file for fconnect to show that the serverName should be specified.
 				else if( userCommands[i].equals("fconnect"))
 				{
 					if(fileClient.isConnected())
@@ -454,6 +455,7 @@ public class UserCommands {
 					{	
 						fileServerToken = groupClient.getToken(userToken, "FilePile", fileServerIP, fileServerPort);
 						fileClient.connect(fileServerIP, fileServerPort, "FilePile", "ALPHA", fileServerToken);
+						return userToken;
 					}
 					
 					i++;
@@ -463,6 +465,7 @@ public class UserCommands {
 					{
 						fileServerToken = groupClient.getToken(userToken, fileServerName, fileServerIP, fileServerPort);
 						fileClient.connect(fileServerIP, fileServerPort, fileServerName, "ALPHA", fileServerToken);
+						return userToken;
 					}
 				}
 				else if( userCommands[i].equals("fdisconnect"))
@@ -489,12 +492,9 @@ public class UserCommands {
 					}
 					else
 					{
-						s = s
-								+ ("Insufficient privileges to print files in group \""
-										+ groupName + "\". Only owners can print group members.\n");
+						s += "Insufficient privileges to print files in group \"" + groupName + "\". Only owners can print group members.\n";
 					}
 				}
-				// TODO: For Uploading:
 				/*
 				 * 1) Make temp file
 				 * 2) Copy sourcefile to temp file. 
@@ -529,7 +529,6 @@ public class UserCommands {
 						s = s + "You need to be a part of a group or admin to upload files.\n";
 					}
 				}
-				// TODO: For Downloading:
 				/*
 				 * 1) Download encrypted file
 				 * 2) From given meta data, ask group client for the key
@@ -541,10 +540,8 @@ public class UserCommands {
 					sourceFile = userCommands[i];
 					i++;
 					destFile = userCommands[i];
-//					Key key = groupClient.getEncryptionKey(groupName);
-//					int epoch = groupClient.getEpoch(groupName);
 					// Success
-					if(fileClient.download(sourceFile, destFile, /*groupName,*/ fileServerToken, groupClient/*, key, epoch*/))
+					if(fileClient.download(sourceFile, destFile, fileServerToken, groupClient))
 					{
 						s = s + "Successfully downloaded to local source file \""
 								+ sourceFile + "\" from file \"" + destFile
@@ -607,9 +604,6 @@ public class UserCommands {
 		}		
 		// Here we print out the success and failures of commands. 
 		// Everything gets printed at once after the commands all finish.
-		// TODO: Fix me. If we don't disconnect and reconnect, there are issues updating the user list.
-//		groupClient.disconnect();
-//		groupClient.connect(groupServerIP, groupServerPort, groupServerName);
 		System.out.printf(s);
 		return userToken;
 	}
@@ -740,8 +734,7 @@ public class UserCommands {
 		System.out.printf("\t%s:\n", fileName);
 		try
 		{
-//			System.out.println(System.getProperty("user.dir"));
-			BufferedReader br = new BufferedReader(new FileReader(/*"" + System.getProperty("user.dir") + System.getProperty("file.separator") +*/ "help files" + System.getProperty("file.separator") + fileName + ".txt"));
+			BufferedReader br = new BufferedReader(new FileReader("help files" + System.getProperty("file.separator") + fileName + ".txt"));
 			String line = "";
 			while ((line = br.readLine()) != null) 
 			{
