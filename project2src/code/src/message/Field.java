@@ -1,10 +1,6 @@
 package message;
 
-public enum Field {
-	
-	
+public enum Field
+{
 	HMAC, IV, INT, TOKEN, DATA
-	
-	
-
 }

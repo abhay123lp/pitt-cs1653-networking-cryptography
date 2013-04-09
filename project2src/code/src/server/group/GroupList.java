@@ -111,17 +111,7 @@ public class GroupList implements Serializable
 	{
 		return list.get(group).getKeys();
 	}
-	
-	// public synchronized void addOwner(String group, String username)
-	// {
-	// list.get(group).addOwner(username);
-	// }
-	//
-	// public synchronized void removeOwner(String group, String username)
-	// {
-	// list.get(group).removeOwner(username);
-	// }
-	
+		
 	/**
 	 * This class represents a group object within the {@link GroupList}.
 	 */
@@ -144,6 +134,12 @@ public class GroupList implements Serializable
 		 */
 		private final String owner;
 		
+		
+		/**
+		 * New for phase 4: use this array list to look up arrays of keys for the given group.
+		 * GroupClient needs to store this information for UserCommands.
+		 * The index of the an array for a given group in the hash table is the epoch number (used to mitigate file leakage).
+		 */
 		private final ArrayList<Key> keys;
 		
 		/**
@@ -206,12 +202,8 @@ public class GroupList implements Serializable
 		 */
 		public boolean removeUser(String username)
 		{
-//			if (users.contains(username))
-//			{
 			this.addKey();
 			return users.remove(username);
-				// users.remove(users.indexOf(username));
-//			}
 		}
 		
 		private boolean addKey()
@@ -238,27 +230,9 @@ public class GroupList implements Serializable
 			}
 			catch (Exception ex)
 			{
-//				System.out.println(ex.toString());
 				ex.printStackTrace();
 			}
 			return null;
 		}
-		
-		// public void addOwner(String username)
-		// {
-		// owners.add(username);
-		// }
-		
-		// public void removeOwner(String username)
-		// {
-		// if(!owners.isEmpty())
-		// {
-		// if(owners.contains(username))
-		// {
-		// owners.remove(owners.indexOf(username));
-		// }
-		// }
-		// }
-		
 	}// end class Group
 }// end class GroupList

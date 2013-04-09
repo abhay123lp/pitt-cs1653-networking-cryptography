@@ -1,11 +1,13 @@
-package client;
+package client.group;
 
 /* Implements the GroupClient Interface */
 
 import java.security.Key;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
+
+import client.Client;
+import client.ClientInterface;
 
 import message.Envelope;
 import message.Field;
@@ -19,15 +21,6 @@ import message.UserToken;
  */
 public class GroupClient extends Client implements GroupInterface, ClientInterface
 {
-	
-	/**
-	 * New for phase 4: use this hash table to look up arrays of keys for a given groupname.
-	 * GroupClient needs to store this information for UserCommands.
-	 * The index of the an array for a given group in the hash table is the epoch number (used
-	 * to mitigate file leakage).
-	 */
-	//private Hashtable<String, ArrayList<Key>> keyTable = null;	
-	
 	ArrayList<GroupKeysMap> keyTable = null;
 	
 	@SuppressWarnings("unchecked")
@@ -35,12 +28,8 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
 			// Tell the server to return a token.
-//			message = encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET");
 			output.writeObject(encryptMessageWithSymmetricKey("GET", null, new Object[]{username, password}));
-					//encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET"));
 
 			// Get the response from the server
 			Envelope response = (Envelope)input.readObject();
@@ -48,9 +37,6 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			{
 				return null;
 			}
-			
-			//keyTable =  (Hashtable<String, ArrayList<Key>>) ((Object[])getFromEnvelope(Field.DATA))[0];
-			
 			
 			// Successful response
 			if (response.getMessage().equals("OK"))
@@ -58,7 +44,6 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 				keyTable = (ArrayList<GroupKeysMap>)objData[0];	
 				return (UserToken)getFromEnvelope(Field.TOKEN);
-						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}// end if block
 			return null;
 		}// end try block
@@ -70,17 +55,12 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 	}// end method getToken(String)
 	
-	
 	public UserToken getToken(UserToken groupToken, String fileServerName, String ipAddress, int portNumber)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
 			// Tell the server to return a token.
-//			message = encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET");
 			output.writeObject(encryptMessageWithSymmetricKey("GET", groupToken, new Object[]{fileServerName, ipAddress, portNumber}));
-					//encryptMessageWithSymmetricKey(new Object[]{username, password}, "GET"));
 			
 			// Get the response from the server
 			Envelope response = (Envelope)input.readObject();
@@ -92,30 +72,22 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			// Successful response
 			if (response.getMessage().equals("OK"))
 			{
-				
 				return (UserToken)getFromEnvelope(Field.TOKEN);
-						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}// end if block
 			return null;
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace();
 			return null;
 		}
 	}// end method getToken(String)
 		
-	
 	public boolean createUser(String username, UserToken token, String password)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER");
 			output.writeObject(encryptMessageWithSymmetricKey("CUSER", token, new Object[]{username, password}));
-					//encryptMessageWithSymmetricKey(new Object[]{username, password, token}, "CUSER"));
 
 			Envelope response = (Envelope)input.readObject();
 			if(!checkValidityOfMessage(response))
@@ -132,20 +104,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return false;
 		}
 	}// end method createUser(String, UserToken)
 
+	@SuppressWarnings("unchecked")
 	public boolean deleteUser(String username, UserToken token)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{username, token}, "DUSER");
-			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, token}, "DUSER"));
 			output.writeObject(encryptMessageWithSymmetricKey("DUSER", token, new Object[]{username}));
 			
 			Envelope response = (Envelope)input.readObject();
@@ -165,20 +133,16 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end block try
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return false;
 		}
 	}// end method deleteUser(String, UserToken)
 
+	@SuppressWarnings("unchecked")
 	public UserToken createGroup(String groupname, UserToken token)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "CGROUP");
-			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "CGROUP"));
 			output.writeObject(encryptMessageWithSymmetricKey("CGROUP", token, new Object[]{groupname}));
 
 			Envelope response = (Envelope)input.readObject();
@@ -193,26 +157,21 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
-						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end block try
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
 	}// end method createGroup(String, UserToken)
 
+	@SuppressWarnings("unchecked")
 	public UserToken deleteGroup(String groupname, UserToken token)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "DGROUP");
-			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{groupname, token}, "DGROUP"));
 			output.writeObject(encryptMessageWithSymmetricKey("DGROUP", token, new Object[]{groupname}));
 
 			Envelope response = (Envelope)input.readObject();
@@ -233,7 +192,6 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
@@ -244,10 +202,6 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS");
-			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{group, token}, "LMEMBERS"));
 			output.writeObject(encryptMessageWithSymmetricKey("LMEMBERS", token, new Object[]{group}));
 
 			Envelope response = (Envelope)input.readObject();
@@ -261,26 +215,21 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			{
 				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 				return (List<String>)objData[0];
-						//(List<String>)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(2)));
 			}
 			return null;
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
 	}// end method listMembers(String, UserToken)
 
+	@SuppressWarnings("unchecked")
 	public UserToken addUserToGroup(String username, String groupname, UserToken token)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "AUSERTOGROUP");
-			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "AUSERTOGROUP"));
 			output.writeObject(encryptMessageWithSymmetricKey("AUSERTOGROUP", token, new Object[]{username, groupname}));
 
 			Envelope response = (Envelope)input.readObject();
@@ -295,26 +244,21 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
-						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end block try
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
 	}// end method addUserToGrpu(String, String, UserToken)
 
+	@SuppressWarnings("unchecked")
 	public UserToken deleteUserFromGroup(String username, String groupname, UserToken token)
 	{
 		try
 		{
-//			Envelope message = null, response = null;
-
-//			message = encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "RUSERFROMGROUP");
-			//output.writeObject(encryptMessageWithSymmetricKey(new Object[]{username, groupname,  token}, "RUSERFROMGROUP"));
 			output.writeObject(encryptMessageWithSymmetricKey("RUSERFROMGROUP", token, new Object[]{username, groupname}));
 
 			Envelope response = (Envelope)input.readObject();
@@ -329,13 +273,11 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 				Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 				keyTable = (ArrayList<GroupKeysMap>)objData[0];
 				return (UserToken)getFromEnvelope(Field.TOKEN);
-						//(UserToken)convertToObject(decryptObjectBytes((byte[])response.getObjContents().get(0), (byte[])response.getObjContents().get(1)));
 			}
 			return null;
 		}// end block try
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 			return null;
 		}
@@ -355,26 +297,18 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 			return null;
 		}
 		else
-		{
-			//TODO UNCOMMENT
-		//	ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
-			
+		{			
 			for(int i = 0; i < keyTable.size(); i++){
-				
 				if(keyTable.get(i).checkGroupName(groupname)){
-					
-					return keyTable.get(i).getLastKey();
-					
+					// return the last key in the last index of the array of keys
+					// because index == epoch number
+					return keyTable.get(i).getLastKey();					
 				}
-				
 			}
-			
-			// return the last key in the last index of the array of keys
-			// because index == epoch number
-			//return keys.get(keys.size() - 1);
 			return null;
 		}
 	}
+	
 	/**
 	 * 
 	 * @param groupname This is the group the client wants to download from.
@@ -392,24 +326,11 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 		else
 		{
-			//TODO UNCOMMENT 
-			//ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
-			// return the last key in the last index of the array of keys
-			// because index == epoch number
-			//return keys.get(keys.size() - 1);
-			
 			for(int i = 0; i < keyTable.size(); i++){
-				
 				if(keyTable.get(i).checkGroupName(groupname)){
-					
 					return keyTable.get(i).getKey(epoch);
-					
 				}
-				
 			}
-			
-			
-			
 			return null;
 		}
 	}
@@ -428,24 +349,12 @@ public class GroupClient extends Client implements GroupInterface, ClientInterfa
 		}
 		else
 		{
-			//TODO UNCOMMENT
-			//ArrayList<Key> keys = new ArrayList<Key>(keyTable.get(groupname));
-			// return the epoch number, which is the last index
-			//return keys.size() - 1;
-			
 			for(int i = 0; i < keyTable.size(); i++){
-				
 				if(keyTable.get(i).checkGroupName(groupname)){
-					
 					return keyTable.get(i).getEpoch();
-					
 				}
-				
 			}
-			
-			
 			return 0;
 		}
 	}
-	
 }// end class GroupClient

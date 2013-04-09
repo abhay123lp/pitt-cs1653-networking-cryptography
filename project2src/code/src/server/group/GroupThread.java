@@ -8,11 +8,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.security.Key;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
 
 import server.ServerThread;
@@ -22,7 +20,6 @@ import message.Field;
 import message.GroupKeysMap;
 import message.Token;
 import message.UserToken;
-
 
 /**
  * The thread spawned by {@link GroupServer} after accepting a connection.
@@ -51,11 +48,7 @@ public class GroupThread extends ServerThread
 	public GroupThread(Socket _socket, GroupServer _gs, RSAPrivateKey _privKey, RSAPublicKey _pubKey, String serverName, String ipAddress, int portNumber)
 	{
 		super(_socket, _pubKey, _privKey, serverName, ipAddress, portNumber);
-//		socket = _socket;
 		my_gs = _gs;
-//		privateKey = _privKey;
-//		publicKey = _pubKey;
-		
 	}
 	
 	private ArrayList<GroupKeysMap> compileKeys(List<String> groups)
@@ -65,7 +58,6 @@ public class GroupThread extends ServerThread
 		{
 			GroupKeysMap g = new GroupKeysMap(group, my_gs.groupList.getKeysForGroup(group));
 			gklist.add(g);
-			//keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
 		}
 		return gklist;
 	}
@@ -95,46 +87,31 @@ public class GroupThread extends ServerThread
 					output.writeObject(this.setUpSecureConnection(message));
 					continue;	
 				} else {
-							
-						
 						if(!checkValidityOfMessage(message)){
-													 
 							response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
-									//new Envelope("DISCONNECT"); // Server does not understand client request
 							output.writeObject(response);
 							
 							socket.close();
 							this.resetMessageCounter();
 							proceed = false;
 							return;
-							
 						}
-					
-					
 				}						
 											
 				if (message.getMessage().equals("GET"))// Client wants a token
 				{
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-					
 					if(getFromEnvelope(Field.TOKEN)!= null){
-						
 						UserToken ut = (UserToken)getFromEnvelope(Field.TOKEN);
-						
 						if(!this.isValidToken(ut)){
-							
 							response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
-							//new Envelope("DISCONNECT"); // Server does not understand client request
 							output.writeObject(response);
 							
 							socket.close();
 							this.resetMessageCounter();
 							proceed = false;
 							return;
-														
 						} else {
-							
-//							String uName = (String)objData[0];
 							String fsName = (String)objData[0];
 							String ipAdd = (String)objData[1];
 							int pNum = (Integer)objData[2];
@@ -143,22 +120,13 @@ public class GroupThread extends ServerThread
 							
 							response = encryptMessageWithSymmetricKey("OK", fsToken, null);
 							output.writeObject(response);
-														
 						}
-						
 					} else {
-					
-					
-						//String username = (String)message.getObjContents().get(0); // Get the username
-						
 						String username = (String)objData[0];
-						//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-
 						if (username == null)
 						{
 							System.out.println("USERNAME IS NULL, FAIL");
 							response = encryptMessageWithSymmetricKey("FAIL", null, null);
-							// new Envelope("FAIL");
 							response.addObject(null);
 
 							output.writeObject(response);
@@ -166,32 +134,9 @@ public class GroupThread extends ServerThread
 						else
 						{
 							String password = (String)objData[1];
-							//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
-
 							if(checkPassword(username, password))
 							{
 								UserToken yourToken = createToken(username); // Create a token
-							// TODO: iterate through every group and ask GroupList for the keys for each group
-								
-							// Add all the keys to the hash table
-								//Hashtable<String, ArrayList<Key>> keyTable = new Hashtable<String, ArrayList<Key>>();
-								
-//								ArrayList<GroupKeysMap> gklist = new ArrayList<GroupKeysMap>();
-//								for(String group : yourToken.getGroups())
-//								{
-//									GroupKeysMap g = new GroupKeysMap(group, my_gs.groupList.getKeysForGroup(group));
-//									gklist.add(g);
-//									//keyTable.put(group, my_gs.groupList.getKeysForGroup(group));
-//								}
-								
-								
-								
-								
-								
-								
-								// Respond to the client. On error, the client will receive a null token
-								//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-							//	response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{keyTable});
 								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
 								output.writeObject(response);
 							}
@@ -201,66 +146,38 @@ public class GroupThread extends ServerThread
 								System.out.println("PASSWORD CHECK FAIL");
 								// Respond to the client. On error, the client will receive a null token
 								response = encryptMessageWithSymmetricKey("FAIL", null, null);
-								// new Envelope("FAIL");
 								output.writeObject(response);
 							}
 						}
 					}
 				}// end if block
-//				else if (message.getMessage().equals("REQUEST_SECURE_CONNECTION"))// Client wants a token
-//				{
-//					
-//				}
 				else if (message.getMessage().equals("CUSER")) // Client wants to create a user
 				{
-					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-										
+					
 					if (message.getObjContents().size() < 5 && objData.length < 2)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-								// new Envelope("FAIL");
 					}
 					else
 					{
-						// response = new Envelope("FAIL");
 						response = null;
 						if (objData[0] != null && objData[1] != null)
-						//if (message.getObjContents().get(0) != null)
 						{
-//							if(objData[1] != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								
-								String username = (String)objData[0];
-								String password = (String)objData[1];
-								
-								//String username = (String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-//								System.out.println(username);
-								
-								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-										//(UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
-								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								
-								if(checkToken && createUser(username, yourToken, password))
-								{					
-									
-											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
-									
-//									if (createUser(username, yourToken, password))
-//									{
-										response = encryptMessageWithSymmetricKey("OK", null, null);
-										// response = new Envelope("OK"); // Success
-//									}
-									
-								}
-								else
-								{
-									response = encryptMessageWithSymmetricKey("FAIL", null, null);
-									System.out.println("Token not authenticated.");
-								}
-//							}
+							String username = (String)objData[0];
+							String password = (String)objData[1];
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
+							
+							if(checkToken && createUser(username, yourToken, password))
+							{					
+								response = encryptMessageWithSymmetricKey("OK", null, null);
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
 						}// end if block
 						else
 						{
@@ -271,49 +188,31 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("DUSER")) // Client wants to delete a user
 				{
-					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
 					if (message.getObjContents().size() < 5)
-					//if (message.getObjContents().size() < 2)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-						// response = new Envelope("FAIL");
 					}
 					else
 					{
 						response = null;
-						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
-						//if (message.getObjContents().get(0) != null)
 						{							
-//							if(getFromEnvelope(Field.TOKEN) != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								String username = (String)objData[0];
-										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-								
-								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-										//(UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
-
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								
-								if(checkToken && deleteUser(username, yourToken))
-								{
-//									if (deleteUser(username, yourToken))
-//									{
-										
-										response = encryptMessageWithSymmetricKey("OK", null, new Object[]{compileKeys(yourToken.getGroups())});
-										//response = new Envelope("OK"); // Success
-//									}
-								}
-								else
-								{
-									response = encryptMessageWithSymmetricKey("FAIL", null, null);
-									System.out.println("Token not authenticated.");
-								}
-//							}
+							String username = (String)objData[0];
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
+							
+							if(checkToken && deleteUser(username, yourToken))
+							{
+								response = encryptMessageWithSymmetricKey("OK", null, new Object[]{compileKeys(yourToken.getGroups())});
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
 						}// end if block
 						else
 						{
@@ -324,52 +223,32 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("CGROUP")) // Client wants to create a group
 				{
-					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
-					/* TODO: Write this handler */
 					if (message.getObjContents().size() < 5)
-					//if (message.getObjContents().size() < 2)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-						//response = new Envelope("FAIL");
 					}
 					else
 					{
 						response = null;
-						//response = new Envelope("FAIL");
-						
 						if(objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
-						//if (message.getObjContents().get(0) != null)
 						{
-							
-//							if (getFromEnvelope(Field.TOKEN) != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								String groupname = (String)objData[0];
-										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-								
-								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-								//Token yourToken = (Token)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
-								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								if(checkToken && createGroup(groupname, yourToken))
-								{
-//									if (createGroup(groupname, yourToken))
-//									{
-										response = new Envelope("OK"); // Success
-										yourToken.getGroups().add(groupname);
-										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-										response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
-//									}
-								}
-								else
-								{
-									response = encryptMessageWithSymmetricKey("FAIL", null, null);
-									System.out.println("Token not authenticated.");
-								}
-//							}
+							String groupname = (String)objData[0];								
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
+							if(checkToken && createGroup(groupname, yourToken))
+							{
+								response = new Envelope("OK"); // Success
+								yourToken.getGroups().add(groupname);
+								yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
+								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
 						}// end if block
 						else
 						{
@@ -380,53 +259,33 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("DGROUP")) // Client wants to delete a group
 				{
-					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
 					
-					/* TODO: Write this handler */
 					if (message.getObjContents().size() < 5)
-					//if (message.getObjContents().size() < 2)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-						// response = new Envelope("FAIL");
 					}
 					else
 					{
-						response = null;
-						//response = new Envelope("FAIL");
-						
+						response = null;						
 						if (objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
-						{
-							
-//							if (getFromEnvelope(Field.TOKEN) != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								
-								String groupname = (String)objData[0];
-										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-								
-								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-								//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
-								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								if(checkToken && deleteGroup(groupname, yourToken))
-								{																	
-//									if (deleteGroup(groupname, yourToken))
-//									{
-										response = new Envelope("OK"); // Success
-										yourToken.getGroups().remove(groupname); // remove the group from the users token
-										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-										
-										//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-										response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
-//									}
-								}
-								else
-								{
-									response = encryptMessageWithSymmetricKey("FAIL", null, null);
-									System.out.println("Token not authenticated.");
-								}
-//							}
+						{							
+							String groupname = (String)objData[0];
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
+							if(checkToken && deleteGroup(groupname, yourToken))
+							{																	
+								response = new Envelope("OK"); // Success
+								yourToken.getGroups().remove(groupname); // remove the group from the users token
+								yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
+								response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
+							//							}
 						}// end if block
 						else
 						{
@@ -437,54 +296,31 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("LMEMBERS")) // Client wants a list of members in a group
 				{
-					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-					
-					/* TODO: Write this handler */
 					if (message.getObjContents().size() < 5)
-					//if (message.getObjContents().size() < 2)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-						//response = new Envelope("FAIL");
 					}
 					else
 					{
 						response = null;
-						//response = new Envelope("FAIL");
-						
 						if(objData[0] != null && getFromEnvelope(Field.TOKEN) != null)
-						//if (message.getObjContents().get(0) != null)
 						{
-							
-//							if(getFromEnvelope(Field.TOKEN) != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								String groupname = (String)objData[0];
-										//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(2)));
-								
-								UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-								//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(2)));
-								
-								boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-								
-								if(checkToken){
-								
+							String groupname = (String)objData[0];
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
+							if(checkToken){
 								List<String> members = listMembers(groupname, yourToken);
-								
-									if (members != null)
-									{
-										response = new Envelope("OK"); // Success
-										
-										//response = encryptMessageWithSymmetricKey(new Object[]{members, new Integer(members.size()) }, "OK");
-										response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{members, new Integer(members.size()) });
-									}
-								}
-								else
+								if (members != null)
 								{
-									response = encryptMessageWithSymmetricKey("FAIL", null, null);
-									System.out.println("Token not authenticated.");
+									response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{members, new Integer(members.size()) });
 								}
-//							}
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
 						}// end if block
 						else
 						{
@@ -495,67 +331,44 @@ public class GroupThread extends ServerThread
 				}// end else if block
 				else if (message.getMessage().equals("AUSERTOGROUP")) // Client wants to add user to a group
 				{
-					
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-					
-					/* TODO: Write this handler */
 					if (message.getObjContents().size() < 5)
-					//if (message.getObjContents().size() < 3)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-						//response = new Envelope("FAIL");
 					}
 					else
 					{
 						response = null;
-						//response = new Envelope("FAIL");
 						
 						if(objData[0] != null && objData[1] != null && getFromEnvelope(Field.TOKEN) != null)
-						//if (message.getObjContents().get(0) != null)
 						{
-//							if(objData[1] != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								
-//								if(getFromEnvelope(Field.TOKEN) != null)
-								//if (message.getObjContents().get(2) != null)
-//								{
-									String username = (String)objData[0];
-											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-									String groupname = (String)objData[1];
-											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
-									
-									UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-									//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
-									
-									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-									
-									if(checkToken)
+							String username = (String)objData[0];
+							String groupname = (String)objData[1];
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);									
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
+							
+							if(checkToken)
+							{
+								if (addUserToGroup(username, groupname, yourToken))
+								{
+									// Add the group name for the user in the token
+									if (username.equals(yourToken.getSubject()))
 									{
-										if (addUserToGroup(username, groupname, yourToken))
-										{
-//											response = new Envelope("OK"); // Success
-											// Add the group name for the user in the token
-											if (username.equals(yourToken.getSubject()))
-											{
-												yourToken.getGroups().add(groupname);
-											}
-											yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-											response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
-										}
-										else
-										{
-											response = encryptMessageWithSymmetricKey("FAIL", null, null);
-										}
+										yourToken.getGroups().add(groupname);
 									}
-									else
-									{
-										response = encryptMessageWithSymmetricKey("FAIL", null, null);
-										System.out.println("Token not authenticated.");
-									}
-//								}// end if block
-//							}// end if block
+									yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
+									response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
+								}
+								else
+								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								}
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
 						}// end if block
 						else
 						{
@@ -567,66 +380,42 @@ public class GroupThread extends ServerThread
 				else if (message.getMessage().equals("RUSERFROMGROUP")) // Client wants to remove user from a group
 				{
 					Object[] objData = (Object[])getFromEnvelope(Field.DATA);
-					
-					/* TODO: Write this handler */
 					if (message.getObjContents().size() < 5)
-					//if (message.getObjContents().size() < 3)
 					{
 						response = encryptMessageWithSymmetricKey("FAIL", null, null);
-						//response = new Envelope("FAIL");
 					}
 					else
 					{
 						response = null;
-						//response = new Envelope("FAIL");
-						
 						if(objData[0] != null && objData[1] != null && getFromEnvelope(Field.TOKEN) != null)
-						//if (message.getObjContents().get(0) != null)
 						{
+							String username = (String)objData[0];
+							String groupname = (String)objData[1];
+							UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
+							boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
 							
-//							if(objData[1] != null)
-							//if (message.getObjContents().get(1) != null)
-//							{
-								
-//								if (getFromEnvelope(Field.TOKEN) != null)
-								//if (message.getObjContents().get(2) != null)
-//								{
-									String username = (String)objData[0];
-											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(0), (byte[])message.getObjContents().get(3)));
-									String groupname = (String)objData[1];
-											//(String)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(1), (byte[])message.getObjContents().get(3)));
-									
-									UserToken yourToken = (UserToken)getFromEnvelope(Field.TOKEN);
-									//UserToken yourToken = (UserToken)convertToObject(decryptObjectBytes((byte[])message.getObjContents().get(2), (byte[])message.getObjContents().get(3)));
-									
-									boolean checkToken = yourToken.RSAVerifySignature("SHA1withRSA", PROVIDER, publicKey);
-									
-									if(checkToken){
-									
-										if (deleteUserFromGroup(username, groupname, yourToken))
-										{
-											response = new Envelope("OK"); // Success
-											// Remove the groupname from the user in the token
-											if(username.equals(yourToken.getSubject()))
-											{
-												yourToken.getGroups().remove(groupname);
-												yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
-											}
-											//response = encryptMessageWithSymmetricKey(new Object[]{yourToken}, "OK");
-											response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
-										}
-										else
-										{
-											response = encryptMessageWithSymmetricKey("FAIL", null, null);
-										}
-									}
-									else
+							if(checkToken){
+								if (deleteUserFromGroup(username, groupname, yourToken))
+								{
+									response = new Envelope("OK"); // Success
+									// Remove the groupname from the user in the token
+									if(username.equals(yourToken.getSubject()))
 									{
-										response = encryptMessageWithSymmetricKey("FAIL", null, null);
-										System.out.println("Token not authenticated.");
+										yourToken.getGroups().remove(groupname);
+										yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 									}
-//								}// end if block
-//							}// end if block
+									response = encryptMessageWithSymmetricKey("OK", yourToken, new Object[]{compileKeys(yourToken.getGroups())});
+								}
+								else
+								{
+									response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								}
+							}
+							else
+							{
+								response = encryptMessageWithSymmetricKey("FAIL", null, null);
+								System.out.println("Token not authenticated.");
+							}
 						}// end if block
 						else
 						{
@@ -644,15 +433,12 @@ public class GroupThread extends ServerThread
 				else
 				{
 					response = encryptMessageWithSymmetricKey("FAIL", null, null);
-					//response = new Envelope("FAIL"); // Server does not understand client request
 					output.writeObject(response);
 				}
-//				output.flush();
 			} while (proceed);
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method run()
@@ -663,15 +449,12 @@ public class GroupThread extends ServerThread
 	 * @param username The String representing the username.
 	 * @return Returns a valid UserToken
 	 */
-	// TODO: password support
 	private UserToken createToken(String username)
 	{
 		// Check that user exists
 		if (my_gs.userList.checkUser(username))
 		{
 			// Issue a new token with server's name, user's name, and user's groups
-			/** Proposed solution **/
-			// Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, "", "", 0);
 			UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), this.getServerName(), this.getIPAddress(), this.getPortNumber());
 			yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 			return yourToken;
@@ -688,15 +471,12 @@ public class GroupThread extends ServerThread
 	 * @param username The String representing the username.
 	 * @return Returns a valid UserToken
 	 */
-	// TODO: password support
 	private UserToken createToken(String username, String fileServerName, String ipAddress, int portNumber)
 	{
 		// Check that user exists
 		if (my_gs.userList.checkUser(username))
 		{
 			// Issue a new token with server's name, user's name, and user's groups
-			/** Proposed solution **/
-			// Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, "", "", 0);
 			UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), fileServerName, ipAddress, portNumber);
 			yourToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 			return yourToken;
@@ -708,7 +488,6 @@ public class GroupThread extends ServerThread
 	}// end method createToken(String)
 	
 	
-	// TODO: update with password
 	/**
 	 * This method will create a new user in the group server.
 	 * 
@@ -798,7 +577,6 @@ public class GroupThread extends ServerThread
 					// If user is the owner, removeMember will automatically delete group!
 					for (int index = 0; index < deleteFromGroups.size(); index++ )
 					{
-						// -- old implementation -- my_gs.groupList.removeMember(username, deleteFromGroups.get(index));
 						my_gs.groupList.removeUser(deleteFromGroups.get(index), username);
 					}
 					
@@ -815,13 +593,10 @@ public class GroupThread extends ServerThread
 					for (int index = 0; index < deleteOwnedGroup.size(); index++ )
 					{
 						// Use the delete group method. Token must be created for this action
-						/** Proposed solution **/
-						// Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, "", "", 0);
 						Token newToken = new Token(my_gs.name, username, deleteOwnedGroup, this.getServerName(), this.getIPAddress(), this.getPortNumber());
 						newToken.generateRSASignature("SHA1withRSA", PROVIDER, privateKey);
 						deleteGroup(deleteOwnedGroup.get(index), newToken);
 					}
-					
 					// Delete the user from the user list
 					my_gs.userList.deleteUser(username);
 					
@@ -843,7 +618,6 @@ public class GroupThread extends ServerThread
 		}
 	}// end method deleteUser(String, UserToken)
 	
-	// TODO
 	/**
 	 * Will create a group for a user.
 	 * Any user can create a group.
@@ -878,7 +652,6 @@ public class GroupThread extends ServerThread
 		return false; // requester does not exist
 	}// end method createGroup(String, UserToken)
 	
-	// TODO
 	/**
 	 * Will delete a group if the user is an admin or owner of the group as specified by UserToken.
 	 * 
@@ -922,7 +695,6 @@ public class GroupThread extends ServerThread
 		return false; // requester does not exist
 	}// end method deleteGroup(String, UserToken)
 	
-	// TODO
 	/**
 	 * Adds a user to a group.
 	 * 
@@ -966,7 +738,6 @@ public class GroupThread extends ServerThread
 	}// end method addUserToGroup(String, String, UserToken)
 	
 	// Note: does not alter user token here
-	// TODO
 	/**
 	 * Deletes a user from a group.
 	 * 
@@ -986,7 +757,6 @@ public class GroupThread extends ServerThread
 		return my_gs.groupList.removeUser(group, user);
 	}
 	
-	// TODO
 	/**
 	 * Will return a list of members of a group if the user is an admin or owner of the group.
 	 * 

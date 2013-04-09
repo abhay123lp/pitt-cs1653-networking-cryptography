@@ -1,6 +1,7 @@
 package server.group;
 
 /* This list represents the users on the server */
+
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.*;
@@ -18,18 +19,18 @@ public class UserList implements java.io.Serializable
 	 */
 	private static final long serialVersionUID = 7600343803563417992L;
 	
-	// TODO: password support
 	/**
 	 * list is a Hashtable class variable that connects a username (String) to a User object.
 	 */
 	private Hashtable<String, User> list = new Hashtable<String, User>();
+	
 	/**
 	 * passwordList is a Hashtable which holds the passwords of users
 	 * Retrieve the password by entering a username -- .get(username) returns null if that user
 	 * is not in the table
 	 */
-	// TODO: SHA-1 with a salt -- need to have an integer
 	private Hashtable<String, String> passwordList = new Hashtable<String, String>();
+	
 	/**
 	 * saltList is a Hashtable which holds the salts for SHA-1
 	 * We use the salts and concatenate them to the user's password.
@@ -56,18 +57,15 @@ public class UserList implements java.io.Serializable
 			random.nextBytes(salt);
 			// Concat the salt to the end of the password
 			String saltedPassword = password + new String(salt);
-//			System.out.println("password + salt: " + saltedPassword);
 			MessageDigest msgDigest = MessageDigest.getInstance("SHA1");
 			msgDigest.update(saltedPassword.getBytes());
 			// Now we get the salted, hashed password
 			byte[] saltedHashedPassword = msgDigest.digest();
 			
-			
 			// (Obvious) Store the hashed password -- useless to attacker with hash
 			passwordList.put(username, new String(saltedHashedPassword));
 			// Store the salt for future checks
 			saltList.put(username, new String(salt));
-			//System.out.println("UserList (checkPassword):  password: " + new String(password) + "  salted password: " + saltedPassword + "  salt: " + new String(salt) + "  hashed PW: " + new String(saltedHashedPassword));
 		}
 		catch(Exception e)
 		{
@@ -114,9 +112,6 @@ public class UserList implements java.io.Serializable
 	 * hashed password in passwordList.
 	 * @return Returns true if the username and password match.
 	 */
-	// TODO: SHA-1 hashing
-	// TODO: Do we need the list still? Key, value pairs already in passwordList
-	// TODO: comments
 	public synchronized boolean checkPassword(String username, String password)
 	{
 		try
@@ -134,12 +129,10 @@ public class UserList implements java.io.Serializable
 			
 			// Concat the salt to the end of the password
 			String saltedPassword = password + new String(salt);
-//			System.out.println("password + salt: " + saltedPassword);
 			MessageDigest msgDigest = MessageDigest.getInstance("SHA1");
 			msgDigest.update(saltedPassword.getBytes());
 			// Now we get the salted, hashed password
 			String saltedHashedPassword = new String(msgDigest.digest());
-			//System.out.println("UserList (checkPassword):  password: " + new String(password) + "  salted password: " + saltedPassword + "  salt: " + new String(salt) + "  hashed PW: " + new String(saltedHashedPassword));	
 			// Check the hashed password that was entered against the hashed password in the hashList.
 			if (saltedHashedPassword.equals(passwordList.get(username)))
 			{
@@ -223,7 +216,6 @@ public class UserList implements java.io.Serializable
 	 */
 	class User implements java.io.Serializable
 	{
-		
 		/**
 		 * 
 		 */

@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -17,35 +16,26 @@ import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import client.CAClient;
+import client.certificateAuthority.CAClient;
 
 import message.Envelope;
 import message.Field;
 import message.UserToken;
 
 /**
- * @author ongnathan
  *
  */
 public abstract class ServerThread extends Thread
 {
-	
-	
-	// Include three fields name of server, ip of server, port of server
-	// constructor ask to pass in those parameters, modify constructor, store values in fields
-	// Check token validity......
-	
 	private String serverName;
 	private String ipAddress;
 	private int portNumber;
@@ -115,7 +105,6 @@ public abstract class ServerThread extends Thread
 	}
 	
 	private void unencryptMessage(Envelope env){
-		
 		// Decrypt message enveloope store in Object[] lastMessageContents array
 		lastMessageContents = new Object[ENV_CONTENTS_SIZE];
 		
@@ -136,15 +125,9 @@ public abstract class ServerThread extends Thread
 		
 		// Get Data if it exists
 		if(env.getObjContents().get(4) != null){
-			
 			lastMessageContents[4] = convertToObject(decryptObjectBytes((byte[])env.getObjContents().get(4), ivByteArray));
-			
 		}
-		
-		
 	}
-	
-	
 	
 	/**
 	 * 
@@ -152,7 +135,6 @@ public abstract class ServerThread extends Thread
 	 * @return
 	 */
 	protected boolean checkValidityOfMessage(Envelope env){
-						
 		boolean isHMACValid = true;
 		boolean isMsgNumValid = true;
 		boolean isTokenValid = true;
@@ -162,8 +144,7 @@ public abstract class ServerThread extends Thread
 			
 		/* *** Check HMAC *** */
 		byte[] HMAC = (byte[])lastMessageContents[0];
-				
-		//Key integrityKey = genterateSymmetricKey();
+		
 		int lengthOfMastArray = 0;
 		
 		byte[] msgBytes = convertToByteArray(env.getMessage());
@@ -197,7 +178,6 @@ public abstract class ServerThread extends Thread
 			}
 			lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
 		}
-		
 		
 		byte[] masterArray = new byte[lengthOfMastArray];
 										
@@ -234,7 +214,6 @@ public abstract class ServerThread extends Thread
 					masterArray[indexToStart] = loopArray[j];
 					indexToStart++;
 				}
-				
 			}
 		}
 				
@@ -247,7 +226,6 @@ public abstract class ServerThread extends Thread
 				isHMACValid = false;
 				break;
 			}
-			
 		}
 		
 		// If false return 
@@ -255,33 +233,25 @@ public abstract class ServerThread extends Thread
 			System.out.println("FAIL HMAC CHECK");
 			return isHMACValid;
 		}
-				
+		
 		// Check Number of Message
-		
 		Integer incomingMessageNumber = (Integer)lastMessageContents[2];
-					
-		
 		if(incomingMessageNumber == numberOfMessage){
-			
 			// Number of the message to send out for response to user
 			//incomingMessageNumber = incomingMessageNumber + 1;
 			synchronized(Integer.class)
 			{
 				numberOfMessage = numberOfMessage + 1;
 			}
-			
 		} else {
-						
 			// Not valid, we will disconnect after receiving -1
 			System.out.println("FAIL MESSAGE NUMBER CHECK");
 			isMsgNumValid = false;
 			return isMsgNumValid;
-			
 		}
 		
 		// Check Token
 		if(lastMessageContents[3] != null){
-			
 			UserToken checkToken = (UserToken)lastMessageContents[3];
 			// Group Server public key
 			if(!isValidToken(checkToken)){
@@ -290,167 +260,65 @@ public abstract class ServerThread extends Thread
 				isTokenValid = false;
 				return isTokenValid;
 			}
-			
-			
 		}
-				
 		return true;
-				
 	}
 	
 	protected Object getFromEnvelope(Field f){
-		
-		return lastMessageContents[f.ordinal()];	
-				
+		return lastMessageContents[f.ordinal()];
 	}
 	
-		
-	
 	protected static byte[] convertToByteArray(Object objToConvert){
-		
 		try{
-			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		    ObjectOutputStream oos = new ObjectOutputStream(baos);
 		    oos.writeObject(objToConvert);
 		    oos.flush();
-		    //return b.toByteArray(); 
 			return baos.toByteArray();
-		
 		} catch(Exception ex){
-		
-//			System.out.println("Error creating byte array envelope: " + ex.toString());
 			ex.printStackTrace();
 		}
-		
 		return null;
-		
 	}
 	
 	protected static Object convertToObject(byte[] bytesToConvert){
-		
 		try
 		{
-			
 			ByteArrayInputStream bais = new ByteArrayInputStream(bytesToConvert);
-	        ObjectInputStream ois = new ObjectInputStream(bais);
-	        
-	        return ois.readObject();
-	        
-		} catch(Exception ex){
+			ObjectInputStream ois = new ObjectInputStream(bais);
+			return ois.readObject();
 			
+		} catch(Exception ex){
 //			System.out.println("Error byte array to object: " + ex.toString());
 			ex.printStackTrace();
-			
 		}
-		
 		return null;
-		
 	}
 	
-//	/**
-//	 * This method will encrypt data via an AES encryption algorithm utilizing an IV and symmetric key.
-//	 * @param algorithm The algorithm to use.
-//	 * @param provider The security provider.
-//	 * @param key The symmetric key
-//	 * @param iv The IV used for encryption.
-//	 * @param dataToEncrypt The clear data to encrypt.
-//	 * @return byte[] array of encrypted data.
-//	 */
-//	private byte[] AESEncrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] byteData){
-//
-//		try{
-//
-//			// Create the cipher object
-//			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-//
-//			// Initialize the cipher encryption object, add the key, and add the IV
-//			objCipher.init(Cipher.ENCRYPT_MODE, key, iv); 
-//			
-//			// Encrypt the data and store in encryptedData
-//			return objCipher.doFinal(byteData);
-//
-//
-//		} catch(Exception ex){
-//			System.out.println(ex.toString());
-//			ex.printStackTrace();
-//		}
-//
-//		return null;
-//	}
-//	
-//	
-//	/**
-//	 * This method will decrypt the data.
-//	 * @param algorithm The algorithm to use.
-//	 * @param provider The security provider.
-//	 * @param key The symmetric key to use.
-//	 * @param iv The IV to use for decryption.
-//	 * @param dataToDecrypt The data to decrypt.
-//	 * @return byte[] array of decrypted data.
-//	 */
-//	private byte[] AESDecrypt(String algorithm, String provider, Key key, IvParameterSpec iv, byte[] dataToDecrypt){
-//
-//		try{
-//
-//			Cipher objCipher = Cipher.getInstance(algorithm, provider);
-//
-//			// Initialize the cipher encryption object, add the key, and add the IV
-//			objCipher.init(Cipher.DECRYPT_MODE, key, iv); 
-//
-//			// Encrypt the data and store in encryptedData
-//			return objCipher.doFinal(dataToDecrypt);
-//
-//		} catch(Exception ex){
-//			System.out.println(ex.toString());
-//			ex.printStackTrace();
-//		}
-//
-//		return null;
-//	}
-	
-	
-		
-	
 	private byte[] createHMAC(Key symmetricIntegrityKey, byte[] msgData){
-		
-		
 		try{
 			Mac HMAC = Mac.getInstance(HMAC_ALGORITHM, PROVIDER);
 			HMAC.init(symmetricIntegrityKey);
-			
 			return HMAC.doFinal(msgData);
-			
 		}catch(Exception ex){
 			ex.printStackTrace();
 		}
-		
 		return null;
-		
-		
-		
-		
 	}
 	
 		
 	protected Envelope encryptMessageWithSymmetricKey(String message, UserToken token, Object[] data){
-		
 		try{
-			
 			Envelope response = new Envelope(message);
-			
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-			
 			IvParameterSpec IV = ivAES();
 			
 			// Initialize the cipher encryption object, add the key, and add the IV
 			objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
 			
 			for(Field f : Field.values()){
-				
 				switch(f){
 					case HMAC:
-						
 						//Key integrityKey = genterateSymmetricKey();
 						int lengthOfMastArray = 0;
 						
@@ -482,7 +350,6 @@ public abstract class ServerThread extends Thread
 							}
 							lengthOfMastArray = lengthOfMastArray + sizeOfVarLenData;
 						}
-						
 						
 						byte[] masterArray = new byte[lengthOfMastArray];
 						
@@ -547,13 +414,7 @@ public abstract class ServerThread extends Thread
 						
 					case DATA:
 						if(data != null){
-							
 							response.addObject(objCipher.doFinal(convertToByteArray(data)));
-							
-							//for(int i = 0; i < data.length; i++){
-							// encrypt and add to envelope
-							//	response.addObject(objCipher.doFinal(convertToByteArray(data[i])));
-							//}
 						}
 						else
 						{
@@ -562,19 +423,6 @@ public abstract class ServerThread extends Thread
 						break;
 				}
 			}
-			//byte[] dataToEncryptBytes = dataToEncrypt.getBytes();
-			
-			/*
-		for(Object o : objs){
-			
-			byte[] newEncryptedChallenge = objCipher.doFinal(convertToByteArray(o));	
-			response.addObject(newEncryptedChallenge);
-			
-		}
-		response.addObject(IV.getIV());
-																
-		return response;
-			 */
 			
 			//increment number of message
 			synchronized(Integer.class)
@@ -592,9 +440,7 @@ public abstract class ServerThread extends Thread
 	}
 	
 	protected byte[] decryptObjectBytes(byte[] objByte, byte[] iv)  {
-		
 		try{
-
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
 
 			// Initialize the cipher encryption object, add the key, and add the IV
@@ -602,11 +448,9 @@ public abstract class ServerThread extends Thread
 
 			// Encrypt the data and store in encryptedData
 			return objCipher.doFinal(objByte);
-
 		} catch(Exception ex){
 			ex.printStackTrace();
 		}
-
 		return null;
 	}
 	
@@ -623,9 +467,6 @@ public abstract class ServerThread extends Thread
 			}
 			try
 			{
-//				byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); //should be encrypted with public key
-//				byte[] encryptedToken = (byte[])requestSecureConnection.getObjContents().get(1);
-				
 				byte[] encryptedChallenge = (byte[])((Object[])this.getFromEnvelope(Field.DATA))[0];
 				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
 				objCipher.init(Cipher.DECRYPT_MODE, privateKey); 
@@ -659,11 +500,6 @@ public abstract class ServerThread extends Thread
 			{
 				e.printStackTrace();
 			}
-//			catch(InvalidAlgorithmParameterException e)
-//			{
-//				e.printStackTrace();
-//				response = null;
-//			}
 			catch(NoSuchPaddingException e)
 			{
 				e.printStackTrace();
@@ -720,7 +556,6 @@ public abstract class ServerThread extends Thread
 					String decryptedGroupServerName = new String(objCipher.doFinal(encryptedGroupServerName));
 					CAClient caClient = new CAClient(decryptedGroupServerName);
 					caClient.connect(CA_LOC, CA_PORT, null);
-//					caClient.connect();
 					caClient.run();
 					caClient.disconnect();
 					this.groupServerPublicKey = (RSAPublicKey)caClient.getPublicKey();
@@ -733,24 +568,7 @@ public abstract class ServerThread extends Thread
 				//getting a random integer
 				this.random.nextBytes(this.challengeBytes);
 
-				//TODO encrypt all material and send it back
 				return encryptMessageWithSymmetricKey("OK", null, new Object[] {decryptedChallenge, this.challengeBytes});
-				
-//				objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-//				// Get the IV to use
-//				IvParameterSpec IV = ivAES();
-//
-//				// Initialize the cipher encryption object, add the key, and add the IV
-//				objCipher.init(Cipher.ENCRYPT_MODE, this.confidentialKey, IV); 
-//
-//				// Encrypt the data and store in encryptedData
-//				byte[] newEncryptedChallenge = objCipher.doFinal(decryptedChallenge);
-//
-//				// Respond to the client. On error, the client will receive a null token
-//				response = new Envelope("OK");
-//
-//				response.addObject(newEncryptedChallenge);
-//				response.addObject(IV.getIV());
 			}
 		}
 		catch(NoSuchAlgorithmException e)
@@ -758,11 +576,6 @@ public abstract class ServerThread extends Thread
 			e.printStackTrace();
 			response = null;
 		}
-//		catch(InvalidAlgorithmParameterException e)
-//		{
-//			e.printStackTrace();
-//			response = null;
-//		}
 		catch(NoSuchPaddingException e)
 		{
 			e.printStackTrace();
@@ -788,18 +601,12 @@ public abstract class ServerThread extends Thread
 			e.printStackTrace();
 			response = null;
 		}
-		
 		return response;
 	}
 	
 	//FOR USE ONLY WITH FILETHREAD
-	
 	protected boolean isValidToken(UserToken t)
 	{
-//		if(t == null){
-//			return false;
-//		}
-//		boolean x = t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey));
 		return t.RSAVerifySignature("SHA1withRSA", PROVIDER, (this.groupServerPublicKey == null ? this.publicKey : this.groupServerPublicKey)) && t.getFileServerName().equals(this.serverName) && t.getIPAddress().equals(this.ipAddress) && t.getPortNumber() == this.portNumber;
 	}
 	

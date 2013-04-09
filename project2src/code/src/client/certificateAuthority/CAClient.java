@@ -1,4 +1,4 @@
-package client;
+package client.certificateAuthority;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.PublicKey;
+
+import client.Client;
 
 import message.Envelope;
 
@@ -88,24 +90,9 @@ public class CAClient extends Client
 			System.out.println("Disconnecting from previous connection...");
 			this.disconnect();
 		}
-//		System.out.println("Attempting to connect...");
 		try
 		{
-//			boolean tryAgain = true;
-//			while(tryAgain)
-//			{
-//				try
-//				{
-					this.sock = new Socket(server, port);
-//					tryAgain = false;
-//				}
-//				catch(ConnectException e)
-//				{
-//					e.printStackTrace();
-//				}
-//			}
-			
-			// this.sock.setSoTimeout(1000);
+			this.sock = new Socket(server, port);
 			this.output = new ObjectOutputStream(this.sock.getOutputStream());
 			this.input = new ObjectInputStream(this.sock.getInputStream());
 		}
@@ -119,8 +106,6 @@ public class CAClient extends Client
 			e.printStackTrace();
 			return false;
 		}
-		
-//		System.out.println("Success!  Connected to " + server + " at port " + port);
 		return true;
 	}// end method connect(String, int)
 	
@@ -137,7 +122,6 @@ public class CAClient extends Client
 			}
 			catch (Exception e)
 			{
-//				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace(System.err);
 			}
 			this.sock = null;

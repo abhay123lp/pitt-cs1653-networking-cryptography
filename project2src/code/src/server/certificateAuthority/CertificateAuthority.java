@@ -36,19 +36,9 @@ public class CertificateAuthority extends Server
 	protected ArrayList<String> serverList;
 	protected Hashtable<String, PublicKey> serverPublicKeyPairs; //server name --> public key
 	
-//	private RSAPrivateKey privateKey;
-//	private RSAPublicKey publicKey;
-	
-//	private static final String ALGORITHM = "rsa";
-//	private static final String RAND_ALG = "SHA1PRNG";
-//	private static final String PROVIDER = "bc";
-//	private static final int KEY_SIZE = 1024;
-	
 	private static final int DEF_PORT = 4999;
 	private static final String NAME = "Certificate Authority";
-	
 	private static final String TEMP_FILE_NAME = "caTemp.tmp";
-	
 	
 	public static void main(String[] args)
 	{
@@ -71,9 +61,6 @@ public class CertificateAuthority extends Server
 			server.start();
 		}
 	}// end method main(String[])
-
-	
-	
 	
 	public CertificateAuthority()
 	{
@@ -85,30 +72,6 @@ public class CertificateAuthority extends Server
 		super(port, NAME);
 		this.serverList = new ArrayList<String>();
 		this.serverPublicKeyPairs = new Hashtable<String, PublicKey>();
-		
-//		KeyPair rsaKeyPair = null;
-//		try
-//		{
-//			SecureRandom random = SecureRandom.getInstance(RAND_ALG, "SUN");
-//			KeyPairGenerator rsaKeyGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
-//			
-//			rsaKeyGenerator.initialize(KEY_SIZE, random);
-//			rsaKeyPair = rsaKeyGenerator.generateKeyPair();
-//		}
-//		catch (NoSuchAlgorithmException e)
-//		{
-//			System.err.println("FATAL ERROR");
-//			e.printStackTrace();
-//		}
-//		catch (NoSuchProviderException e)
-//		{
-//			System.err.println("FATAL ERROR");
-//			e.printStackTrace();
-//		}
-//		// Private Key
-//		this.privateKey = (RSAPrivateKey)rsaKeyPair.getPrivate();
-//		// Public key
-//		this.publicKey = (RSAPublicKey)rsaKeyPair.getPublic();
 	}
 	
 	public void start()
@@ -116,7 +79,7 @@ public class CertificateAuthority extends Server
 		File autoSaved = new File(TEMP_FILE_NAME);
 		if(autoSaved.exists())
 		{
-			//reload everything
+			//TODO reload everything
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListenerCA()));
 		ScheduledExecutorService timer = new ScheduledThreadPoolExecutor(1);
@@ -142,7 +105,6 @@ public class CertificateAuthority extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
-//				thread = new CAThread(sock, this, this.privateKey);
 				thread = new CAThread(sock, this);
 				System.out.println("got connection from " + sock.getInetAddress().getCanonicalHostName());
 				thread.start();
@@ -150,8 +112,6 @@ public class CertificateAuthority extends Server
 		}// end try block
 		catch (Exception e)
 		{
-			//TODO
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 
@@ -165,7 +125,6 @@ public class CertificateAuthority extends Server
 			e1.printStackTrace();
 			return;
 		}
-		
 		timer.shutdownNow();
 	}
 }
@@ -175,23 +134,7 @@ public class CertificateAuthority extends Server
  */
 class ShutDownListenerCA extends Thread
 {
-	/**
-	 * The group server to write out.
-	 */
-//	public CertificateAuthority certificateAuthority;
-	
 	private static final String TEMP_FILE_NAME = "caTemp.tmp";
-	
-	/**
-	 * The constructor.
-	 * Takes in the GroupServer to write out.
-	 * 
-	 * @param certificateAuthority The GroupServer to write out.
-	 */
-//	public ShutDownListenerCA(CertificateAuthority certificateAuthority)
-//	{
-//		this.certificateAuthority = certificateAuthority;
-//	}
 	
 	public ShutDownListenerCA()
 	{
@@ -231,32 +174,27 @@ class AutoSaveCA extends Thread
 	
 	public final void run()
 	{
-//		do
-//		{
+		try
+		{
+			System.out.println("Autosave group and user lists...");
+			ObjectOutputStream outStream;
 			try
 			{
-//				Thread.sleep(300000); // Save group and user lists every 5 minutes
-				System.out.println("Autosave group and user lists...");
-				ObjectOutputStream outStream;
-				try
-				{
-					outStream = new ObjectOutputStream(new FileOutputStream(TEMP_FILE_NAME));
-					outStream.writeObject(this.certificateAuthority.serverList);
-					outStream.writeObject(this.certificateAuthority.serverPublicKeyPairs);
-					outStream.flush();
-					outStream.close();
-				}
-				catch (Exception e)
-				{
-//					System.err.println("Error: " + e.getMessage());
-					e.printStackTrace(System.err);
-				}
-			}// end try block
+				outStream = new ObjectOutputStream(new FileOutputStream(TEMP_FILE_NAME));
+				outStream.writeObject(this.certificateAuthority.serverList);
+				outStream.writeObject(this.certificateAuthority.serverPublicKeyPairs);
+				outStream.flush();
+				outStream.close();
+			}
 			catch (Exception e)
 			{
-				System.out.println("Autosave Interrupted");
+				e.printStackTrace(System.err);
 			}
-//		} while (true); // end do while
+		}// end try block
+		catch (Exception e)
+		{
+			System.out.println("Autosave Interrupted");
+		}
 	}// end method run()
 }//end class AutoSave
 
@@ -267,21 +205,13 @@ class CAThread extends Thread
 	 */
 	private final Socket socket;
 	
-//	private ObjectInputStream input;
-//	private ObjectOutputStream output;
-	
 	private CertificateAuthority ca;
-	
-//	private RSAPrivateKey privateKey;
 	
 	public CAThread(Socket socket, CertificateAuthority ca) throws IOException
 	{
 		super();
 		this.socket = socket;
-//		this.input = new ObjectInputStream(socket.getInputStream());
-//		this.output = new ObjectOutputStream(socket.getOutputStream());
 		this.ca = ca;
-//		this.privateKey = privateKey;
 	}
 	
 	public final void run()
@@ -292,109 +222,84 @@ class CAThread extends Thread
 			final ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 			final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
 			//get message, get public key, store in hashmap and key
-//			do
-//			{
-				Envelope received = null;
-				try
+			Envelope received = null;
+			try
+			{
+				received = (Envelope)input.readObject();
+			}
+			catch (ClassNotFoundException e)
+			{
+				e.printStackTrace();
+				System.err.println("FATAL ERROR");
+				return;
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				System.err.println("FATAL ERROR");
+				return;
+			}
+			
+			String message = received.getMessage();
+			Envelope response = null;
+			
+			if(message.equals("ADDKEY"))
+			{
+				String serverName = (String)received.getObjContents().get(0);
+				PublicKey pubKey = (PublicKey)received.getObjContents().get(1);
+				if(this.ca.serverList.contains(serverName) || serverName == null || pubKey == null)
 				{
-					received = (Envelope)input.readObject();
-				}
-				catch (ClassNotFoundException e)
-				{
-					e.printStackTrace();
-					System.err.println("FATAL ERROR");
-					return;
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-					System.err.println("FATAL ERROR");
-					return;
-				}
-				
-				String message = received.getMessage();
-				Envelope response = null;
-				
-				if(message.equals("ADDKEY"))
-				{
-					String serverName = (String)received.getObjContents().get(0);
-					PublicKey pubKey = (PublicKey)received.getObjContents().get(1);
-					if(this.ca.serverList.contains(serverName) || serverName == null || pubKey == null)
-					{
-						response = new Envelope("FAIL");
-					}
-					else
-					{
-						try
-						{
-							this.ca.serverList.add(serverName);
-							this.ca.serverPublicKeyPairs.put(serverName, pubKey); //FIXME may not be an X509EncodedKeySpec
-						}
-						catch(Exception e)
-						{
-							e.printStackTrace();
-							return;
-						}
-						
-						response = new Envelope("OK");
-					}
-				}
-				else if(message.equals("GETKEY"))
-				{
-					String serverName = (String)received.getObjContents().get(0);
-					if(!this.ca.serverList.contains(serverName))
-					{
-						response = new Envelope("FAIL");
-					}
-					else
-					{
-						response = new Envelope("OK");
-						response.addObject(this.ca.serverPublicKeyPairs.get(serverName));
-					}
+					response = new Envelope("FAIL");
 				}
 				else
 				{
-					//unrecognized command
+					try
+					{
+						this.ca.serverList.add(serverName);
+						this.ca.serverPublicKeyPairs.put(serverName, pubKey);
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+						return;
+					}
+					
+					response = new Envelope("OK");
+				}
+			}
+			else if(message.equals("GETKEY"))
+			{
+				String serverName = (String)received.getObjContents().get(0);
+				if(!this.ca.serverList.contains(serverName))
+				{
 					response = new Envelope("FAIL");
 				}
-				
-				try
+				else
 				{
-					output.writeObject(response);
+					response = new Envelope("OK");
+					response.addObject(this.ca.serverPublicKeyPairs.get(serverName));
 				}
-				catch (IOException e)
-				{
-					System.err.println("FATAL ERROR");
-					e.printStackTrace();
-					return;
-				}
-//			}while(true);
+			}
+			else
+			{
+				//unrecognized command
+				response = new Envelope("FAIL");
+			}
+			
+			try
+			{
+				output.writeObject(response);
+			}
+			catch (IOException e)
+			{
+				System.err.println("FATAL ERROR");
+				e.printStackTrace();
+				return;
+			}
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
 		}
 	}
-	
-//	public static void main(String[] args)
-//	{
-//		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-//		if (args.length > 0)
-//		{
-//			try
-//			{
-//				CertificateAuthority server = new CertificateAuthority(Integer.parseInt(args[0]));
-//				server.start();
-//			}
-//			catch (NumberFormatException e)
-//			{
-//				System.out.printf("Enter a valid port number or pass no arguments to use the default port (%d)\n", GroupServer.SERVER_PORT);
-//			}
-//		}
-//		else
-//		{
-//			CertificateAuthority server = new CertificateAuthority();
-//			server.start();
-//		}
-//	}// end method main(String[])
 }

@@ -5,18 +5,12 @@ package server.group;
  * On exit, the server saves the user list to file. 
  */
 
-/*
- * TODO: This file will need to be modified to save state related to
- *       groups that are created in the system
- *
- */
-
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
 import java.util.*;
 
-import client.CAServerClient;
+import client.certificateAuthority.CAServerClient;
 
 import server.Server;
 
@@ -69,7 +63,6 @@ public class GroupServer extends Server
 		super(_port, name);
 	}
 	
-	// TODO: password support
 	public void start()
 	{
 		// Overwrote server.start() because if no user file exists, initial admin account needs to be created
@@ -85,10 +78,8 @@ public class GroupServer extends Server
 			String groupFile = "GroupList.bin";
 			ObjectInputStream userStream;
 			ObjectInputStream groupStream;
-			// FileInputStream fis = new FileInputStream(userFile);
 			userStream = new ObjectInputStream(new FileInputStream(userFile));
 			userList = (UserList)userStream.readObject();
-			// fis.close();
 			userStream.close();
 			
 			groupStream = new ObjectInputStream(new FileInputStream(groupFile));
@@ -96,20 +87,15 @@ public class GroupServer extends Server
 			groupStream.close();
 		}// end try block
 		catch (FileNotFoundException e)
-		{
-			
-			// TODO CREATE PUBLIC/PRIVATE KEY
-						
-			try {
-												
+		{						
+			try {							
 				// Create new CAClient
 				CAServerClient ca = new CAServerClient(this.name, publicKey);
+				
+				// Want to connect to CA, pass it both the server's name & public key
 				ca.connect(CA_LOC, CA_SERVER_PORT, null);
 				ca.run();
-				
 				ca.disconnect();
-								
-				// Pass along this server's name and public key
 				
 				if(!ca.getSuccess())
 				{
@@ -118,12 +104,8 @@ public class GroupServer extends Server
 					return;
 				}
 			} catch (Exception ex) {
-				// TODO Auto-generated catch block
 				ex.printStackTrace();
 			}
-			
-			// Want to connect to CA, pass it both the server's name & public key
-			
 			
 			System.out.println("UserList File Does Not Exist. Creating UserList...");
 			System.out.println("No users currently exist. Your account will be the administrator.");
@@ -174,11 +156,9 @@ public class GroupServer extends Server
 				thread = new GroupThread(sock, this, privateKey, publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
 				thread.start();
 			}
-			// serverSock.close();
 		}// end try block
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method start()
@@ -222,7 +202,6 @@ class ShutDownListener extends Thread
 		}
 		catch (Exception e)
 		{
-//			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace(System.err);
 		}
 	}// end method run()
@@ -272,7 +251,6 @@ class AutoSave extends Thread
 				}
 				catch (Exception e)
 				{
-//					System.err.println("Error: " + e.getMessage());
 					e.printStackTrace(System.err);
 				}
 			}// end try block

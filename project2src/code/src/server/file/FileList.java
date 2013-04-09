@@ -6,8 +6,6 @@ import java.util.*;
 
 import message.ShareFile;
 
-
-
 /**
  * A list of all the files in a particular {@link FileServer}.
  * 
@@ -15,7 +13,6 @@ import message.ShareFile;
  */
 public class FileList implements java.io.Serializable
 {
-	/* Serializable so it can be stored in a file for persistence */
 	/**
 	 * 
 	 */
@@ -24,7 +21,7 @@ public class FileList implements java.io.Serializable
 	/**
 	 * ArrayList of ShareFile objects that represent the list of files to share.
 	 */
-	private ArrayList<ShareFile> list; // The list of files to share.
+	private ArrayList<ShareFile> list;
 	
 	/**
 	 * Constructor that initializes the list class variable.
