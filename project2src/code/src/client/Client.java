@@ -67,8 +67,8 @@ public abstract class Client implements ClientInterface
 	public Client()
 	{
 		this.random = new SecureRandom();
-		this.confidentialKey = this.genterateSymmetricKey();
-		this.integrityKey = this.genterateSymmetricKey();
+		this.confidentialKey = this.generateSymmetricKey();
+		this.integrityKey = this.generateSymmetricKey();
 		this.lastMessageContents = null;
 		this.numberOfMessage = 0;
 	}
@@ -278,7 +278,7 @@ public abstract class Client implements ClientInterface
 	/**
 	 * This method will generate a symmetric key for use.
 	 */
-	private final Key genterateSymmetricKey()
+	private final Key generateSymmetricKey()
 	{
 		try
 		{
