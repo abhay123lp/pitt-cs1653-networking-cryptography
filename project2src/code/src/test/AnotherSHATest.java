@@ -6,19 +6,49 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 
 public class AnotherSHATest {
+	
+	private MessageDigest md;
 
-	public AnotherSHATest() {
-		// TODO Auto-generated constructor stub
+	public AnotherSHATest()
+	{
+		this.md = null;
+		try
+		{
+			this.md = MessageDigest.getInstance("SHA", "BC");
+			this.md.reset();
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			e.printStackTrace();
+		}
+		catch (NoSuchProviderException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
-	public boolean createTest()
+	public void createTest(int numInstances)
 	{
-		byte[] origInput = generateRandomInput(16, 3);
-		byte[] hash = generateSHAHash(origInput);
-		byte[] invertHash = invertHash(hash, 16, 3);
+		long sumOfTimes = 0;
+		byte[] origInput = null;
+		byte[] hash = null;
+		long startTime = 0;
+		byte[] invertHash = null;
+		long endTime = 0;
+		for(int i = 0; i < numInstances; i++)
+		{
+			origInput = generateRandomInput(16, 3);
+			hash = generateSHAHash(origInput);
+			startTime = System.currentTimeMillis();
+			invertHash = invertHash(hash, 16, 3);
+			endTime = System.currentTimeMillis();
+			sumOfTimes += (endTime - startTime);
+		}
+		System.out.println("It took the last one " + (endTime-startTime) + "ms to invert the hash");
 		printArray(origInput);
 		printArray(invertHash);
-		return (new String(origInput)).equals(new String(invertHash));
+		System.out.println("It took an average of " + ((double)sumOfTimes/numInstances) + "ms to convert");
+//		return (new String(origInput)).equals(new String(invertHash));
 	}
 	
 	public byte[] invertHash(byte[] digest, int lengthOfOrig, int lengthOfRandom)
@@ -31,21 +61,24 @@ public class AnotherSHATest {
 		}
 		String digestString = new String(digest);
 		byte[] counter = combineBytes(ones, randomIter);
-		boolean same = digestString.equals(new String(generateSHAHash(counter)));
+		String counterString = new String(generateSHAHash(counter));
+		boolean same = digestString.hashCode() == counterString.hashCode() && digestString.equals(counterString);
 		while(!same)
 		{
 			randomIter[0]++;
 			boolean carryOver = randomIter[0] == Byte.MIN_VALUE;
 			for(int i = 1; i < lengthOfRandom; i++)
 			{
-				if(carryOver)
+				if(!carryOver)
 				{
-					randomIter[i]++;
-					carryOver = randomIter[i] == Byte.MIN_VALUE;
+					break;
 				}
+				randomIter[i]++;
+				carryOver = randomIter[i] == Byte.MIN_VALUE;
 			}
 			counter = combineBytes(ones, randomIter);
-			same = digestString.equals(new String(generateSHAHash(counter)));
+			counterString = new String(generateSHAHash(counter));
+			same = digestString.hashCode() == counterString.hashCode() && digestString.equals(counterString);
 			if(carryOver)
 			{
 				//Means it exhausted all possibilities, but did not find the correct thing.
@@ -57,18 +90,9 @@ public class AnotherSHATest {
 	
 	public byte[] generateSHAHash(byte[] array)
 	{
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA", "BC");
-			md.update(array);
-			return md.digest();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+//		this.md.reset();
+		this.md.update(array);
+		return md.digest();
 	}
 	
 	public byte[] generateRandomInput(int totalSize, int lengthOfRandom)
@@ -116,6 +140,7 @@ public class AnotherSHATest {
 	public static void main(String[] args)
 	{
 		AnotherSHATest ashat = new AnotherSHATest();
-		System.out.println(ashat.createTest());
+//		System.out.println(ashat.createTest());
+		ashat.createTest(100);
 	}
 }
