@@ -37,6 +37,8 @@ public class FileServer extends Server
 	private static final String CA_LOC = "localhost";
 	private static final int DEF_CA_PORT = 4999;
 	
+	private static final int TIMEOUT = 7000;
+	
 	/**
 	 * Default constructor.
 	 * Uses the default port of 4321
@@ -132,6 +134,7 @@ public class FileServer extends Server
 			while (running)
 			{
 				sock = serverSock.accept();
+				sock.setSoTimeout(TIMEOUT);
 				thread = new FileThread(sock, this.privateKey, this.publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
 				thread.start();
 			}
