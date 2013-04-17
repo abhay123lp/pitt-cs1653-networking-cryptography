@@ -3,6 +3,9 @@ package client;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -38,6 +41,8 @@ public abstract class Client implements ClientInterface
 	 */
 	protected Socket sock;
 	
+	private MessageDigest md; 
+	
 	/**
 	 * The output stream to the server.
 	 */
@@ -71,6 +76,18 @@ public abstract class Client implements ClientInterface
 		this.integrityKey = this.generateSymmetricKey();
 		this.lastMessageContents = null;
 		this.numberOfMessage = 0;
+		try {
+			this.md = MessageDigest.getInstance("SHA", "BC");
+		} catch (NoSuchAlgorithmException e) {
+			
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			
+		} catch(NoSuchProviderException e){
+			
+			e.printStackTrace();
+			
+		}
 	}
 	
 	private void unencryptMessage(Envelope env)
@@ -500,6 +517,84 @@ public abstract class Client implements ClientInterface
 		return this.connect(server, port, serverName, null, null);
 	}
 	
+	public Envelope computeHashInversion(Integer inputLen, Integer randByteLen, byte[] hashInput, Object returnMsg){
+		// brute force hash inversion
+		byte[] bruteForceInput = invertHash(hashInput, inputLen, randByteLen);
+		
+		Envelope answerEnvelope = new Envelope("HASH_CHALLENGE");		
+		answerEnvelope.addObject(bruteForceInput);
+		answerEnvelope.addObject(returnMsg);
+		return answerEnvelope;
+		
+		// create envelope as hash challenge - return
+		// Envelope has brute force input, return message
+		
+		
+	}
+	
+	public byte[] invertHash(byte[] digest, int lengthOfOrig, int lengthOfRandom)
+	{
+		byte[] ones = generateAllOnes(lengthOfOrig-lengthOfRandom);
+		byte[] randomIter = new byte[lengthOfRandom];
+		for(int i = 0; i < lengthOfRandom; i++)
+		{
+			randomIter[i] = Byte.MIN_VALUE;
+		}
+		String digestString = new String(digest);
+		byte[] counter = combineBytes(ones, randomIter);
+		String counterString = new String(generateSHAHash(counter));
+		boolean same = digestString.hashCode() == counterString.hashCode() && digestString.equals(counterString);
+		while(!same)
+		{
+			randomIter[0]++;
+			boolean carryOver = randomIter[0] == Byte.MIN_VALUE;
+			for(int i = 1; i < lengthOfRandom; i++)
+			{
+				if(!carryOver)
+				{
+					break;
+				}
+				randomIter[i]++;
+				carryOver = randomIter[i] == Byte.MIN_VALUE;
+			}
+			counter = combineBytes(ones, randomIter);
+			counterString = new String(generateSHAHash(counter));
+			same = digestString.hashCode() == counterString.hashCode() && digestString.equals(counterString);
+			if(carryOver)
+			{
+				//Means it exhausted all possibilities, but did not find the correct thing.
+				break;
+			}
+		}
+		return counter;
+	}
+	
+	public byte[] combineBytes(byte[] array1, byte[] array2)
+	{
+		byte[] total = new byte[array1.length+array2.length];
+		System.arraycopy(array1, 0, total, 0, array1.length);
+		System.arraycopy(array2, 0, total, array1.length, array2.length);
+		return total;
+	}
+	
+	public byte[] generateSHAHash(byte[] array)
+	{
+//		this.md.reset();
+		this.md.update(array);
+		return md.digest();
+	}
+	
+	public byte[] generateAllOnes(int length)
+	{
+		byte[] ones = new byte[length];
+		byte one = Byte.MAX_VALUE;
+		for(int i = 0; i < length; i++)
+		{
+			ones[i] = one;
+		}
+		return ones;
+	}
+	
 	// javadoc already handled by ClientInterface
 	// groupServerName is for the FileServer to retrieve the group server's public key.  It is ignored otherwise.
 	public boolean connect(final String server, final int port, final String serverName, final String groupServerName, final UserToken serverToken)
@@ -540,6 +635,19 @@ public abstract class Client implements ClientInterface
 			this.output.writeObject(request);
 		
 			Envelope reqResponse = (Envelope)this.input.readObject();
+			// check hash inversion here
+			// Integer - len of input, Integer - len of random bytes, byte[] - hash of input, byte[] - return message
+			// store return message to send back
+			Integer lenOfInput = (Integer)reqResponse.getObjContents().get(0);
+			Integer lenOfRandBytes = (Integer)reqResponse.getObjContents().get(1);
+			byte[] hashOfInput = (byte[])reqResponse.getObjContents().get(2);
+			Object returnMessage = reqResponse.getObjContents().get(3);
+			
+			this.output.writeObject(computeHashInversion(lenOfInput, lenOfRandBytes, hashOfInput, returnMessage));
+			
+			// Do secure connection stuff below here
+			reqResponse = (Envelope)this.input.readObject();
+						
 			if(!checkValidityOfMessage(reqResponse))
 			{
 				disconnect();
