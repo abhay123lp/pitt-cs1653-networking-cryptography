@@ -29,6 +29,8 @@ public class GroupServer extends Server
 	public static final int CA_SERVER_PORT = 4999;
 	public static final String CA_LOC = "localhost";
 	
+	private static final int TIMEOUT = 7000;
+	
 	/**
 	 * The list of users that the GroupServer has.
 	 */
@@ -153,6 +155,7 @@ public class GroupServer extends Server
 			while (true)
 			{
 				sock = serverSock.accept();
+				sock.setSoTimeout(TIMEOUT);
 				thread = new GroupThread(sock, this, privateKey, publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
 				thread.start();
 			}
