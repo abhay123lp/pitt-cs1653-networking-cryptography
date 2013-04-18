@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
@@ -39,8 +41,9 @@ public abstract class ServerThread extends Thread
 	private String serverName;
 	private String ipAddress;
 	private int portNumber;
-		
-	protected static final String SYM_KEY_ALG = "AES/CTR/NoPadding";
+	
+	private static final String SYM_KEY_TYPE = "AES";
+	protected static final String SYM_KEY_ALG = SYM_KEY_TYPE + "/CTR/NoPadding";
 	protected static final String PROVIDER = "BC";
 	protected static final String ASYM_ALGORITHM = "RSA";
 	private static final int IV_BYTES = 16;
@@ -48,6 +51,8 @@ public abstract class ServerThread extends Thread
 	private static final String CA_LOC = "localhost";
 	private static final int CA_PORT = 4999;
 	private static final String HMAC_ALGORITHM = "HmacSHA1";
+	private static final int HASH_CHALLENGE_INPUT_LENGTH = 16;
+	private static final int HASH_CHALLENGE_RANDOM_LENGTH = 3;
 	
 	private final SecureRandom random;
 	
@@ -56,6 +61,7 @@ public abstract class ServerThread extends Thread
 	protected final RSAPrivateKey privateKey;
 	
 	private RSAPublicKey groupServerPublicKey; //FOR USE BY NON GROUP SERVERS ONLY
+	private Key hashInversionKey;
 	private volatile int numberOfMessage;
 	private Key confidentialKey;
 	private Key integrityKey;
@@ -79,6 +85,21 @@ public abstract class ServerThread extends Thread
 		this.serverName = sName;
 		this.ipAddress = ipAdd;
 		this.portNumber = portNum;
+		this.hashInversionKey = null;
+		try
+		{
+			this.hashInversionKey = KeyGenerator.getInstance(SYM_KEY_TYPE, PROVIDER).generateKey();
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch (NoSuchProviderException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public String getServerName(){
@@ -522,6 +543,8 @@ public abstract class ServerThread extends Thread
 			}
 			return null;
 		}
+		
+		//First message
 		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
 		byte[] encryptedConfidentialKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
 		byte[] encryptedIntegrityKey = (byte[])requestSecureConnection.getObjContents().get(2); //Get the integrity key
@@ -539,6 +562,8 @@ public abstract class ServerThread extends Thread
 			}
 			else
 			{
+				
+				
 				// Create the cipher object
 				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
 
@@ -603,6 +628,80 @@ public abstract class ServerThread extends Thread
 		}
 		return response;
 	}
+	
+	//----hash challenge stuff----//
+	private static MessageDigest md;
+	static
+	{
+		try
+		{
+			md = MessageDigest.getInstance("SHA", "BC");
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch (NoSuchProviderException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	protected Envelope sendhashInversionChallenge()
+	{
+		// Send a hash inversion challenge
+		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+		byte[] randomInput = this.generateRandomInput(HASH_CHALLENGE_INPUT_LENGTH, HASH_CHALLENGE_RANDOM_LENGTH);
+		long currTime = System.currentTimeMillis();
+		Envelope hashChallengeEnv = new Envelope("HASH_CHALLENGE");
+		hashChallengeEnv.addObject(HASH_CHALLENGE_INPUT_LENGTH);
+		hashChallengeEnv.addObject(HASH_CHALLENGE_RANDOM_LENGTH);
+		hashChallengeEnv.addObject(generateSHAHash(randomInput));
+		hashChallengeEnv.addObject(new Object[]{objCipher.doFinal(String.valueOf(currTime).getBytes()), objCipher.doFinal(randomInput)});
+		this.ou
+	}
+	
+	public byte[] generateSHAHash(byte[] array)
+	{
+		md.reset();
+		md.update(array);
+		return md.digest();
+	}
+	
+	public byte[] generateRandomInput(int totalSize, int lengthOfRandom)
+	{
+		return combineBytes(generateAllOnes(totalSize-lengthOfRandom), generateRandomBytes(lengthOfRandom));
+	}
+	
+	public byte[] generateAllOnes(int length)
+	{
+		byte[] ones = new byte[length];
+		byte one = Byte.MAX_VALUE;
+		for(int i = 0; i < length; i++)
+		{
+			ones[i] = one;
+		}
+		return ones;
+	}
+	
+	public byte[] generateRandomBytes(int length)
+	{
+		SecureRandom secRand = new SecureRandom();
+		byte[] randBytes = new byte[length];
+		secRand.nextBytes(randBytes);
+		return randBytes;
+	}
+	
+	public byte[] combineBytes(byte[] array1, byte[] array2)
+	{
+		byte[] total = new byte[array1.length+array2.length];
+		System.arraycopy(array1, 0, total, 0, array1.length);
+		System.arraycopy(array2, 0, total, array1.length, array2.length);
+		return total;
+	}
+	//---end challenge stuff---//
 	
 	//FOR USE ONLY WITH FILETHREAD
 	protected boolean isValidToken(UserToken t)
