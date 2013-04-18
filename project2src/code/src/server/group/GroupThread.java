@@ -86,7 +86,14 @@ public class GroupThread extends ServerThread
 				{	
 					output.writeObject(this.setUpSecureConnection(message));
 					continue;	
-				} else {
+				}
+				else if(message.getMessage().equals("HASH_CHALLENGE"))
+				{
+					output.writeObject(this.afterHashInversionChallenge(message));
+					continue;
+				}
+				else
+				{
 						if(!checkValidityOfMessage(message)){
 							response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
 							output.writeObject(response);
