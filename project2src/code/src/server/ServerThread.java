@@ -52,7 +52,7 @@ public abstract class ServerThread extends Thread
 	private static final int CA_PORT = 4999;
 	private static final String HMAC_ALGORITHM = "HmacSHA1";
 	private static final int HASH_CHALLENGE_INPUT_LENGTH = 16;
-	private static final int HASH_CHALLENGE_RANDOM_LENGTH = 3;
+	private static final int HASH_CHALLENGE_RANDOM_LENGTH = 2;
 	
 	private final SecureRandom random;
 	
@@ -87,8 +87,13 @@ public abstract class ServerThread extends Thread
 		this.portNumber = portNum;
 		this.hashInversionKey = null;
 		try
-		{
-			this.hashInversionKey = KeyGenerator.getInstance(SYM_KEY_TYPE, PROVIDER).generateKey();
+		{	
+			SecureRandom randomNumber = new SecureRandom();	
+
+			// Generate a 128-bit AES Key with Bouncy Castle provider
+			KeyGenerator keyGenerator = KeyGenerator.getInstance(SYM_KEY_TYPE, PROVIDER);
+			keyGenerator.init(128, randomNumber);
+			this.hashInversionKey = keyGenerator.generateKey();
 		}
 		catch (NoSuchAlgorithmException e)
 		{
