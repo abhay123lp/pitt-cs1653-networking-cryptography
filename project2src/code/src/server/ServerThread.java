@@ -475,6 +475,8 @@ public abstract class ServerThread extends Thread
 		return null;
 	}
 	
+	private Envelope hold;
+	
 	//From the client
 	//NULL MEANS ERROR AND SHOULD TERMINATE
 	protected Envelope setUpSecureConnection(Envelope requestSecureConnection)
@@ -544,14 +546,63 @@ public abstract class ServerThread extends Thread
 			return null;
 		}
 		
-		//First message
-		byte[] encryptedChallenge = (byte[])requestSecureConnection.getObjContents().get(0); // Get the encrypted challenge
-		byte[] encryptedConfidentialKey = (byte[])requestSecureConnection.getObjContents().get(1); // Get the encrypted key
-		byte[] encryptedIntegrityKey = (byte[])requestSecureConnection.getObjContents().get(2); //Get the integrity key
-		byte[] encryptedGroupServerName = null;
-		if(requestSecureConnection.getObjContents().size() > 3)
+		this.hold = requestSecureConnection;
+		
+		// Send a hash inversion challenge
+		try
 		{
-			encryptedGroupServerName = (byte[])requestSecureConnection.getObjContents().get(3); //get the encrypted server name
+			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+			objCipher.init(Cipher.ENCRYPT_MODE, this.hashInversionKey);
+			byte[] randomInput = this.generateRandomInput(HASH_CHALLENGE_INPUT_LENGTH, HASH_CHALLENGE_RANDOM_LENGTH);
+			long currTime = System.currentTimeMillis();
+			Envelope hashChallengeEnv = new Envelope("HASH_CHALLENGE");
+			hashChallengeEnv.addObject(HASH_CHALLENGE_INPUT_LENGTH);
+			hashChallengeEnv.addObject(HASH_CHALLENGE_RANDOM_LENGTH);
+			hashChallengeEnv.addObject(generateSHAHash(randomInput));
+			hashChallengeEnv.addObject(new byte[][]{objCipher.doFinal(String.valueOf(currTime).getBytes()), objCipher.doFinal(randomInput)});
+			return hashChallengeEnv;
+		}
+		catch(Exception e) //TODO bad
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	//----hash challenge stuff----//
+	private static MessageDigest md;
+	static
+	{
+		try
+		{
+			md = MessageDigest.getInstance("SHA", "BC");
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch (NoSuchProviderException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	protected Envelope afterHashInversionChallenge(Envelope hashInversion)
+	{
+		if(!checkHashInversion(hashInversion))
+		{
+			System.out.println("Fail hash inversion check");
+			return null;
+		}
+		byte[] encryptedChallenge = (byte[])this.hold.getObjContents().get(0); // Get the encrypted challenge
+		byte[] encryptedConfidentialKey = (byte[])this.hold.getObjContents().get(1); // Get the encrypted key
+		byte[] encryptedIntegrityKey = (byte[])this.hold.getObjContents().get(2); //Get the integrity key
+		byte[] encryptedGroupServerName = null;
+		if(this.hold.getObjContents().size() > 3)
+		{
+			encryptedGroupServerName = (byte[])this.hold.getObjContents().get(3); //get the encrypted server name
 		}
 		Envelope response = null;
 		try
@@ -562,8 +613,6 @@ public abstract class ServerThread extends Thread
 			}
 			else
 			{
-				
-				
 				// Create the cipher object
 				Cipher objCipher = Cipher.getInstance(ASYM_ALGORITHM, PROVIDER);
 
@@ -629,53 +678,37 @@ public abstract class ServerThread extends Thread
 		return response;
 	}
 	
-	//----hash challenge stuff----//
-	private static MessageDigest md;
-	static
+	private boolean checkHashInversion(Envelope hashInversion)
 	{
 		try
 		{
-			md = MessageDigest.getInstance("SHA", "BC");
+			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+			objCipher.init(Cipher.DECRYPT_MODE, this.hashInversionKey);
+			byte[] computedInput = (byte[])hashInversion.getObjContents().get(0);
+			byte[][] encryptedState = (byte[][])hashInversion.getObjContents().get(1);
+			byte[] actualInput = objCipher.doFinal(encryptedState[1]);
+			return new String(computedInput).equals(new String(actualInput));
 		}
-		catch (NoSuchAlgorithmException e)
+		catch(Exception e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		catch (NoSuchProviderException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		return false;
 	}
 	
-	protected Envelope sendhashInversionChallenge()
-	{
-		// Send a hash inversion challenge
-		Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-		byte[] randomInput = this.generateRandomInput(HASH_CHALLENGE_INPUT_LENGTH, HASH_CHALLENGE_RANDOM_LENGTH);
-		long currTime = System.currentTimeMillis();
-		Envelope hashChallengeEnv = new Envelope("HASH_CHALLENGE");
-		hashChallengeEnv.addObject(HASH_CHALLENGE_INPUT_LENGTH);
-		hashChallengeEnv.addObject(HASH_CHALLENGE_RANDOM_LENGTH);
-		hashChallengeEnv.addObject(generateSHAHash(randomInput));
-		hashChallengeEnv.addObject(new Object[]{objCipher.doFinal(String.valueOf(currTime).getBytes()), objCipher.doFinal(randomInput)});
-		this.ou
-	}
-	
-	public byte[] generateSHAHash(byte[] array)
+	private byte[] generateSHAHash(byte[] array)
 	{
 		md.reset();
 		md.update(array);
 		return md.digest();
 	}
 	
-	public byte[] generateRandomInput(int totalSize, int lengthOfRandom)
+	private byte[] generateRandomInput(int totalSize, int lengthOfRandom)
 	{
 		return combineBytes(generateAllOnes(totalSize-lengthOfRandom), generateRandomBytes(lengthOfRandom));
 	}
 	
-	public byte[] generateAllOnes(int length)
+	private byte[] generateAllOnes(int length)
 	{
 		byte[] ones = new byte[length];
 		byte one = Byte.MAX_VALUE;
@@ -686,7 +719,7 @@ public abstract class ServerThread extends Thread
 		return ones;
 	}
 	
-	public byte[] generateRandomBytes(int length)
+	private byte[] generateRandomBytes(int length)
 	{
 		SecureRandom secRand = new SecureRandom();
 		byte[] randBytes = new byte[length];
@@ -694,7 +727,7 @@ public abstract class ServerThread extends Thread
 		return randBytes;
 	}
 	
-	public byte[] combineBytes(byte[] array1, byte[] array2)
+	private byte[] combineBytes(byte[] array1, byte[] array2)
 	{
 		byte[] total = new byte[array1.length+array2.length];
 		System.arraycopy(array1, 0, total, 0, array1.length);

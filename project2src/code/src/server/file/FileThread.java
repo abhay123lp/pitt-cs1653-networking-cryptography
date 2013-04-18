@@ -58,7 +58,14 @@ public class FileThread extends ServerThread
 				{	
 					output.writeObject(this.setUpSecureConnection(e));
 					continue;	
-				} else {
+				}
+				else if(e.getMessage().equals("HASH_CHALLENGE"))
+				{
+					output.writeObject(this.afterHashInversionChallenge(e));
+					continue;
+				}
+				else
+				{
 							
 					if(!checkValidityOfMessage(e)){
 						response = encryptMessageWithSymmetricKey("DISCONNECT", null, null);
