@@ -37,7 +37,7 @@ public class FileServer extends Server
 	private static final String CA_LOC = "localhost";
 	private static final int DEF_CA_PORT = 4999;
 	
-	private static final int TIMEOUT = 7000;
+	private static final int TIMEOUT = 1000;
 	
 	/**
 	 * Default constructor.

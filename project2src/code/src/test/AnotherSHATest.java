@@ -37,14 +37,14 @@ public class AnotherSHATest {
 		long endTime = 0;
 		for(int i = 0; i < numInstances; i++)
 		{
-			origInput = generateRandomInput(16, 3);
+			origInput = generateRandomInput(16, 2);
 			hash = generateSHAHash(origInput);
 			startTime = System.currentTimeMillis();
-			invertHash = invertHash(hash, 16, 3);
+			invertHash = invertHash(hash, 16, 2);
 			endTime = System.currentTimeMillis();
 			sumOfTimes += (endTime - startTime);
+			System.out.println("It took the last one " + (endTime-startTime) + "ms to invert the hash");
 		}
-		System.out.println("It took the last one " + (endTime-startTime) + "ms to invert the hash");
 		printArray(origInput);
 		printArray(invertHash);
 		System.out.println("It took an average of " + ((double)sumOfTimes/numInstances) + "ms to convert");
