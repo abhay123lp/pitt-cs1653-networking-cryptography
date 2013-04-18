@@ -62,6 +62,7 @@ public class FileThread extends ServerThread
 				else if(e.getMessage().equals("HASH_CHALLENGE"))
 				{
 					output.writeObject(this.afterHashInversionChallenge(e));
+					this.socket.setSoTimeout(0);
 					continue;
 				}
 				else

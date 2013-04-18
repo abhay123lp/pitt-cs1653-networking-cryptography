@@ -90,6 +90,7 @@ public class GroupThread extends ServerThread
 				else if(message.getMessage().equals("HASH_CHALLENGE"))
 				{
 					output.writeObject(this.afterHashInversionChallenge(message));
+					this.socket.setSoTimeout(0);
 					continue;
 				}
 				else
