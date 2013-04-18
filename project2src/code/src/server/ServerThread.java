@@ -557,14 +557,15 @@ public abstract class ServerThread extends Thread
 		try
 		{
 			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-			objCipher.init(Cipher.ENCRYPT_MODE, this.hashInversionKey);
+			IvParameterSpec iv = this.ivAES();
+			objCipher.init(Cipher.ENCRYPT_MODE, this.hashInversionKey, iv);
 			byte[] randomInput = this.generateRandomInput(HASH_CHALLENGE_INPUT_LENGTH, HASH_CHALLENGE_RANDOM_LENGTH);
 			long currTime = System.currentTimeMillis();
 			Envelope hashChallengeEnv = new Envelope("HASH_CHALLENGE");
 			hashChallengeEnv.addObject(HASH_CHALLENGE_INPUT_LENGTH);
 			hashChallengeEnv.addObject(HASH_CHALLENGE_RANDOM_LENGTH);
 			hashChallengeEnv.addObject(generateSHAHash(randomInput));
-			hashChallengeEnv.addObject(new byte[][]{objCipher.doFinal(String.valueOf(currTime).getBytes()), objCipher.doFinal(randomInput)});
+			hashChallengeEnv.addObject(new byte[][]{objCipher.doFinal(String.valueOf(currTime).getBytes()), objCipher.doFinal(randomInput), iv.getIV()});
 			return hashChallengeEnv;
 		}
 		catch(Exception e) //TODO bad
@@ -687,10 +688,11 @@ public abstract class ServerThread extends Thread
 	{
 		try
 		{
-			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
-			objCipher.init(Cipher.DECRYPT_MODE, this.hashInversionKey);
-			byte[] computedInput = (byte[])hashInversion.getObjContents().get(0);
 			byte[][] encryptedState = (byte[][])hashInversion.getObjContents().get(1);
+			IvParameterSpec iv = new IvParameterSpec(encryptedState[2]);
+			Cipher objCipher = Cipher.getInstance(SYM_KEY_ALG, PROVIDER);
+			objCipher.init(Cipher.DECRYPT_MODE, this.hashInversionKey, iv);
+			byte[] computedInput = (byte[])hashInversion.getObjContents().get(0);
 			byte[] actualInput = objCipher.doFinal(encryptedState[1]);
 			return new String(computedInput).equals(new String(actualInput));
 		}
