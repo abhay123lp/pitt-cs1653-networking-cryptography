@@ -156,7 +156,7 @@ public class GroupServer extends Server
 			{
 				sock = serverSock.accept();
 				sock.setSoTimeout(TIMEOUT);
-				thread = new GroupThread(sock, this, privateKey, publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
+				thread = new GroupThread(sock, this, privateKey, publicKey, this.name, this.ipAddress, this.port);
 				thread.start();
 			}
 		}// end try block

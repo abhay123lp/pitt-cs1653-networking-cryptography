@@ -135,7 +135,7 @@ public class FileServer extends Server
 			{
 				sock = serverSock.accept();
 				sock.setSoTimeout(TIMEOUT);
-				thread = new FileThread(sock, this.privateKey, this.publicKey, this.name, sock.getInetAddress().getHostAddress(), this.port);
+				thread = new FileThread(sock, this.privateKey, this.publicKey, this.name, this.ipAddress, this.port);
 				thread.start();
 			}
 			
