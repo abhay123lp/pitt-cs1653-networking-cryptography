@@ -9,6 +9,7 @@ import java.security.Key;
 import java.security.Security;
 import java.util.List;
 import java.io.FileReader;
+import java.net.URL;
 
 import java.util.*;
 
@@ -417,7 +418,19 @@ public class UserCommands {
 						// User wanted to use default settings
 						if(userCommands[i].equals("default"))
 						{
-							fileServerToken = groupClient.getToken(userToken, "FilePile", "127.0.0.1", 4321);
+							String ipAddress = null;
+							try
+							{ //source: http://stackoverflow.com/questions/2939218/getting-the-external-ip-address-in-java
+								URL whatismyip = new URL("http://wtfismyip.com/text");
+								BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+						
+								ipAddress = in.readLine(); //you get the IP as a String
+							}
+							catch(Exception e)
+							{
+								e.printStackTrace();
+							}
+							fileServerToken = groupClient.getToken(userToken, "FilePile", ipAddress, 4321);
 							fileClient = new FileClient();
 							fileClient.connect("localhost", 4321, "FilePile", "ALPHA", fileServerToken);
 						}
