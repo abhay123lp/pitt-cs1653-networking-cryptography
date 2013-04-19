@@ -1,5 +1,8 @@
 package server;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
@@ -21,6 +24,8 @@ public abstract class Server
 	 * The name of the server.
 	 */
 	public final String name;
+	
+	protected String ipAddress;
 	
 	protected RSAPublicKey publicKey;
 	protected RSAPrivateKey privateKey;
@@ -45,6 +50,19 @@ public abstract class Server
 		port = _SERVER_PORT;
 		name = _serverName;
 		generateRSAKeyPair();
+		
+		this.ipAddress = null;
+		try
+		{ //source: http://stackoverflow.com/questions/2939218/getting-the-external-ip-address-in-java
+			URL whatismyip = new URL("http://wtfismyip.com/text");
+			BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+	
+			this.ipAddress = in.readLine(); //you get the IP as a String
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	/**
